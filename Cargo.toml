@@ -1,0 +1,10 @@
+[package]
+name = "asampo-gtk"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+gtk = { package = "gtk4", version = "0.8.1", features = ["v4_12"] }
+libasampo = { git = "https://github.com/mkforsb/libasampo" }
+audiothread = { git = "https://github.com/mkforsb/libasampo" }
+env_logger = "0.11.3"
