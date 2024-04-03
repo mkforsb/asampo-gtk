@@ -1,20 +1,20 @@
-use gtk::prelude::*;
-use gtk::subclass::prelude::*;
 use gtk::glib;
+use gtk::glib::subclass::InitializingObject;
+use gtk::subclass::prelude::*;
 
-#[derive(gtk::CompositeTemplate, Default)]
+#[derive(gtk::CompositeTemplate, Default, Debug)]
 #[template(resource = "/asampo.ui")]
 pub struct AsampoViewState {
-    // #[template_child]
-    // pub button: gtk::TemplateChild<gtk::Button>,
+    #[template_child]
+    pub samples_listview: gtk::TemplateChild<gtk::ListView>,
 }
 
-impl gtk::subclass::widget::WidgetImpl for AsampoViewState { }
-impl gtk::subclass::window::WindowImpl for AsampoViewState { }
-impl gtk::subclass::application_window::ApplicationWindowImpl for AsampoViewState { }
+impl WidgetImpl for AsampoViewState {}
+impl WindowImpl for AsampoViewState {}
+impl ApplicationWindowImpl for AsampoViewState {}
 
 #[glib::object_subclass]
-impl gtk::glib::subclass::types::ObjectSubclass for AsampoViewState {
+impl ObjectSubclass for AsampoViewState {
     // `NAME` needs to match `class` attribute of template
     const NAME: &'static str = "AsampoView";
     type Type = AsampoView;
@@ -24,22 +24,14 @@ impl gtk::glib::subclass::types::ObjectSubclass for AsampoViewState {
         klass.bind_template();
     }
 
-    fn instance_init(obj: &gtk::glib::subclass::InitializingObject<Self>) {
+    fn instance_init(obj: &InitializingObject<Self>) {
         obj.init_template();
     }
 }
 
-// Trait shared by all GObjects
-impl glib::subclass::object::ObjectImpl for AsampoViewState {
+impl ObjectImpl for AsampoViewState {
     fn constructed(&self) {
-        // Call "constructed" on parent
         self.parent_constructed();
-
-        // Connect to "clicked" signal of `button`
-        // self.button.connect_clicked(move |button| {
-            // Set the label to "Hello World!" after the button has been clicked on
-            // button.set_label("Hello World!");
-        // });
     }
 }
 
@@ -58,4 +50,3 @@ impl AsampoView {
         Object::builder().property("application", app).build()
     }
 }
-

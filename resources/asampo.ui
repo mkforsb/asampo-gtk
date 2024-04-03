@@ -187,7 +187,11 @@
               </object>
             </child>
             <child>
-              <object class="GtkListView" id="samples_listview">
+              <object class="GtkScrolledWindow">
+                <child>
+                  <object class="GtkListView" id="samples_listview">
+                  </object>
+                </child>
               </object>
             </child>
           </object>
