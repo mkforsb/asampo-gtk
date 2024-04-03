@@ -77,6 +77,7 @@ version = "0.0.0"
 dependencies = [
  "audiothread",
  "env_logger",
+ "glib-build-tools",
  "gtk4",
  "libasampo",
 ]
@@ -426,6 +427,15 @@ dependencies = [
  "memchr",
  "smallvec",
  "thiserror",
+]
+
+[[package]]
+name = "glib-build-tools"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "108f374fff60efd14b0d70d8916e7213aed18d7dd071ba3e9334ed2dac1dc86a"
+dependencies = [
+ "gio",
 ]
 
 [[package]]

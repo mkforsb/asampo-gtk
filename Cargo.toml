@@ -8,3 +8,6 @@ gtk = { package = "gtk4", version = "0.8.1", features = ["v4_12"] }
 libasampo = { git = "https://github.com/mkforsb/libasampo" }
 audiothread = { git = "https://github.com/mkforsb/libasampo" }
 env_logger = "0.11.3"
+
+[build-dependencies]
+glib-build-tools = "0.19.0"
