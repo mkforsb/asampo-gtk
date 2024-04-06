@@ -6,7 +6,13 @@ use gtk::subclass::prelude::*;
 #[template(resource = "/asampo.ui")]
 pub struct AsampoViewState {
     #[template_child]
+    pub samples_filter: gtk::TemplateChild<gtk::Entry>,
+
+    #[template_child]
     pub samples_listview: gtk::TemplateChild<gtk::ListView>,
+
+    #[template_child]
+    pub sources_list: gtk::TemplateChild<gtk::ListBox>,
 }
 
 impl WidgetImpl for AsampoViewState {}

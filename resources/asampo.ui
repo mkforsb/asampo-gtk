@@ -142,8 +142,80 @@
               </object>
             </child>
             <child>
-              <object class="GtkLabel">
-                <property name="label">Here goes the sources list pane</property>
+              <object class="GtkFrame">
+                <property name="margin_top">10</property>
+                <property name="margin_start">10</property>
+                <property name="margin_end">10</property>
+                <property name="margin_bottom">10</property>
+                <child>
+                  <object class="GtkScrolledWindow">
+                    <child>
+                      <object class="GtkListBox" id="sources_list">
+                        <property name="vexpand">true</property>
+                        <property name="activate-on-single-click">true</property>
+                        <property name="show-separators">true</property>
+                        <child>
+                          <object class="GtkListBoxRow" id="row1">
+                            <child>
+                              <object class="GtkBox">
+                                <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                                <child>
+                                  <object class="GtkCheckButton">
+                                    <property name="margin-top">10</property>
+                                    <property name="margin-start">10</property>
+                                    <property name="margin-bottom">10</property>
+                                    <property name="tooltip-text">Enable?</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="label">List Entry 1</property>
+                                    <property name="halign">GTK_ALIGN_FILL</property>
+                                    <property name="hexpand">true</property>
+                                    <property name="xalign">0.0</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_bottom">10</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton">
+                                    <property name="label">Delete</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkListBoxRow" id="row2">
+                            <child>
+                              <object class="GtkBox">
+                                <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                                <child>
+                                  <object class="GtkCheckButton">
+                                    <property name="margin-top">10</property>
+                                    <property name="margin-start">10</property>
+                                    <property name="margin-bottom">10</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="label">List Entry 2</property>
+                                    <property name="xalign">0.0</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_bottom">10</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </child>
               </object>
             </child>
           </object>
@@ -190,6 +262,8 @@
               <object class="GtkScrolledWindow">
                 <child>
                   <object class="GtkListView" id="samples_listview">
+                      <property name="vexpand">true</property>
+                      <property name="single_click_activate">true</property>
                   </object>
                 </child>
               </object>
