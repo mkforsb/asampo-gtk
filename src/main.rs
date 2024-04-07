@@ -5,6 +5,7 @@
 mod view;
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::env;
 use std::rc::Rc;
 use std::sync::mpsc::Sender;
@@ -15,12 +16,13 @@ use gtk::gio::ApplicationFlags;
 use gtk::glib::subclass::object::ObjectImpl;
 use gtk::glib::subclass::types::{ObjectSubclass, ObjectSubclassExt};
 use gtk::glib::{clone, Object};
-use gtk::prelude::*;
 use gtk::{glib, Application};
+use gtk::{prelude::*, GestureClick};
 use libasampo::prelude::*;
 use libasampo::samples::Sample;
 use libasampo::sources::file_system_source::FilesystemSource;
 use libasampo::sources::Source;
+use uuid::Uuid;
 use view::{AsampoView, AsampoViewState};
 
 #[derive(Default, Debug)]
@@ -49,7 +51,172 @@ impl SampleListEntry {
     }
 }
 
-fn update_samples_list(appstate: Rc<AppState>, filter: &str) {
+fn update_sources_list(appstate: Rc<AppState>, view: &AsampoView) {
+    view.sources_list.remove_all();
+
+    for uuid in appstate.sources_order.borrow().iter() {
+        let objects = gtk::Builder::from_string(indoc::indoc! {r#"
+            <interface>
+                <object class="GtkListBoxRow">
+                    <child>
+                        <object class="GtkBox">
+                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                            <child>
+                                <object class="GtkCheckButton">
+                                    <property name="margin-top">10</property>
+                                    <property name="margin-start">10</property>
+                                    <property name="margin-bottom">10</property>
+                                    <property name="tooltip-text">Enable?</property>
+                                </object>
+                            </child>
+                            <child>
+                                <object class="GtkLabel">
+                                    <property name="label"></property>
+                                    <property name="halign">GTK_ALIGN_FILL</property>
+                                    <property name="hexpand">true</property>
+                                    <property name="xalign">0.0</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_bottom">10</property>
+                                </object>
+                            </child>
+                            <child>
+                                <object class="GtkButton">
+                                    <property name="label">Delete</property>
+                                    <property name="margin_end">16</property>
+                                </object>
+                            </child>
+                        </object>
+                    </child>
+                </object>
+            </interface>
+        "#})
+        .objects();
+
+        let row = objects[0].dynamic_cast_ref::<gtk::ListBoxRow>().unwrap();
+
+        let hbox_raw = row.child().unwrap();
+        let hbox = hbox_raw.dynamic_cast_ref::<gtk::Box>().unwrap();
+
+        let checkbutton_raw = hbox.first_child().unwrap();
+        let checkbutton = checkbutton_raw
+            .dynamic_cast_ref::<gtk::CheckButton>()
+            .unwrap();
+
+        if appstate.sources.borrow().get(uuid).unwrap().is_enabled() {
+            checkbutton.activate();
+        }
+
+        checkbutton.connect_toggled(
+            clone!(@strong appstate, @strong uuid, @strong view => move |e: &gtk::CheckButton| {
+                appstate.sources.borrow_mut().get_mut(&uuid).unwrap().set_enabled(e.is_active());
+
+                if e.is_active() {
+                    enable_source(appstate.clone(), &view, &uuid);
+                } else {
+                    disable_source(appstate.clone(), &view, &uuid);
+                }
+            }),
+        );
+
+        row.child()
+            .unwrap()
+            .dynamic_cast_ref::<gtk::Box>()
+            .unwrap()
+            .first_child()
+            .unwrap()
+            .next_sibling()
+            .unwrap()
+            .dynamic_cast_ref::<gtk::Label>()
+            .unwrap()
+            .set_label(
+                appstate
+                    .sources
+                    .borrow()
+                    .get(uuid)
+                    .unwrap()
+                    .name()
+                    .unwrap_or("Unnamed"),
+            );
+
+        let clicked = GestureClick::new();
+
+        clicked.connect_pressed(|e: &GestureClick, _, _, _| {
+            e.widget().activate();
+        });
+
+        row.add_controller(clicked);
+
+        view.sources_list.append(row);
+    }
+}
+
+fn enable_source(appstate: Rc<AppState>, view: &AsampoView, source_uuid: &Uuid) {
+    {
+        let mut samples = appstate.samples.borrow_mut();
+
+        for sample in appstate
+            .sources
+            .borrow()
+            .get(source_uuid)
+            .unwrap()
+            .list()
+            .unwrap()
+        {
+            samples.push(sample);
+        }
+    }
+
+    apply_samples_filter(appstate.clone(), &view.samples_filter.text());
+}
+
+fn disable_source(appstate: Rc<AppState>, view: &AsampoView, source_uuid: &Uuid) {
+    appstate
+        .samples
+        .borrow_mut()
+        .retain(|s| s.source_uuid() != Some(source_uuid));
+    apply_samples_filter(appstate.clone(), &view.samples_filter.text());
+}
+
+fn setup_sources_page(appstate: Rc<AppState>, view: &AsampoView) {
+    let msgbox = clone!(@strong view => move |msg: String| {
+        let mbox = gtk::AlertDialog::builder().modal(true).message(msg).buttons(["Ok"]).build();
+        mbox.show(Some(&view));
+    });
+
+    view.source_add_fs_add_button
+        .connect_clicked(clone!(@strong view => move |_| {
+            let mut failures: Vec<bool> = Vec::new();
+
+            failures.push(view.source_add_fs_name_entry.text_length() < 1);
+            failures.push(view.source_add_fs_path_entry.text_length() < 1);
+            failures.push(view.source_add_fs_extensions_entry.text_length() < 1);
+
+            if failures.contains(&true) {
+                msgbox(String::from("Fields not filled correctly"));
+            } else {
+                let new_source = Source::FilesystemSource(FilesystemSource::new_named(
+                    view.source_add_fs_name_entry.text().to_string(),
+                    view.source_add_fs_path_entry.text().to_string(),
+                    view.source_add_fs_extensions_entry
+                        .text()
+                        .split(',')
+                        .map(|x| x.trim().to_string())
+                        .collect::<Vec<_>>(),
+                ));
+
+                let uuid = *new_source.uuid();
+
+                appstate.sources_order.borrow_mut().push(uuid);
+                appstate.sources.borrow_mut().insert(uuid, new_source);
+
+                update_sources_list(appstate.clone(), &view);
+                enable_source(appstate.clone(), &view, &uuid);
+            }
+        }));
+}
+
+fn apply_samples_filter(appstate: Rc<AppState>, filter: &str) {
     appstate.samples_listview_model.remove_all();
 
     if filter.is_empty() {
@@ -78,7 +245,7 @@ fn update_samples_list(appstate: Rc<AppState>, filter: &str) {
     }
 }
 
-fn setup_samples_list(appstate: Rc<AppState>, view: &AsampoView) {
+fn setup_samples_page(appstate: Rc<AppState>, view: &AsampoView) {
     let factory = gtk::SignalListItemFactory::new();
 
     factory.connect_setup(move |_, list_item| {
@@ -143,15 +310,16 @@ fn setup_samples_list(appstate: Rc<AppState>, view: &AsampoView) {
 
     viewstate.samples_filter.connect_changed(
         clone!(@strong appstate => move |entry: &gtk::Entry| {
-            update_samples_list(appstate.clone(), entry.text().as_ref());
+            apply_samples_filter(appstate.clone(), entry.text().as_ref());
         }),
     );
 
-    update_samples_list(appstate, "");
+    apply_samples_filter(appstate, "");
 }
 
 struct AppState {
-    sources: Rc<RefCell<Vec<Source>>>,
+    sources: Rc<RefCell<HashMap<Uuid, Source>>>,
+    sources_order: Rc<RefCell<Vec<Uuid>>>,
     samples: Rc<RefCell<Vec<Sample>>>,
     samples_listview_model: gtk::gio::ListStore, // cloning seems to behave like Rc
     audiothread_tx: Sender<Message>,             // can clone to create more senders
@@ -165,10 +333,18 @@ impl AppState {
         let (tx, rx) = std::sync::mpsc::channel();
 
         AppState {
-            sources: Rc::new(RefCell::new(Vec::new())),
+            sources: Rc::new(RefCell::new(HashMap::new())),
+            sources_order: Rc::new(RefCell::new(Vec::new())),
             samples: Rc::new(RefCell::new(Vec::new())),
             samples_listview_model: gtk::gio::ListStore::new::<SampleListEntry>(),
-            audiothread_handle: Rc::new(audiothread::spawn("Asampo Audio".to_string(), rx, None)),
+            audiothread_handle: Rc::new(audiothread::spawn(
+                rx,
+                Some(
+                    audiothread::Opts::default()
+                        .with_sr_conv_quality(audiothread::Quality::Fastest)
+                        .with_bufsize_n_stereo_samples(1024),
+                ),
+            )),
             audiothread_tx: tx,
         }
     }
@@ -194,32 +370,8 @@ fn main() -> glib::ExitCode {
         let window = AsampoView::new(app);
         let appstate = Rc::new(AppState::new());
 
-        appstate
-            .sources
-            .borrow_mut()
-            .push(Source::FilesystemSource(FilesystemSource::new(
-                env::args()
-                    .nth(1)
-                    .expect("Source path should have been given on command line"),
-                vec![],
-            )));
-
-        {
-            let mut samples = appstate.samples.borrow_mut();
-
-            for sample in appstate
-                .sources
-                .borrow_mut()
-                .first()
-                .unwrap()
-                .list()
-                .unwrap()
-            {
-                samples.push(sample);
-            }
-        }
-
-        setup_samples_list(appstate, &window);
+        setup_sources_page(appstate.clone(), &window);
+        setup_samples_page(appstate.clone(), &window);
 
         window.present();
     });

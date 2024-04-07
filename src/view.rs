@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use gtk::glib;
 use gtk::glib::subclass::InitializingObject;
 use gtk::subclass::prelude::*;
@@ -6,13 +8,52 @@ use gtk::subclass::prelude::*;
 #[template(resource = "/asampo.ui")]
 pub struct AsampoViewState {
     #[template_child]
+    pub source_add_frame: gtk::TemplateChild<gtk::Frame>,
+
+    #[template_child]
+    pub source_add_fs_name_entry: gtk::TemplateChild<gtk::Entry>,
+
+    #[template_child]
+    pub source_add_fs_path_entry: gtk::TemplateChild<gtk::Entry>,
+
+    #[template_child]
+    pub source_add_fs_path_browse_button: gtk::TemplateChild<gtk::Button>,
+
+    #[template_child]
+    pub source_add_fs_extensions_entry: gtk::TemplateChild<gtk::Entry>,
+
+    #[template_child]
+    pub source_add_fs_add_button: gtk::TemplateChild<gtk::Button>,
+
+    #[template_child]
+    pub source_edit_frame: gtk::TemplateChild<gtk::Frame>,
+
+    #[template_child]
+    pub source_edit_fs_name_entry: gtk::TemplateChild<gtk::Entry>,
+
+    #[template_child]
+    pub source_edit_fs_path_entry: gtk::TemplateChild<gtk::Entry>,
+
+    #[template_child]
+    pub source_edit_fs_path_browse_button: gtk::TemplateChild<gtk::Button>,
+
+    #[template_child]
+    pub source_edit_fs_extensions_entry: gtk::TemplateChild<gtk::Entry>,
+
+    #[template_child]
+    pub source_edit_fs_save_button: gtk::TemplateChild<gtk::Button>,
+
+    #[template_child]
+    pub source_edit_fs_cancel_button: gtk::TemplateChild<gtk::Button>,
+
+    #[template_child]
+    pub sources_list: gtk::TemplateChild<gtk::ListBox>,
+
+    #[template_child]
     pub samples_filter: gtk::TemplateChild<gtk::Entry>,
 
     #[template_child]
     pub samples_listview: gtk::TemplateChild<gtk::ListView>,
-
-    #[template_child]
-    pub sources_list: gtk::TemplateChild<gtk::ListBox>,
 }
 
 impl WidgetImpl for AsampoViewState {}
@@ -54,5 +95,13 @@ glib::wrapper! {
 impl AsampoView {
     pub fn new(app: &Application) -> Self {
         Object::builder().property("application", app).build()
+    }
+}
+
+impl Deref for AsampoView {
+    type Target = AsampoViewState;
+
+    fn deref(&self) -> &Self::Target {
+        AsampoViewState::from_obj(self)
     }
 }
