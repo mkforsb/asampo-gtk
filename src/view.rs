@@ -8,49 +8,49 @@ use gtk::subclass::prelude::*;
 #[template(resource = "/asampo.ui")]
 pub struct AsampoViewState {
     #[template_child]
-    pub source_add_frame: gtk::TemplateChild<gtk::Frame>,
+    pub sources_add_frame: gtk::TemplateChild<gtk::Frame>,
 
     #[template_child]
-    pub source_add_fs_name_entry: gtk::TemplateChild<gtk::Entry>,
+    pub sources_add_fs_name_entry: gtk::TemplateChild<gtk::Entry>,
 
     #[template_child]
-    pub source_add_fs_path_entry: gtk::TemplateChild<gtk::Entry>,
+    pub sources_add_fs_path_entry: gtk::TemplateChild<gtk::Entry>,
 
     #[template_child]
-    pub source_add_fs_path_browse_button: gtk::TemplateChild<gtk::Button>,
+    pub sources_add_fs_path_browse_button: gtk::TemplateChild<gtk::Button>,
 
     #[template_child]
-    pub source_add_fs_extensions_entry: gtk::TemplateChild<gtk::Entry>,
+    pub sources_add_fs_extensions_entry: gtk::TemplateChild<gtk::Entry>,
 
     #[template_child]
-    pub source_add_fs_add_button: gtk::TemplateChild<gtk::Button>,
+    pub sources_add_fs_add_button: gtk::TemplateChild<gtk::Button>,
 
     #[template_child]
-    pub source_edit_frame: gtk::TemplateChild<gtk::Frame>,
+    pub sources_edit_frame: gtk::TemplateChild<gtk::Frame>,
 
     #[template_child]
-    pub source_edit_fs_name_entry: gtk::TemplateChild<gtk::Entry>,
+    pub sources_edit_fs_name_entry: gtk::TemplateChild<gtk::Entry>,
 
     #[template_child]
-    pub source_edit_fs_path_entry: gtk::TemplateChild<gtk::Entry>,
+    pub sources_edit_fs_path_entry: gtk::TemplateChild<gtk::Entry>,
 
     #[template_child]
-    pub source_edit_fs_path_browse_button: gtk::TemplateChild<gtk::Button>,
+    pub sources_edit_fs_path_browse_button: gtk::TemplateChild<gtk::Button>,
 
     #[template_child]
-    pub source_edit_fs_extensions_entry: gtk::TemplateChild<gtk::Entry>,
+    pub sources_edit_fs_extensions_entry: gtk::TemplateChild<gtk::Entry>,
 
     #[template_child]
-    pub source_edit_fs_save_button: gtk::TemplateChild<gtk::Button>,
+    pub sources_edit_fs_save_button: gtk::TemplateChild<gtk::Button>,
 
     #[template_child]
-    pub source_edit_fs_cancel_button: gtk::TemplateChild<gtk::Button>,
+    pub sources_edit_fs_cancel_button: gtk::TemplateChild<gtk::Button>,
 
     #[template_child]
     pub sources_list: gtk::TemplateChild<gtk::ListBox>,
 
     #[template_child]
-    pub samples_filter: gtk::TemplateChild<gtk::Entry>,
+    pub samples_list_filter_entry: gtk::TemplateChild<gtk::Entry>,
 
     #[template_child]
     pub samples_listview: gtk::TemplateChild<gtk::ListView>,

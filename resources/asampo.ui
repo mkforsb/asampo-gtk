@@ -20,7 +20,7 @@
           <object class="GtkBox">
             <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
             <child>
-              <object class="GtkFrame" id="source_add_frame">
+              <object class="GtkFrame" id="sources_add_frame">
                 <property name="label">Add Source</property>
                 <property name="margin_top">10</property>
                 <property name="margin_start">10</property>
@@ -43,7 +43,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="source_add_fs_name_entry">
+                          <object class="GtkEntry" id="sources_add_fs_name_entry">
                             <property name="placeholder_text">Drums</property>
                             <property name="width_request">250</property>
                             <property name="margin_top">10</property>
@@ -69,7 +69,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="source_add_fs_path_entry">
+                          <object class="GtkEntry" id="sources_add_fs_path_entry">
                             <property name="placeholder_text">/home/user/samples/drums</property>
                             <property name="margin_top">10</property>
                             <property name="margin_start">10</property>
@@ -81,7 +81,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkButton" id="source_add_fs_path_browse_button">
+                          <object class="GtkButton" id="sources_add_fs_path_browse_button">
                             <property name="label">Browse</property>
                             <property name="margin_top">10</property>
                             <property name="margin_end">10</property>
@@ -105,7 +105,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="source_add_fs_extensions_entry">
+                          <object class="GtkEntry" id="sources_add_fs_extensions_entry">
                             <property name="placeholder_text">wav,flac,ogg</property>
                             <property name="margin_top">10</property>
                             <property name="margin_start">10</property>
@@ -117,7 +117,8 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkButton" id="source_add_fs_add_button">
+                          <object class="GtkButton" id="sources_add_fs_add_button">
+                            <property name="sensitive">false</property>
                             <property name="halign">GTK_ALIGN_END</property>
                             <property name="hexpand">false</property>
                             <property name="label">Add</property>
@@ -143,7 +144,7 @@
               </object>
             </child>
             <child>
-              <object class="GtkFrame" id="source_edit_frame">
+              <object class="GtkFrame" id="sources_edit_frame">
                 <property name="visible">false</property>
                 <property name="label">Edit Source</property>
                 <property name="margin_top">10</property>
@@ -167,7 +168,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="source_edit_fs_name_entry">
+                          <object class="GtkEntry" id="sources_edit_fs_name_entry">
                             <property name="placeholder_text">Drums</property>
                             <property name="width_request">250</property>
                             <property name="margin_top">10</property>
@@ -193,7 +194,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="source_edit_fs_path_entry">
+                          <object class="GtkEntry" id="sources_edit_fs_path_entry">
                             <property name="placeholder_text">/home/user/samples/drums</property>
                             <property name="margin_top">10</property>
                             <property name="margin_start">10</property>
@@ -205,7 +206,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkButton" id="source_edit_fs_path_browse_button">
+                          <object class="GtkButton" id="sources_edit_fs_path_browse_button">
                             <property name="label">Browse</property>
                             <property name="margin_top">10</property>
                             <property name="margin_end">10</property>
@@ -229,7 +230,7 @@
                           </object>
                         </child>
                         <child>
-                          <object class="GtkEntry" id="source_edit_fs_extensions_entry">
+                          <object class="GtkEntry" id="sources_edit_fs_extensions_entry">
                             <property name="placeholder_text">wav,flac,ogg</property>
                             <property name="margin_top">10</property>
                             <property name="margin_start">10</property>
@@ -245,7 +246,7 @@
                             <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
                             <property name="halign">GTK_ALIGN_END</property>
                             <child>
-                              <object class="GtkButton" id="source_edit_fs_save_button">
+                              <object class="GtkButton" id="sources_edit_fs_save_button">
                                 <property name="hexpand">false</property>
                                 <property name="label">Save</property>
                                 <property name="margin_top">10</property>
@@ -254,7 +255,7 @@
                               </object>
                             </child>
                             <child>
-                              <object class="GtkButton" id="source_edit_fs_cancel_button">
+                              <object class="GtkButton" id="sources_edit_fs_cancel_button">
                                 <property name="hexpand">false</property>
                                 <property name="sensitive">false</property>
                                 <property name="label">Cancel</property>
@@ -386,7 +387,7 @@
                       </object>
                     </child>
                     <child>
-                      <object class="GtkEntry" id="samples_filter">
+                      <object class="GtkEntry" id="samples_list_filter_entry">
                         <property name="hexpand">true</property>
                         <property name="margin_top">10</property>
                         <property name="margin_start">10</property>

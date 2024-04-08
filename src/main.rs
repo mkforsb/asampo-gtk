@@ -2,355 +2,351 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashMap,
+    rc::Rc,
+    sync::mpsc::{self, Sender},
+    thread::JoinHandle,
+};
+
+use anyhow::anyhow;
+use gtk::{
+    gio::{ApplicationFlags, ListStore},
+    glib::{clone, ExitCode},
+    prelude::*,
+    Application,
+};
+
+use libasampo::{
+    prelude::*,
+    samples::Sample,
+    sources::{file_system_source::FilesystemSource, Source, SourceTrait},
+};
+use samples::{setup_samples_page, SampleListEntry};
+use sources::setup_sources_page;
+use sources::update_sources_list;
+use uuid::Uuid;
+use view::AsampoView;
+
+mod ext;
+mod samples;
+mod sources;
 mod view;
 
-use std::cell::RefCell;
-use std::collections::HashMap;
-use std::env;
-use std::rc::Rc;
-use std::sync::mpsc::Sender;
-use std::thread::JoinHandle;
+use ext::*;
 
-use audiothread::Message;
-use gtk::gio::ApplicationFlags;
-use gtk::glib::subclass::object::ObjectImpl;
-use gtk::glib::subclass::types::{ObjectSubclass, ObjectSubclassExt};
-use gtk::glib::{clone, Object};
-use gtk::{glib, Application};
-use gtk::{prelude::*, GestureClick};
-use libasampo::prelude::*;
-use libasampo::samples::Sample;
-use libasampo::sources::file_system_source::FilesystemSource;
-use libasampo::sources::Source;
-use uuid::Uuid;
-use view::{AsampoView, AsampoViewState};
-
-#[derive(Default, Debug)]
-pub struct SampleListEntryState {
-    value: RefCell<Option<Sample>>, // FIXME: the `Option` is there only for its `Default` impl
+#[derive(Debug, Clone)]
+struct AppFlags {
+    sources_add_fs_fields_valid: bool,
 }
 
-#[glib::object_subclass]
-impl ObjectSubclass for SampleListEntryState {
-    const NAME: &'static str = "SampleListEntry";
-    type Type = SampleListEntry;
-}
-
-impl ObjectImpl for SampleListEntryState {}
-
-glib::wrapper! {
-    pub struct SampleListEntry(ObjectSubclass<SampleListEntryState>);
-}
-
-impl SampleListEntry {
-    pub fn new(value: Sample) -> Self {
-        let obj = Object::builder().build();
-        let x = SampleListEntryState::from_obj(&obj);
-        x.value.replace(Some(value));
-        obj
+#[allow(clippy::derivable_impls)]
+impl Default for AppFlags {
+    fn default() -> Self {
+        AppFlags {
+            sources_add_fs_fields_valid: false,
+        }
     }
 }
 
-fn update_sources_list(appstate: Rc<AppState>, view: &AsampoView) {
-    view.sources_list.remove_all();
+#[derive(Default, Debug, Clone)]
+struct AppValues {
+    sources_add_fs_name_entry: String,
+    sources_add_fs_path_entry: String,
+    sources_add_fs_extensions_entry: String,
+    samples_list_filter: String,
+}
 
-    for uuid in appstate.sources_order.borrow().iter() {
-        let objects = gtk::Builder::from_string(indoc::indoc! {r#"
-            <interface>
-                <object class="GtkListBoxRow">
-                    <child>
-                        <object class="GtkBox">
-                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                            <child>
-                                <object class="GtkCheckButton">
-                                    <property name="margin-top">10</property>
-                                    <property name="margin-start">10</property>
-                                    <property name="margin-bottom">10</property>
-                                    <property name="tooltip-text">Enable?</property>
-                                </object>
-                            </child>
-                            <child>
-                                <object class="GtkLabel">
-                                    <property name="label"></property>
-                                    <property name="halign">GTK_ALIGN_FILL</property>
-                                    <property name="hexpand">true</property>
-                                    <property name="xalign">0.0</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_bottom">10</property>
-                                </object>
-                            </child>
-                            <child>
-                                <object class="GtkButton">
-                                    <property name="label">Delete</property>
-                                    <property name="margin_end">16</property>
-                                </object>
-                            </child>
-                        </object>
-                    </child>
-                </object>
-            </interface>
-        "#})
-        .objects();
+#[derive(Clone, Debug)]
+struct AppModel {
+    flags: AppFlags,
+    values: AppValues,
+    audiothread_tx: Sender<audiothread::Message>,
+    _audiothread_handle: Rc<JoinHandle<()>>,
+    sources: HashMap<Uuid, Source>,
+    sources_order: Vec<Uuid>,
+    samples: Rc<RefCell<Vec<Sample>>>,
+    samples_listview_model: ListStore,
+}
 
-        let row = objects[0].dynamic_cast_ref::<gtk::ListBoxRow>().unwrap();
+type AppModelPtr = Rc<Cell<Option<AppModel>>>;
 
-        let hbox_raw = row.child().unwrap();
-        let hbox = hbox_raw.dynamic_cast_ref::<gtk::Box>().unwrap();
+impl AppModel {
+    fn new() -> Self {
+        let (tx, rx) = mpsc::channel();
 
-        let checkbutton_raw = hbox.first_child().unwrap();
-        let checkbutton = checkbutton_raw
-            .dynamic_cast_ref::<gtk::CheckButton>()
-            .unwrap();
-
-        if appstate.sources.borrow().get(uuid).unwrap().is_enabled() {
-            checkbutton.activate();
+        AppModel {
+            flags: AppFlags::default(),
+            values: AppValues::default(),
+            audiothread_tx: tx,
+            _audiothread_handle: Rc::new(audiothread::spawn(rx, Some(audiothread::Opts::default().with_bufsize_n_stereo_samples(1024)))),
+            sources: HashMap::new(),
+            sources_order: Vec::new(),
+            samples: Rc::new(RefCell::new(Vec::new())),
+            samples_listview_model: ListStore::new::<samples::SampleListEntry>(),
         }
+    }
 
-        checkbutton.connect_toggled(
-            clone!(@strong appstate, @strong uuid, @strong view => move |e: &gtk::CheckButton| {
-                appstate.sources.borrow_mut().get_mut(&uuid).unwrap().set_enabled(e.is_active());
+    fn add_source(self, source: Source) -> Self {
+        let mut new_sources_order = self.sources_order.clone();
+        new_sources_order.push(*source.uuid());
 
-                if e.is_active() {
-                    enable_source(appstate.clone(), &view, &uuid);
-                } else {
-                    disable_source(appstate.clone(), &view, &uuid);
-                }
-            }),
+        let mut new_sources = self.sources.clone();
+        new_sources.insert(*source.uuid(), source);
+
+        AppModel {
+            sources_order: new_sources_order,
+            sources: new_sources,
+            ..self
+        }
+    }
+
+    fn enable_source(self, uuid: Uuid) -> Result<Self, anyhow::Error> {
+        self.samples.borrow_mut().extend(
+            self.sources
+                .get(&uuid)
+                .ok_or_else(|| anyhow!("Failed to enable source: uuid not found!"))?
+                .list()?,
         );
 
-        row.child()
-            .unwrap()
-            .dynamic_cast_ref::<gtk::Box>()
-            .unwrap()
-            .first_child()
-            .unwrap()
-            .next_sibling()
-            .unwrap()
-            .dynamic_cast_ref::<gtk::Label>()
-            .unwrap()
-            .set_label(
-                appstate
-                    .sources
-                    .borrow()
-                    .get(uuid)
-                    .unwrap()
-                    .name()
-                    .unwrap_or("Unnamed"),
-            );
-
-        let clicked = GestureClick::new();
-
-        clicked.connect_pressed(|e: &GestureClick, _, _, _| {
-            e.widget().activate();
-        });
-
-        row.add_controller(clicked);
-
-        view.sources_list.append(row);
-    }
-}
-
-fn enable_source(appstate: Rc<AppState>, view: &AsampoView, source_uuid: &Uuid) {
-    {
-        let mut samples = appstate.samples.borrow_mut();
-
-        for sample in appstate
-            .sources
-            .borrow()
-            .get(source_uuid)
-            .unwrap()
-            .list()
-            .unwrap()
-        {
-            samples.push(sample);
-        }
+        Ok(AppModel {
+            sources: self.sources.cloned_update_with(
+                |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
+                    s.get_mut(&uuid)
+                        .ok_or_else(|| anyhow!("Failed to enable source: uuid not found!"))?
+                        .enable();
+                    Ok(s)
+                },
+            )?,
+            ..self
+        })
     }
 
-    apply_samples_filter(appstate.clone(), &view.samples_filter.text());
-}
+    fn disable_source(self, uuid: Uuid) -> Result<Self, anyhow::Error> {
+        self.samples.borrow_mut().retain(|s| s.source_uuid() != Some(&uuid));
 
-fn disable_source(appstate: Rc<AppState>, view: &AsampoView, source_uuid: &Uuid) {
-    appstate
-        .samples
-        .borrow_mut()
-        .retain(|s| s.source_uuid() != Some(source_uuid));
-    apply_samples_filter(appstate.clone(), &view.samples_filter.text());
-}
+        Ok(AppModel {
+            sources: self.sources.cloned_update_with(
+                |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
+                    s.get_mut(&uuid)
+                        .ok_or_else(|| anyhow!("Failed to disable source: uuid not found!"))?
+                        .disable();
+                    Ok(s)
+                },
+            )?,
+            ..self
+        })
+    }
 
-fn setup_sources_page(appstate: Rc<AppState>, view: &AsampoView) {
-    let msgbox = clone!(@strong view => move |msg: String| {
-        let mbox = gtk::AlertDialog::builder().modal(true).message(msg).buttons(["Ok"]).build();
-        mbox.show(Some(&view));
-    });
+    fn populate_samples_list(self) -> Self {
+        let filter = &self.values.samples_list_filter;
+        self.samples_listview_model.remove_all();
 
-    view.source_add_fs_add_button
-        .connect_clicked(clone!(@strong view => move |_| {
-            let mut failures: Vec<bool> = Vec::new();
-
-            failures.push(view.source_add_fs_name_entry.text_length() < 1);
-            failures.push(view.source_add_fs_path_entry.text_length() < 1);
-            failures.push(view.source_add_fs_extensions_entry.text_length() < 1);
-
-            if failures.contains(&true) {
-                msgbox(String::from("Fields not filled correctly"));
-            } else {
-                let new_source = Source::FilesystemSource(FilesystemSource::new_named(
-                    view.source_add_fs_name_entry.text().to_string(),
-                    view.source_add_fs_path_entry.text().to_string(),
-                    view.source_add_fs_extensions_entry
-                        .text()
-                        .split(',')
-                        .map(|x| x.trim().to_string())
-                        .collect::<Vec<_>>(),
-                ));
-
-                let uuid = *new_source.uuid();
-
-                appstate.sources_order.borrow_mut().push(uuid);
-                appstate.sources.borrow_mut().insert(uuid, new_source);
-
-                update_sources_list(appstate.clone(), &view);
-                enable_source(appstate.clone(), &view, &uuid);
-            }
-        }));
-}
-
-fn apply_samples_filter(appstate: Rc<AppState>, filter: &str) {
-    appstate.samples_listview_model.remove_all();
-
-    if filter.is_empty() {
-        let samples = appstate
-            .samples
-            .borrow()
-            .iter()
-            .map(|s| SampleListEntry::new(s.clone()))
-            .collect::<Vec<_>>();
-        appstate
-            .samples_listview_model
-            .extend_from_slice(samples.as_slice());
-    } else {
-        let fragments = filter.split(' ').map(|s| s.to_string()).collect::<Vec<_>>();
-
-        let mut samples = appstate.samples.borrow().clone();
-        samples.retain(|x| fragments.iter().all(|frag| x.uri().contains(frag)));
-
-        appstate.samples_listview_model.extend_from_slice(
-            samples
+        if filter.is_empty() {
+            let samples = self
+                .samples
+                .borrow()
                 .iter()
                 .map(|s| SampleListEntry::new(s.clone()))
-                .collect::<Vec<_>>()
-                .as_slice(),
+                .collect::<Vec<_>>();
+
+            self.samples_listview_model
+                .extend_from_slice(samples.as_slice());
+        } else {
+            let fragments = filter.split(' ').map(|s| s.to_string()).collect::<Vec<_>>();
+
+            let mut samples = self.samples.borrow().clone();
+            samples.retain(|x| fragments.iter().all(|frag| x.uri().contains(frag)));
+
+            self.samples_listview_model.extend_from_slice(
+                samples
+                    .iter()
+                    .map(|s| SampleListEntry::new(s.clone()))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+            );
+        }
+
+        log::log!(
+            log::Level::Debug,
+            "showing {} samples",
+            self.samples_listview_model.n_items()
         );
+
+        self
     }
 }
 
-fn setup_samples_page(appstate: Rc<AppState>, view: &AsampoView) {
-    let factory = gtk::SignalListItemFactory::new();
-
-    factory.connect_setup(move |_, list_item| {
-        let label = gtk::Label::new(None);
-        label.set_xalign(0.0);
-
-        list_item
-            .downcast_ref::<gtk::ListItem>()
-            .expect("ListItem")
-            .set_child(Some(&label));
-    });
-
-    factory.connect_bind(move |_, list_item| {
-        let entry = list_item
-            .downcast_ref::<gtk::ListItem>()
-            .expect("ListItem")
-            .item()
-            .and_downcast::<SampleListEntry>()
-            .expect("Entry");
-        let label = list_item
-            .downcast_ref::<gtk::ListItem>()
-            .expect("ListItem")
-            .child()
-            .and_downcast::<gtk::Label>()
-            .expect("Label");
-
-        label.set_label(
-            SampleListEntryState::from_obj(&entry)
-                .value
-                .borrow()
-                .as_ref()
-                .unwrap()
-                .uri(),
-        );
-    });
-
-    let sample_clicked = clone!(@strong appstate.audiothread_tx as tx => move |list_view: &gtk::ListView, pos| {
-        let item = list_view.model().expect("").item(pos);
-        let sample =
-            SampleListEntryState::from_obj(item.and_dynamic_cast_ref::<SampleListEntry>().unwrap())
-                .value
-                .borrow();
-        let uri = sample.as_ref().unwrap().uri();
-
-        tx.send(audiothread::Message::PlaySymphoniaSource(
-            audiothread::SymphoniaSource::from_file(uri).unwrap(),
-        ))
-        .unwrap();
-    });
-
-    let selectmodel = gtk::SingleSelection::new(Some(appstate.samples_listview_model.clone()));
-    let viewstate = AsampoViewState::from_obj(view);
-
-    viewstate
-        .samples_listview
-        .settings()
-        .set_property("gtk-double-click-time", 0);
-
-    viewstate.samples_listview.connect_activate(sample_clicked);
-    viewstate.samples_listview.set_model(Some(&selectmodel));
-    viewstate.samples_listview.set_factory(Some(&factory));
-
-    viewstate.samples_filter.connect_changed(
-        clone!(@strong appstate => move |entry: &gtk::Entry| {
-            apply_samples_filter(appstate.clone(), entry.text().as_ref());
-        }),
-    );
-
-    apply_samples_filter(appstate, "");
+#[derive(Debug)]
+enum AppMessage {
+    AddFilesystemSourceNameChanged(String),
+    AddFilesystemSourcePathChanged(String),
+    AddFilesystemSourceExtensionsChanged(String),
+    AddFilesystemSourceClicked,
+    SampleClicked(u32),
+    SamplesFilterChanged(String),
+    SourceEnabled(Uuid),
+    SourceDisabled(Uuid),
 }
 
-struct AppState {
-    sources: Rc<RefCell<HashMap<Uuid, Source>>>,
-    sources_order: Rc<RefCell<Vec<Uuid>>>,
-    samples: Rc<RefCell<Vec<Sample>>>,
-    samples_listview_model: gtk::gio::ListStore, // cloning seems to behave like Rc
-    audiothread_tx: Sender<Message>,             // can clone to create more senders
+fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
+    log::log!(log::Level::Debug, "{message:?}");
 
-    #[allow(unused)]
-    audiothread_handle: Rc<JoinHandle<()>>,
-}
+    let old_model = model_ptr.take().unwrap();
 
-impl AppState {
-    pub fn new() -> Self {
-        let (tx, rx) = std::sync::mpsc::channel();
+    match update_model(old_model.clone(), message) {
+        Ok(new_model) => {
+            model_ptr.set(Some(new_model.clone()));
+            update_view(model_ptr, old_model, new_model, view);
+        }
 
-        AppState {
-            sources: Rc::new(RefCell::new(HashMap::new())),
-            sources_order: Rc::new(RefCell::new(Vec::new())),
-            samples: Rc::new(RefCell::new(Vec::new())),
-            samples_listview_model: gtk::gio::ListStore::new::<SampleListEntry>(),
-            audiothread_handle: Rc::new(audiothread::spawn(
-                rx,
-                Some(
-                    audiothread::Opts::default()
-                        .with_sr_conv_quality(audiothread::Quality::Fastest)
-                        .with_bufsize_n_stereo_samples(1024),
-                ),
-            )),
-            audiothread_tx: tx,
+        Err(e) => {
+            model_ptr.set(Some(old_model));
+            log::log!(log::Level::Error, "{}", e.to_string());
         }
     }
 }
 
-fn main() -> glib::ExitCode {
+fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow::Error> {
+    fn check_sources_add_fs_valid(model: AppModel) -> AppModel {
+        #[allow(clippy::needless_update)]
+        AppModel {
+            flags: AppFlags {
+                sources_add_fs_fields_valid: !model.values.sources_add_fs_name_entry.is_empty()
+                    && !model.values.sources_add_fs_path_entry.is_empty()
+                    && !model.values.sources_add_fs_extensions_entry.is_empty(),
+                ..model.flags
+            },
+            ..model
+        }
+    }
+
+    match message {
+        AppMessage::AddFilesystemSourceNameChanged(text) => {
+            Ok(check_sources_add_fs_valid(AppModel {
+                values: AppValues {
+                    sources_add_fs_name_entry: text,
+                    ..model.values
+                },
+                ..model
+            }))
+        }
+
+        AppMessage::AddFilesystemSourcePathChanged(text) => {
+            Ok(check_sources_add_fs_valid(AppModel {
+                values: AppValues {
+                    sources_add_fs_path_entry: text,
+                    ..model.values
+                },
+                ..model
+            }))
+        }
+
+        AppMessage::AddFilesystemSourceExtensionsChanged(text) => {
+            Ok(check_sources_add_fs_valid(AppModel {
+                values: AppValues {
+                    sources_add_fs_extensions_entry: text,
+                    ..model.values
+                },
+                ..model
+            }))
+        }
+
+        // TODO: more validation, e.g is the path readable
+        AppMessage::AddFilesystemSourceClicked => {
+            let new_source = Source::FilesystemSource(FilesystemSource::new_named(
+                model.values.sources_add_fs_name_entry.clone(),
+                model.values.sources_add_fs_path_entry.clone(),
+                model
+                    .values
+                    .sources_add_fs_extensions_entry
+                    .split(',')
+                    .map(|s| s.trim().to_string())
+                    .collect(),
+            ));
+
+            let uuid = *new_source.uuid();
+            let model = model.add_source(new_source).enable_source(uuid).unwrap();
+
+            Ok(AppModel {
+                #[allow(clippy::needless_update)]
+                flags: AppFlags {
+                    sources_add_fs_fields_valid: false,
+                    ..model.flags
+                },
+
+                values: AppValues {
+                    sources_add_fs_name_entry: String::from(""),
+                    sources_add_fs_path_entry: String::from(""),
+                    sources_add_fs_extensions_entry: String::from(""),
+                    ..model.values
+                },
+
+                ..model
+            }
+            .populate_samples_list())
+        }
+
+        AppMessage::SampleClicked(index) => {
+            let item = model.samples_listview_model.item(index);
+
+            match item
+                .and_dynamic_cast_ref::<SampleListEntry>()
+                .map(|x| &x.value)
+            {
+                Some(sample) => {
+                    model
+                        .audiothread_tx
+                        .send(audiothread::Message::PlaySymphoniaSource(
+                            audiothread::SymphoniaSource::from_file(sample.borrow().uri())?,
+                        ))?;
+
+                    Ok(model)
+                }
+                None => Err(anyhow!("Could not obtain clicked sample (this is a bug)")),
+            }
+        }
+
+        AppMessage::SamplesFilterChanged(text) => Ok(AppModel {
+            values: AppValues {
+                samples_list_filter: text,
+                ..model.values
+            },
+            ..model
+        }.populate_samples_list()),
+
+        AppMessage::SourceEnabled(uuid) => Ok(model.enable_source(uuid)?.populate_samples_list()),
+
+        AppMessage::SourceDisabled(uuid) => Ok(model.disable_source(uuid)?.populate_samples_list()),
+    }
+}
+
+fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &AsampoView) {
+    macro_rules! maybe_update_entry_text {
+        ($old:ident, $new:ident, $view:ident, $entry:ident) => {
+            if $old.values.$entry != $new.values.$entry && $view.$entry.text() != $new.values.$entry
+            {
+                $view.$entry.set_text(&$new.values.$entry);
+            }
+        };
+    }
+
+    maybe_update_entry_text!(old, new, view, sources_add_fs_name_entry);
+    maybe_update_entry_text!(old, new, view, sources_add_fs_path_entry);
+    maybe_update_entry_text!(old, new, view, sources_add_fs_extensions_entry);
+
+    if old.flags.sources_add_fs_fields_valid != new.flags.sources_add_fs_fields_valid {
+        view.sources_add_fs_add_button
+            .set_sensitive(new.flags.sources_add_fs_fields_valid);
+    }
+
+    if old.sources != new.sources {
+        update_sources_list(model_ptr, new, view);
+    }
+}
+
+fn main() -> ExitCode {
     env_logger::init();
 
     gtk::gio::resources_register_include!("resources.gresource")
@@ -367,13 +363,13 @@ fn main() -> glib::ExitCode {
     }));
 
     app.connect_activate(|app| {
-        let window = AsampoView::new(app);
-        let appstate = Rc::new(AppState::new());
+        let view = AsampoView::new(app);
+        view.present();
 
-        setup_sources_page(appstate.clone(), &window);
-        setup_samples_page(appstate.clone(), &window);
+        let model = Rc::new(Cell::new(Some(AppModel::new())));
 
-        window.present();
+        setup_sources_page(model.clone(), &view);
+        setup_samples_page(model.clone(), &view);
     });
 
     app.run()
