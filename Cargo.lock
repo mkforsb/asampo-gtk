@@ -83,13 +83,15 @@ dependencies = [
  "indoc",
  "libasampo",
  "log",
+ "serde",
+ "serde_json",
  "uuid",
 ]
 
 [[package]]
 name = "audiothread"
 version = "0.0.1"
-source = "git+https://github.com/mkforsb/libasampo#9e73323c14621f03771c1680408d23bd0c62be32"
+source = "git+https://github.com/mkforsb/libasampo#965a317edf276568d0586c7007374532271eef21"
 dependencies = [
  "libpulse-binding",
  "log",
@@ -625,6 +627,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b248f5224d1d606005e02c97f5aa4e88eeb230488bcc03bc9ca4d7991399f2b5"
 
 [[package]]
+name = "itoa"
+version = "1.0.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "49f1f14873335454500d59611f1cf4a4b0f786f9ac11f4312a78e4cf2566695b"
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -633,11 +641,13 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 [[package]]
 name = "libasampo"
 version = "0.0.0"
-source = "git+https://github.com/mkforsb/libasampo#9e73323c14621f03771c1680408d23bd0c62be32"
+source = "git+https://github.com/mkforsb/libasampo#965a317edf276568d0586c7007374532271eef21"
 dependencies = [
  "glob",
  "log",
  "mockall",
+ "serde",
+ "serde_json",
  "symphonia",
  "thiserror",
  "uuid",
@@ -911,6 +921,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "ryu"
+version = "1.0.17"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e86697c916019a8588c99b5fac3cead74ec0b4b819707a682fd4d23fa0ce1ba1"
+
+[[package]]
 name = "samplerate"
 version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -943,6 +959,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.58",
+]
+
+[[package]]
+name = "serde_json"
+version = "1.0.115"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "12dc5c46daa8e9fdf4f5e71b6cf9a53f2487da0e86e55808e2d35539666497dd"
+dependencies = [
+ "itoa",
+ "ryu",
+ "serde",
 ]
 
 [[package]]
@@ -1269,6 +1296,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a183cf7feeba97b4dd1c0d46788634f6221d87fa961b305bed08c851829efcc0"
 dependencies = [
  "getrandom",
+ "serde",
 ]
 
 [[package]]

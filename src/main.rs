@@ -2,17 +2,11 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-use std::{
-    cell::{Cell, RefCell},
-    collections::HashMap,
-    rc::Rc,
-    sync::mpsc::{self, Sender},
-    thread::JoinHandle,
-};
+use std::{cell::Cell, path::Path, rc::Rc};
 
 use anyhow::anyhow;
 use gtk::{
-    gio::{ApplicationFlags, ListStore},
+    gio::ApplicationFlags,
     glib::{clone, ExitCode},
     prelude::*,
     Application,
@@ -20,7 +14,6 @@ use gtk::{
 
 use libasampo::{
     prelude::*,
-    samples::Sample,
     sources::{file_system_source::FilesystemSource, Source, SourceTrait},
 };
 use samples::{setup_samples_page, SampleListEntry};
@@ -30,153 +23,16 @@ use uuid::Uuid;
 use view::AsampoView;
 
 mod ext;
+mod model;
 mod samples;
+mod savefile;
 mod sources;
 mod view;
 
-use ext::*;
+use ext::WithModel;
+use model::{AppFlags, AppModel, AppModelPtr, AppValues};
 
-#[derive(Debug, Clone)]
-struct AppFlags {
-    sources_add_fs_fields_valid: bool,
-}
-
-#[allow(clippy::derivable_impls)]
-impl Default for AppFlags {
-    fn default() -> Self {
-        AppFlags {
-            sources_add_fs_fields_valid: false,
-        }
-    }
-}
-
-#[derive(Default, Debug, Clone)]
-struct AppValues {
-    sources_add_fs_name_entry: String,
-    sources_add_fs_path_entry: String,
-    sources_add_fs_extensions_entry: String,
-    samples_list_filter: String,
-}
-
-#[derive(Clone, Debug)]
-struct AppModel {
-    flags: AppFlags,
-    values: AppValues,
-    audiothread_tx: Sender<audiothread::Message>,
-    _audiothread_handle: Rc<JoinHandle<()>>,
-    sources: HashMap<Uuid, Source>,
-    sources_order: Vec<Uuid>,
-    samples: Rc<RefCell<Vec<Sample>>>,
-    samples_listview_model: ListStore,
-}
-
-type AppModelPtr = Rc<Cell<Option<AppModel>>>;
-
-impl AppModel {
-    fn new() -> Self {
-        let (tx, rx) = mpsc::channel();
-
-        AppModel {
-            flags: AppFlags::default(),
-            values: AppValues::default(),
-            audiothread_tx: tx,
-            _audiothread_handle: Rc::new(audiothread::spawn(rx, Some(audiothread::Opts::default().with_bufsize_n_stereo_samples(1024)))),
-            sources: HashMap::new(),
-            sources_order: Vec::new(),
-            samples: Rc::new(RefCell::new(Vec::new())),
-            samples_listview_model: ListStore::new::<samples::SampleListEntry>(),
-        }
-    }
-
-    fn add_source(self, source: Source) -> Self {
-        let mut new_sources_order = self.sources_order.clone();
-        new_sources_order.push(*source.uuid());
-
-        let mut new_sources = self.sources.clone();
-        new_sources.insert(*source.uuid(), source);
-
-        AppModel {
-            sources_order: new_sources_order,
-            sources: new_sources,
-            ..self
-        }
-    }
-
-    fn enable_source(self, uuid: Uuid) -> Result<Self, anyhow::Error> {
-        self.samples.borrow_mut().extend(
-            self.sources
-                .get(&uuid)
-                .ok_or_else(|| anyhow!("Failed to enable source: uuid not found!"))?
-                .list()?,
-        );
-
-        Ok(AppModel {
-            sources: self.sources.cloned_update_with(
-                |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
-                    s.get_mut(&uuid)
-                        .ok_or_else(|| anyhow!("Failed to enable source: uuid not found!"))?
-                        .enable();
-                    Ok(s)
-                },
-            )?,
-            ..self
-        })
-    }
-
-    fn disable_source(self, uuid: Uuid) -> Result<Self, anyhow::Error> {
-        self.samples.borrow_mut().retain(|s| s.source_uuid() != Some(&uuid));
-
-        Ok(AppModel {
-            sources: self.sources.cloned_update_with(
-                |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
-                    s.get_mut(&uuid)
-                        .ok_or_else(|| anyhow!("Failed to disable source: uuid not found!"))?
-                        .disable();
-                    Ok(s)
-                },
-            )?,
-            ..self
-        })
-    }
-
-    fn populate_samples_list(self) -> Self {
-        let filter = &self.values.samples_list_filter;
-        self.samples_listview_model.remove_all();
-
-        if filter.is_empty() {
-            let samples = self
-                .samples
-                .borrow()
-                .iter()
-                .map(|s| SampleListEntry::new(s.clone()))
-                .collect::<Vec<_>>();
-
-            self.samples_listview_model
-                .extend_from_slice(samples.as_slice());
-        } else {
-            let fragments = filter.split(' ').map(|s| s.to_string()).collect::<Vec<_>>();
-
-            let mut samples = self.samples.borrow().clone();
-            samples.retain(|x| fragments.iter().all(|frag| x.uri().contains(frag)));
-
-            self.samples_listview_model.extend_from_slice(
-                samples
-                    .iter()
-                    .map(|s| SampleListEntry::new(s.clone()))
-                    .collect::<Vec<_>>()
-                    .as_slice(),
-            );
-        }
-
-        log::log!(
-            log::Level::Debug,
-            "showing {} samples",
-            self.samples_listview_model.n_items()
-        );
-
-        self
-    }
-}
+use crate::savefile::Savefile;
 
 #[derive(Debug)]
 enum AppMessage {
@@ -269,7 +125,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             let uuid = *new_source.uuid();
             let model = model.add_source(new_source).enable_source(uuid).unwrap();
 
-            Ok(AppModel {
+            let result = AppModel {
                 #[allow(clippy::needless_update)]
                 flags: AppFlags {
                     sources_add_fs_fields_valid: false,
@@ -285,7 +141,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
                 ..model
             }
-            .populate_samples_list())
+            .populate_samples_listmodel();
+
+            // Savefile::save(&result, Path::new("/tmp/asampo.json"))?;
+
+            Ok(result)
         }
 
         AppMessage::SampleClicked(index) => {
@@ -314,11 +174,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ..model.values
             },
             ..model
-        }.populate_samples_list()),
+        }
+        .populate_samples_listmodel()),
 
-        AppMessage::SourceEnabled(uuid) => Ok(model.enable_source(uuid)?.populate_samples_list()),
+        AppMessage::SourceEnabled(uuid) => {
+            Ok(model.enable_source(uuid)?.populate_samples_listmodel())
+        }
 
-        AppMessage::SourceDisabled(uuid) => Ok(model.disable_source(uuid)?.populate_samples_list()),
+        AppMessage::SourceDisabled(uuid) => {
+            Ok(model.disable_source(uuid)?.populate_samples_listmodel())
+        }
     }
 }
 
@@ -366,10 +231,16 @@ fn main() -> ExitCode {
         let view = AsampoView::new(app);
         view.present();
 
-        let model = Rc::new(Cell::new(Some(AppModel::new())));
+        let model = AppModel::new();
+        // let model = Savefile::load(&Path::new("/tmp/asampo.json")).unwrap();
+        let model_ptr = Rc::new(Cell::new(Some(model.clone())));
 
-        setup_sources_page(model.clone(), &view);
-        setup_samples_page(model.clone(), &view);
+        setup_sources_page(model_ptr.clone(), &view);
+        setup_samples_page(model_ptr.clone(), &view);
+
+        update_sources_list(model_ptr.clone(), model.clone(), &view);
+        model.load_enabled_sources().unwrap();
+        model.populate_samples_listmodel();
     });
 
     app.run()
