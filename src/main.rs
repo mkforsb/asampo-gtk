@@ -2,14 +2,14 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-use std::{cell::Cell, path::Path, rc::Rc};
+use std::{cell::Cell, rc::Rc, sync::mpsc};
 
 use anyhow::anyhow;
 use gtk::{
-    gio::ApplicationFlags,
+    gio::{ActionEntry, ApplicationFlags},
     glib::{clone, ExitCode},
     prelude::*,
-    Application,
+    Application, DialogError,
 };
 
 use libasampo::{
@@ -44,6 +44,8 @@ enum AppMessage {
     SamplesFilterChanged(String),
     SourceEnabled(Uuid),
     SourceDisabled(Uuid),
+    LoadFromSavefile(String),
+    SaveToSavefile(String),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -125,7 +127,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             let uuid = *new_source.uuid();
             let model = model.add_source(new_source).enable_source(uuid).unwrap();
 
-            let result = AppModel {
+            Ok(AppModel {
                 #[allow(clippy::needless_update)]
                 flags: AppFlags {
                     sources_add_fs_fields_valid: false,
@@ -141,11 +143,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
                 ..model
             }
-            .populate_samples_listmodel();
-
-            // Savefile::save(&result, Path::new("/tmp/asampo.json"))?;
-
-            Ok(result)
+            .map_ref(AppModel::populate_samples_listmodel))
         }
 
         AppMessage::SampleClicked(index) => {
@@ -156,11 +154,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 .map(|x| &x.value)
             {
                 Some(sample) => {
-                    model
-                        .audiothread_tx
-                        .send(audiothread::Message::PlaySymphoniaSource(
+                    model.audiothread_tx.as_ref().unwrap().send(
+                        audiothread::Message::PlaySymphoniaSource(
                             audiothread::SymphoniaSource::from_file(sample.borrow().uri())?,
-                        ))?;
+                        ),
+                    )?;
 
                     Ok(model)
                 }
@@ -175,14 +173,44 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             },
             ..model
         }
-        .populate_samples_listmodel()),
+        .map_ref(AppModel::populate_samples_listmodel)),
 
-        AppMessage::SourceEnabled(uuid) => {
-            Ok(model.enable_source(uuid)?.populate_samples_listmodel())
+        AppMessage::SourceEnabled(uuid) => Ok(model
+            .enable_source(uuid)?
+            .map_ref(AppModel::populate_samples_listmodel)),
+
+        AppMessage::SourceDisabled(uuid) => Ok(model
+            .disable_source(uuid)?
+            .map_ref(AppModel::populate_samples_listmodel)),
+
+        AppMessage::LoadFromSavefile(filename) => {
+            log::log!(log::Level::Info, "Loading from {filename}");
+
+            match Savefile::load(&filename) {
+                Ok(mut loaded_app_model) => {
+                    loaded_app_model.audiothread_tx = model.audiothread_tx;
+                    loaded_app_model._audiothread_handle = model._audiothread_handle;
+
+                    loaded_app_model.load_enabled_sources()?;
+                    loaded_app_model.populate_samples_listmodel();
+
+                    Ok(loaded_app_model)
+                }
+                Err(e) => Err(e),
+            }
         }
 
-        AppMessage::SourceDisabled(uuid) => {
-            Ok(model.disable_source(uuid)?.populate_samples_listmodel())
+        AppMessage::SaveToSavefile(filename) => {
+            log::log!(log::Level::Info, "Saving to {filename}");
+
+            match Savefile::save(&model, &filename) {
+                Ok(_) => Ok(AppModel {
+                    savefile: Some(filename),
+                    ..model
+                }),
+
+                Err(e) => Err(e),
+            }
         }
     }
 }
@@ -207,7 +235,14 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     }
 
     if old.sources != new.sources {
-        update_sources_list(model_ptr, new, view);
+        update_sources_list(model_ptr, new.clone(), view);
+    }
+
+    if old.samples_listview_model != new.samples_listview_model {
+        view.samples_listview
+            .set_model(Some(&gtk::SingleSelection::new(Some(
+                new.samples_listview_model.clone(),
+            ))));
     }
 }
 
@@ -228,19 +263,84 @@ fn main() -> ExitCode {
     }));
 
     app.connect_activate(|app| {
-        let view = AsampoView::new(app);
-        view.present();
+        let (tx, rx) = mpsc::channel();
+        let audiothread_handle = Rc::new(audiothread::spawn(
+            rx,
+            Some(
+                audiothread::Opts::default()
+                    .with_name("Asampo")
+                    .with_bufsize_n_stereo_samples(1024),
+            ),
+        ));
 
-        let model = AppModel::new();
-        // let model = Savefile::load(&Path::new("/tmp/asampo.json")).unwrap();
+        let view = AsampoView::new(app);
+
+        let model = AppModel::new(None, Some(tx.clone()), Some(audiothread_handle.clone()));
         let model_ptr = Rc::new(Cell::new(Some(model.clone())));
 
         setup_sources_page(model_ptr.clone(), &view);
         setup_samples_page(model_ptr.clone(), &view);
 
-        update_sources_list(model_ptr.clone(), model.clone(), &view);
-        model.load_enabled_sources().unwrap();
-        model.populate_samples_listmodel();
+        let action_open_savefile = ActionEntry::builder("open_savefile")
+            .activate(
+                clone!(@strong model_ptr, @strong view => move |_app: &Application, _, _| {
+                    let filters = gtk::gio::ListStore::new::<gtk::FileFilter>();
+                    let filter_json = gtk::FileFilter::new();
+
+                    filter_json.add_suffix("json");
+                    filters.append(&filter_json);
+
+                    let dialog = gtk::FileDialog::builder().modal(true).filters(&filters).build();
+
+                    dialog.open(Some(&view), None::<gtk::gio::Cancellable>.as_ref(), clone!(@strong model_ptr, @strong view => move |result| {
+                        match result {
+                            Ok(gfile) => update(model_ptr.clone(), &view, AppMessage::LoadFromSavefile(gfile.path().unwrap().into_os_string().into_string().unwrap())),
+
+                            Err(e) => match e.kind::<DialogError>() {
+                                Some(DialogError::Dismissed) | Some(DialogError::Cancelled) => (),
+                                _ => log::log!(log::Level::Error, "{e}"),
+                            }
+                        }
+                    }));
+                }),
+            )
+            .build();
+
+        let action_save = ActionEntry::builder("save")
+            .activate(
+                clone!(@strong model_ptr, @strong view  => move |_app: &Application, _, _| {
+                    let filters = gtk::gio::ListStore::new::<gtk::FileFilter>();
+                    let filter_json = gtk::FileFilter::new();
+
+                    filter_json.add_suffix("json");
+                    filters.append(&filter_json);
+
+                    let model = model_ptr.take().unwrap();
+                    let initial_name = model.savefile.clone();
+                    model_ptr.set(Some(model));
+
+                    let mut dialog = gtk::FileDialog::builder().modal(true).filters(&filters);
+
+                    if let Some(filename) = initial_name {
+                        dialog = dialog.initial_name(filename);
+                    }
+
+                    dialog.build().save(Some(&view), None::<gtk::gio::Cancellable>.as_ref(), clone!(@strong model_ptr, @strong view => move |result| {
+                        match result {
+                            Ok(gfile) => update(model_ptr.clone(), &view, AppMessage::SaveToSavefile(gfile.path().unwrap().into_os_string().into_string().unwrap())),
+                            Err(e) => match e.kind::<DialogError>() {
+                                Some(DialogError::Dismissed) | Some(DialogError::Cancelled) => (),
+                                _ => log::log!(log::Level::Error, "{e}"),
+                            }
+                        }
+                    }))
+                }),
+            )
+            .build();
+
+        app.add_action_entries([action_open_savefile, action_save]);
+
+        view.present();
     });
 
     app.run()

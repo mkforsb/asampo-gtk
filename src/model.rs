@@ -42,10 +42,11 @@ pub struct AppValues {
 
 #[derive(Clone, Debug)]
 pub struct AppModel {
+    pub savefile: Option<String>,
     pub flags: AppFlags,
     pub values: AppValues,
-    pub audiothread_tx: Sender<audiothread::Message>,
-    pub _audiothread_handle: Rc<JoinHandle<()>>,
+    pub audiothread_tx: Option<Sender<audiothread::Message>>,
+    pub _audiothread_handle: Option<Rc<JoinHandle<()>>>,
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
     pub samples: Rc<RefCell<Vec<Sample>>>,
@@ -55,17 +56,17 @@ pub struct AppModel {
 pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
 
 impl AppModel {
-    pub fn new() -> Self {
-        let (tx, rx) = mpsc::channel();
-
+    pub fn new(
+        savefile: Option<String>,
+        tx: Option<mpsc::Sender<audiothread::Message>>,
+        handle: Option<Rc<JoinHandle<()>>>,
+    ) -> Self {
         AppModel {
+            savefile,
             flags: AppFlags::default(),
             values: AppValues::default(),
             audiothread_tx: tx,
-            _audiothread_handle: Rc::new(audiothread::spawn(
-                rx,
-                Some(audiothread::Opts::default().with_bufsize_n_stereo_samples(1024)),
-            )),
+            _audiothread_handle: handle,
             sources: HashMap::new(),
             sources_order: Vec::new(),
             samples: Rc::new(RefCell::new(Vec::new())),
@@ -144,7 +145,16 @@ impl AppModel {
         })
     }
 
-    pub fn populate_samples_listmodel(self) -> Self {
+    // pub fn map<F: FnOnce(Self) -> Self>(self, f: F) -> Self {
+    //     f(self)
+    // }
+
+    pub fn map_ref<F: FnOnce(&Self)>(self, f: F) -> Self {
+        f(&self);
+        self
+    }
+
+    pub fn populate_samples_listmodel(&self) {
         let filter = &self.values.samples_list_filter;
         self.samples_listview_model.remove_all();
 
@@ -178,7 +188,5 @@ impl AppModel {
             "showing {} samples",
             self.samples_listview_model.n_items()
         );
-
-        self
     }
 }

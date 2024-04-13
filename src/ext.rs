@@ -9,14 +9,14 @@ use uuid::Uuid;
 
 pub trait WithModel<T, F>
 where
-    F: Fn(T) -> T,
+    F: FnOnce(T) -> T,
 {
     fn with_model(&self, f: F);
 }
 
 impl<T, F> WithModel<T, F> for Cell<Option<T>>
 where
-    F: Fn(T) -> T,
+    F: FnOnce(T) -> T,
 {
     fn with_model(&self, f: F) {
         let inner = self.take().unwrap();

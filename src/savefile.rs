@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-use std::{io::Write, path::Path};
+use std::io::Write;
 
 use libasampo::{prelude::*, serialize::IntoDomain};
 use serde::{Deserialize, Serialize};
@@ -16,7 +16,7 @@ pub struct SavefileV1 {
 
 impl SavefileV1 {
     pub fn into_appmodel(self) -> Result<AppModel, anyhow::Error> {
-        let mut model = AppModel::new();
+        let mut model = AppModel::new(None, None, None);
 
         for src in self.sources {
             let source = src.into_domain();
@@ -45,7 +45,7 @@ pub enum Savefile {
 }
 
 impl Savefile {
-    pub fn save(model: &AppModel, filename: &Path) -> Result<(), anyhow::Error> {
+    pub fn save(model: &AppModel, filename: &str) -> Result<(), anyhow::Error> {
         let json = serde_json::to_string(&Savefile::V1(SavefileV1::from_appmodel(model)))?;
 
         {
@@ -61,9 +61,12 @@ impl Savefile {
         Ok(())
     }
 
-    pub fn load(filename: &Path) -> Result<AppModel, anyhow::Error> {
+    pub fn load(filename: &str) -> Result<AppModel, anyhow::Error> {
         match serde_json::from_str::<Savefile>(&String::from_utf8(std::fs::read(filename)?)?)? {
-            Savefile::V1(sav) => Ok(sav.into_appmodel()?),
+            Savefile::V1(sav) => Ok(AppModel {
+                savefile: Some(filename.to_string()),
+                ..sav.into_appmodel()?
+            }),
         }
     }
 }
