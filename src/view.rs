@@ -8,6 +8,9 @@ use gtk::subclass::prelude::*;
 #[template(resource = "/asampo.ui")]
 pub struct AsampoViewState {
     #[template_child]
+    pub main_menu_button: gtk::TemplateChild<gtk::MenuButton>,
+
+    #[template_child]
     pub sources_add_frame: gtk::TemplateChild<gtk::Frame>,
 
     #[template_child]

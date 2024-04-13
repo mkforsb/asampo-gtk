@@ -1,439 +1,432 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
+  <menu id="main-menu">
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">_About</attribute>
+        <attribute name="action">app.about</attribute>
+      </item>
+      <item>
+        <attribute name="label" translatable="yes">_Quit</attribute>
+        <attribute name="action">window.close</attribute>
+      </item>
+    </section>
+  </menu>
   <template class="AsampoView" parent="GtkApplicationWindow">
     <property name="title">Asampo 0.0.0</property>
     <property name="default_width">1200</property>
     <property name="default_height">800</property>
-    <child>
-      <object class="GtkNotebook">
-        <child>
-          <object class="GtkLabel">
-            <property name="label">This is the settings page</property>
-          </object>
-        </child>
-        <child type="tab">
-          <object class="GtkLabel">
-            <property name="label">Settings</property>
-          </object>
-        </child>
-        <child>
+    <child type="titlebar">
+      <object class="GtkHeaderBar">
+        <property name="title-widget">
           <object class="GtkBox">
             <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
+            <!-- <child> -->
+            <!--   <object class="GtkLabel"> -->
+            <!--     <property name="label">Asampo</property> -->
+            <!--     <style> -->
+            <!--       <class name="title" /> -->
+            <!--     </style> -->
+            <!--   </object> -->
+            <!-- </child> -->
             <child>
-              <object class="GtkFrame" id="sources_add_frame">
-                <property name="label">Add Source</property>
-                <property name="margin_top">10</property>
-                <property name="margin_start">10</property>
-                <property name="margin_end">10</property>
-                <child>
-                  <object class="GtkNotebook">
-                    <child>
-                      <object class="GtkGrid">
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="label">Name:</property>
-                            <property name="xalign">0.0</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">0</property>
-                              <property name="column">0</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkEntry" id="sources_add_fs_name_entry">
-                            <property name="placeholder_text">Drums</property>
-                            <property name="width_request">250</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">0</property>
-                              <property name="column">1</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="label">Path:</property>
-                            <property name="xalign">0.0</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">1</property>
-                              <property name="column">0</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkEntry" id="sources_add_fs_path_entry">
-                            <property name="placeholder_text">/home/user/samples/drums</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">1</property>
-                              <property name="column">1</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="sources_add_fs_path_browse_button">
-                            <property name="label">Browse</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">1</property>
-                              <property name="column">2</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="label">File extensions:</property>
-                            <property name="xalign">0.0</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">2</property>
-                              <property name="column">0</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkEntry" id="sources_add_fs_extensions_entry">
-                            <property name="placeholder_text">wav,flac,ogg</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">2</property>
-                              <property name="column">1</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="sources_add_fs_add_button">
-                            <property name="sensitive">false</property>
-                            <property name="halign">GTK_ALIGN_END</property>
-                            <property name="hexpand">false</property>
-                            <property name="label">Add</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <property name="margin_bottom">10</property>
-                            <layout>
-                              <property name="row">3</property>
-                              <property name="column">1</property>
-                            </layout>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child type="tab">
-                      <object class="GtkLabel">
-                        <property name="label">File system source</property>
-                      </object>
-                    </child>
+              <object class="GtkStackSwitcher">
+                <property name="stack">stack</property>
+              </object>
+            </child>
+          </object>
+        </property>
+        <child type="end">
+          <object class="GtkMenuButton" id="main_menu_button">
+            <property name="icon-name">open-menu-symbolic</property>
+            <property name="menu-model">main-menu</property>
+            <property name="valign">GTK_ALIGN_CENTER</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
+        <child>
+          <object class="GtkStack" id="stack">
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">settings</property>
+                <property name="title">Settings</property>
+                <property name="child">
+                  <object class="GtkLabel">
+                    <property name="label">This is the settings page</property>
                   </object>
-                </child>
+                </property>
               </object>
             </child>
             <child>
-              <object class="GtkFrame" id="sources_edit_frame">
-                <property name="visible">false</property>
-                <property name="label">Edit Source</property>
-                <property name="margin_top">10</property>
-                <property name="margin_start">10</property>
-                <property name="margin_end">10</property>
-                <child>
-                  <object class="GtkNotebook">
+              <object class="GtkStackPage">
+                <property name="name">sources</property>
+                <property name="title">Sources</property>
+                <property name="child">
+                  <object class="GtkBox">
+                    <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
                     <child>
-                      <object class="GtkGrid">
+                      <object class="GtkFrame" id="sources_add_frame">
+                        <property name="label">Add Source</property>
+                        <property name="margin_top">10</property>
+                        <property name="margin_start">10</property>
+                        <property name="margin_end">10</property>
                         <child>
-                          <object class="GtkLabel">
-                            <property name="label">Name:</property>
-                            <property name="xalign">0.0</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">0</property>
-                              <property name="column">0</property>
-                            </layout>
+                          <object class="GtkNotebook">
+                            <child>
+                              <object class="GtkGrid">
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="label">Name:</property>
+                                    <property name="xalign">0.0</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">0</property>
+                                      <property name="column">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="sources_add_fs_name_entry">
+                                    <property name="placeholder_text">Drums</property>
+                                    <property name="width_request">250</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">0</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="label">Path:</property>
+                                    <property name="xalign">0.0</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">1</property>
+                                      <property name="column">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="sources_add_fs_path_entry">
+                                    <property name="placeholder_text">/home/user/samples/drums</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">1</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="sources_add_fs_path_browse_button">
+                                    <property name="label">Browse</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">1</property>
+                                      <property name="column">2</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="label">File extensions:</property>
+                                    <property name="xalign">0.0</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">2</property>
+                                      <property name="column">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="sources_add_fs_extensions_entry">
+                                    <property name="placeholder_text">wav,flac,ogg</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">2</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="sources_add_fs_add_button">
+                                    <property name="sensitive">false</property>
+                                    <property name="halign">GTK_ALIGN_END</property>
+                                    <property name="hexpand">false</property>
+                                    <property name="label">Add</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <property name="margin_bottom">10</property>
+                                    <layout>
+                                      <property name="row">3</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child type="tab">
+                              <object class="GtkLabel">
+                                <property name="label">File system source</property>
+                              </object>
+                            </child>
                           </object>
                         </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkFrame" id="sources_edit_frame">
+                        <property name="visible">false</property>
+                        <property name="label">Edit Source</property>
+                        <property name="margin_top">10</property>
+                        <property name="margin_start">10</property>
+                        <property name="margin_end">10</property>
                         <child>
-                          <object class="GtkEntry" id="sources_edit_fs_name_entry">
-                            <property name="placeholder_text">Drums</property>
-                            <property name="width_request">250</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">0</property>
-                              <property name="column">1</property>
-                            </layout>
+                          <object class="GtkNotebook">
+                            <child>
+                              <object class="GtkGrid">
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="label">Name:</property>
+                                    <property name="xalign">0.0</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">0</property>
+                                      <property name="column">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="sources_edit_fs_name_entry">
+                                    <property name="placeholder_text">Drums</property>
+                                    <property name="width_request">250</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">0</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="label">Path:</property>
+                                    <property name="xalign">0.0</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">1</property>
+                                      <property name="column">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="sources_edit_fs_path_entry">
+                                    <property name="placeholder_text">/home/user/samples/drums</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">1</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="sources_edit_fs_path_browse_button">
+                                    <property name="label">Browse</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">1</property>
+                                      <property name="column">2</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="label">File extensions:</property>
+                                    <property name="xalign">0.0</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">2</property>
+                                      <property name="column">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry" id="sources_edit_fs_extensions_entry">
+                                    <property name="placeholder_text">wav,flac,ogg</property>
+                                    <property name="margin_top">10</property>
+                                    <property name="margin_start">10</property>
+                                    <property name="margin_end">10</property>
+                                    <layout>
+                                      <property name="row">2</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                                    <property name="halign">GTK_ALIGN_END</property>
+                                    <child>
+                                      <object class="GtkButton" id="sources_edit_fs_save_button">
+                                        <property name="hexpand">false</property>
+                                        <property name="label">Save</property>
+                                        <property name="margin_top">10</property>
+                                        <property name="margin_start">10</property>
+                                        <property name="margin_bottom">10</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="sources_edit_fs_cancel_button">
+                                        <property name="hexpand">false</property>
+                                        <property name="sensitive">false</property>
+                                        <property name="label">Cancel</property>
+                                        <property name="margin_top">10</property>
+                                        <property name="margin_start">10</property>
+                                        <property name="margin_end">10</property>
+                                        <property name="margin_bottom">10</property>
+                                      </object>
+                                    </child>
+                                    <layout>
+                                      <property name="row">3</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child type="tab">
+                              <object class="GtkLabel">
+                                <property name="label">File system source</property>
+                              </object>
+                            </child>
                           </object>
                         </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkFrame">
+                        <property name="margin_top">10</property>
+                        <property name="margin_start">10</property>
+                        <property name="margin_end">10</property>
+                        <property name="margin_bottom">10</property>
                         <child>
-                          <object class="GtkLabel">
-                            <property name="label">Path:</property>
-                            <property name="xalign">0.0</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">1</property>
-                              <property name="column">0</property>
-                            </layout>
+                          <object class="GtkScrolledWindow">
+                            <child>
+                              <object class="GtkListBox" id="sources_list">
+                                <property name="vexpand">true</property>
+                                <property name="activate-on-single-click">true</property>
+                                <property name="show-separators">true</property>
+                              </object>
+                            </child>
                           </object>
                         </child>
-                        <child>
-                          <object class="GtkEntry" id="sources_edit_fs_path_entry">
-                            <property name="placeholder_text">/home/user/samples/drums</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">1</property>
-                              <property name="column">1</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkButton" id="sources_edit_fs_path_browse_button">
-                            <property name="label">Browse</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">1</property>
-                              <property name="column">2</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkLabel">
-                            <property name="label">File extensions:</property>
-                            <property name="xalign">0.0</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">2</property>
-                              <property name="column">0</property>
-                            </layout>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkEntry" id="sources_edit_fs_extensions_entry">
-                            <property name="placeholder_text">wav,flac,ogg</property>
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <layout>
-                              <property name="row">2</property>
-                              <property name="column">1</property>
-                            </layout>
-                          </object>
-                        </child>
+                      </object>
+                    </child>
+                  </object>
+                </property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkStackPage">
+                <property name="name">samples</property>
+                <property name="title">Samples</property>
+                <property name="child">
+                  <object class="GtkBox">
+                    <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
+                    <child>
+                      <object class="GtkFrame">
+                        <property name="margin_top">10</property>
+                        <property name="margin_start">10</property>
+                        <property name="margin_end">10</property>
+                        <property name="margin_bottom">10</property>
                         <child>
                           <object class="GtkBox">
                             <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                            <property name="halign">GTK_ALIGN_END</property>
                             <child>
-                              <object class="GtkButton" id="sources_edit_fs_save_button">
-                                <property name="hexpand">false</property>
-                                <property name="label">Save</property>
+                              <object class="GtkLabel">
+                                <property name="label">Filter:</property>
                                 <property name="margin_top">10</property>
                                 <property name="margin_start">10</property>
                                 <property name="margin_bottom">10</property>
                               </object>
                             </child>
                             <child>
-                              <object class="GtkButton" id="sources_edit_fs_cancel_button">
-                                <property name="hexpand">false</property>
-                                <property name="sensitive">false</property>
-                                <property name="label">Cancel</property>
+                              <object class="GtkEntry" id="samples_list_filter_entry">
+                                <property name="hexpand">true</property>
                                 <property name="margin_top">10</property>
                                 <property name="margin_start">10</property>
                                 <property name="margin_end">10</property>
                                 <property name="margin_bottom">10</property>
                               </object>
                             </child>
-                            <layout>
-                              <property name="row">3</property>
-                              <property name="column">1</property>
-                            </layout>
                           </object>
                         </child>
                       </object>
                     </child>
-                    <child type="tab">
-                      <object class="GtkLabel">
-                        <property name="label">File system source</property>
+                    <child>
+                      <object class="GtkScrolledWindow">
+                        <child>
+                          <object class="GtkListView" id="samples_listview">
+                              <property name="vexpand">true</property>
+                              <property name="single_click_activate">true</property>
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>
-                </child>
+                </property>
               </object>
             </child>
             <child>
-              <object class="GtkFrame">
-                <property name="margin_top">10</property>
-                <property name="margin_start">10</property>
-                <property name="margin_end">10</property>
-                <property name="margin_bottom">10</property>
-                <child>
-                  <object class="GtkScrolledWindow">
-                    <child>
-                      <object class="GtkListBox" id="sources_list">
-                        <property name="vexpand">true</property>
-                        <property name="activate-on-single-click">true</property>
-                        <property name="show-separators">true</property>
-                        <!-- <child> -->
-                          <!-- <object class="GtkListBoxRow" id="row1"> -->
-                          <!--   <child> -->
-                          <!--     <object class="GtkBox"> -->
-                          <!--       <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property> -->
-                          <!--       <child> -->
-                          <!--         <object class="GtkCheckButton"> -->
-                          <!--           <property name="margin-top">10</property> -->
-                          <!--           <property name="margin-start">10</property> -->
-                          <!--           <property name="margin-bottom">10</property> -->
-                          <!--           <property name="tooltip-text">Enable?</property> -->
-                          <!--         </object> -->
-                          <!--       </child> -->
-                          <!--       <child> -->
-                          <!--         <object class="GtkLabel"> -->
-                          <!--           <property name="label">List Entry 1</property> -->
-                          <!--           <property name="halign">GTK_ALIGN_FILL</property> -->
-                          <!--           <property name="hexpand">true</property> -->
-                          <!--           <property name="xalign">0.0</property> -->
-                          <!--           <property name="margin_start">10</property> -->
-                          <!--           <property name="margin_top">10</property> -->
-                          <!--           <property name="margin_bottom">10</property> -->
-                          <!--         </object> -->
-                          <!--       </child> -->
-                          <!--       <child> -->
-                          <!--         <object class="GtkButton"> -->
-                          <!--           <property name="label">Delete</property> -->
-                          <!--         </object> -->
-                          <!--       </child> -->
-                          <!--     </object> -->
-                          <!--   </child> -->
-                          <!-- </object> -->
-                        <!-- </child> -->
-                        <!-- <child> -->
-                        <!--   <object class="GtkListBoxRow" id="row2"> -->
-                        <!--     <child> -->
-                        <!--       <object class="GtkBox"> -->
-                        <!--         <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property> -->
-                        <!--         <child> -->
-                        <!--           <object class="GtkCheckButton"> -->
-                        <!--             <property name="margin-top">10</property> -->
-                        <!--             <property name="margin-start">10</property> -->
-                        <!--             <property name="margin-bottom">10</property> -->
-                        <!--           </object> -->
-                        <!--         </child> -->
-                        <!--         <child> -->
-                        <!--           <object class="GtkLabel"> -->
-                        <!--             <property name="label">List Entry 2</property> -->
-                        <!--             <property name="xalign">0.0</property> -->
-                        <!--             <property name="margin_start">10</property> -->
-                        <!--             <property name="margin_top">10</property> -->
-                        <!--             <property name="margin_bottom">10</property> -->
-                        <!--           </object> -->
-                        <!--         </child> -->
-                        <!--       </object> -->
-                        <!--     </child> -->
-                        <!--   </object> -->
-                        <!-- </child> -->
-                      </object>
-                    </child>
+              <object class="GtkStackPage">
+                <property name="name">sets</property>
+                <property name="title">Sets</property>
+                <property name="child">
+                  <object class="GtkLabel">
+                    <property name="label">This is the sets page</property>
                   </object>
-                </child>
-              </object>
-            </child>
-          </object>
-        </child>
-        <child type="tab">
-          <object class="GtkLabel">
-            <property name="label">Sources</property>
-          </object>
-        </child>
-        <child>
-          <object class="GtkBox">
-            <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
-            <child>
-              <object class="GtkFrame">
-                <property name="margin_top">10</property>
-                <property name="margin_start">10</property>
-                <property name="margin_end">10</property>
-                <property name="margin_bottom">10</property>
-                <child>
-                  <object class="GtkBox">
-                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label">Filter:</property>
-                        <property name="margin_top">10</property>
-                        <property name="margin_start">10</property>
-                        <property name="margin_bottom">10</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="samples_list_filter_entry">
-                        <property name="hexpand">true</property>
-                        <property name="margin_top">10</property>
-                        <property name="margin_start">10</property>
-                        <property name="margin_end">10</property>
-                        <property name="margin_bottom">10</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
+                </property>
               </object>
             </child>
             <child>
-              <object class="GtkScrolledWindow">
-                <child>
-                  <object class="GtkListView" id="samples_listview">
-                      <property name="vexpand">true</property>
-                      <property name="single_click_activate">true</property>
+              <object class="GtkStackPage">
+                <property name="name">sequences</property>
+                <property name="title">Sequences</property>
+                <property name="child">
+                  <object class="GtkLabel">
+                    <property name="label">This is the sequences page</property>
                   </object>
-                </child>
+                </property>
               </object>
             </child>
-          </object>
-        </child>
-        <child type="tab">
-          <object class="GtkLabel">
-            <property name="label">Samples</property>
-          </object>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="label">This is the sets page</property>
-          </object>
-        </child>
-        <child type="tab">
-          <object class="GtkLabel">
-            <property name="label">Sets</property>
-          </object>
-        </child>
-        <child>
-          <object class="GtkLabel">
-            <property name="label">This is the sequences page</property>
-          </object>
-        </child>
-        <child type="tab">
-          <object class="GtkLabel">
-            <property name="label">Sequences</property>
           </object>
         </child>
       </object>
