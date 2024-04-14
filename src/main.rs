@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
+mod dialogs;
 mod ext;
 mod menus;
 mod model;
@@ -39,6 +40,9 @@ use view::AsampoView;
 enum AppMessage {
     AddFilesystemSourceNameChanged(String),
     AddFilesystemSourcePathChanged(String),
+    AddFilesystemSourcePathBrowseClicked,
+    AddFilesystemSourcePathBrowseSubmitted(String),
+    AddFilesystemSourcePathBrowseError(gtk::glib::Error),
     AddFilesystemSourceExtensionsChanged(String),
     AddFilesystemSourceClicked,
     SampleClicked(u32),
@@ -101,6 +105,34 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ..model
             }))
         }
+
+        AppMessage::AddFilesystemSourcePathBrowseClicked => Ok(AppModel {
+            flags: AppFlags {
+                sources_add_fs_browse: true,
+                ..model.flags
+            },
+            ..model
+        }),
+
+        AppMessage::AddFilesystemSourcePathBrowseSubmitted(text) => Ok(AppModel {
+            flags: AppFlags {
+                sources_add_fs_browse: false,
+                ..model.flags
+            },
+            values: AppValues {
+                sources_add_fs_path_entry: text,
+                ..model.values
+            },
+            ..model
+        }),
+
+        AppMessage::AddFilesystemSourcePathBrowseError(_) => Ok(AppModel {
+            flags: AppFlags {
+                sources_add_fs_browse: false,
+                ..model.flags
+            },
+            ..model
+        }),
 
         AppMessage::AddFilesystemSourceExtensionsChanged(text) => {
             Ok(check_sources_add_fs_valid(AppModel {
@@ -229,6 +261,15 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     maybe_update_entry_text!(old, new, view, sources_add_fs_name_entry);
     maybe_update_entry_text!(old, new, view, sources_add_fs_path_entry);
     maybe_update_entry_text!(old, new, view, sources_add_fs_extensions_entry);
+
+    if new.flags.sources_add_fs_browse {
+        dialogs::choose_folder(
+            model_ptr.clone(),
+            view,
+            AppMessage::AddFilesystemSourcePathBrowseSubmitted,
+            AppMessage::AddFilesystemSourcePathBrowseError,
+        );
+    }
 
     if old.flags.sources_add_fs_fields_valid != new.flags.sources_add_fs_fields_valid {
         view.sources_add_fs_add_button

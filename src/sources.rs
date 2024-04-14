@@ -16,6 +16,12 @@ pub fn setup_sources_page(model_ptr: AppModelPtr, view: &AsampoView) {
         }),
     );
 
+    view.sources_add_fs_path_browse_button.connect_clicked(
+        clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
+            update(model_ptr.clone(), &view, AppMessage::AddFilesystemSourcePathBrowseClicked);
+        }),
+    );
+
     view.sources_add_fs_extensions_entry.connect_changed(
         clone!(@strong model_ptr, @strong view => move |e: &gtk::Entry| {
             update(model_ptr.clone(), &view, AppMessage::AddFilesystemSourceExtensionsChanged(e.text().to_string()));

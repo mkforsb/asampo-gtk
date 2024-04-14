@@ -21,6 +21,7 @@ use crate::samples::SampleListEntry;
 #[derive(Debug, Clone)]
 pub struct AppFlags {
     pub sources_add_fs_fields_valid: bool,
+    pub sources_add_fs_browse: bool,
 }
 
 #[allow(clippy::derivable_impls)]
@@ -28,6 +29,7 @@ impl Default for AppFlags {
     fn default() -> Self {
         AppFlags {
             sources_add_fs_fields_valid: false,
+            sources_add_fs_browse: false,
         }
     }
 }
