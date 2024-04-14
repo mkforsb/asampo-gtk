@@ -11,7 +11,7 @@ mod savefile;
 mod sources;
 mod view;
 
-use std::{cell::Cell, rc::Rc, sync::mpsc};
+use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc};
 
 use anyhow::anyhow;
 use gtk::{
@@ -201,9 +201,20 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 .map(|x| &x.value)
             {
                 Some(sample) => {
+                    let stream = model
+                        .sources
+                        .get(
+                            sample
+                                .borrow()
+                                .source_uuid()
+                                .ok_or(anyhow!("Sample missing source uuid"))?,
+                        )
+                        .ok_or(anyhow!("Failed to get source for sample"))?
+                        .stream(&sample.borrow())?;
+
                     model.audiothread_tx.as_ref().unwrap().send(
                         audiothread::Message::PlaySymphoniaSource(
-                            audiothread::SymphoniaSource::from_file(sample.borrow().uri())?,
+                            audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
                         ),
                     )?;
 
@@ -329,6 +340,7 @@ fn main() -> ExitCode {
             Some(
                 audiothread::Opts::default()
                     .with_name("Asampo")
+                    .with_sr_conv_quality(audiothread::Quality::Fastest)
                     .with_bufsize_n_stereo_samples(1024),
             ),
         ));
