@@ -121,6 +121,19 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ..model.flags
             },
             values: AppValues {
+                sources_add_fs_name_entry: if model.values.sources_add_fs_name_entry.is_empty() {
+                    if let Some(name) = std::path::Path::new(&text)
+                        .file_name()
+                        .and_then(|s| s.to_str())
+                        .and_then(|s| Some(s.to_string()))
+                    {
+                        name
+                    } else {
+                        model.values.sources_add_fs_name_entry
+                    }
+                } else {
+                    model.values.sources_add_fs_name_entry
+                },
                 sources_add_fs_path_entry: text,
                 ..model.values
             },
