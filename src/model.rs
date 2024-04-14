@@ -147,6 +147,30 @@ impl AppModel {
         })
     }
 
+    pub fn remove_source(self, uuid: Uuid) -> Result<Self, anyhow::Error> {
+        let mut new_order = self.sources_order.clone();
+
+        new_order.remove(
+            new_order
+                .iter()
+                .position(|x| *x == uuid)
+                .ok_or(anyhow!("Failed to remove source: uuid not found!"))?,
+        );
+
+        Ok(AppModel {
+            sources_order: new_order,
+            sources: self.sources.cloned_update_with(
+                |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
+                    match s.remove(&uuid) {
+                        Some(_) => Ok(s),
+                        None => Err(anyhow!("Failed to remove source")),
+                    }
+                },
+            )?,
+            ..self.disable_source(uuid)?
+        })
+    }
+
     // pub fn map<F: FnOnce(Self) -> Self>(self, f: F) -> Self {
     //     f(self)
     // }

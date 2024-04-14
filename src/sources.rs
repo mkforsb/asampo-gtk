@@ -113,6 +113,24 @@ pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &Asamp
             .unwrap()
             .set_label(model.sources.get(uuid).unwrap().name().unwrap_or("Unnamed"));
 
+        row.child()
+            .unwrap()
+            .dynamic_cast_ref::<gtk::Box>()
+            .unwrap()
+            .first_child()
+            .unwrap()
+            .next_sibling()
+            .unwrap()
+            .next_sibling()
+            .unwrap()
+            .dynamic_cast_ref::<gtk::Button>()
+            .unwrap()
+            .connect_clicked(
+                clone!(@strong model_ptr, @strong view, @strong uuid => move |_: &gtk::Button| {
+                    update(model_ptr.clone(), &view, AppMessage::SourceDeleteClicked(uuid));
+                }),
+            );
+
         let clicked = GestureClick::new();
 
         clicked.connect_pressed(|e: &GestureClick, _, _, _| {

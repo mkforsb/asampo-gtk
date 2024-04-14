@@ -49,6 +49,7 @@ enum AppMessage {
     SamplesFilterChanged(String),
     SourceEnabled(Uuid),
     SourceDisabled(Uuid),
+    SourceDeleteClicked(Uuid),
     LoadFromSavefile(String),
     SaveToSavefile(String),
 }
@@ -214,6 +215,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SourceDisabled(uuid) => Ok(model
             .disable_source(uuid)?
+            .map_ref(AppModel::populate_samples_listmodel)),
+
+        AppMessage::SourceDeleteClicked(uuid) => Ok(model
+            .remove_source(uuid)?
             .map_ref(AppModel::populate_samples_listmodel)),
 
         AppMessage::LoadFromSavefile(filename) => {
