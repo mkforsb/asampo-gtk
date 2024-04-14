@@ -2,6 +2,14 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
+mod ext;
+mod menus;
+mod model;
+mod samples;
+mod savefile;
+mod sources;
+mod view;
+
 use std::{cell::Cell, rc::Rc, sync::mpsc};
 
 use anyhow::anyhow;
@@ -16,25 +24,16 @@ use libasampo::{
     prelude::*,
     sources::{file_system_source::FilesystemSource, Source, SourceTrait},
 };
+
+use ext::WithModel;
 use menus::build_actions;
+use model::{AppFlags, AppModel, AppModelPtr, AppValues};
 use samples::{setup_samples_page, SampleListEntry};
+use savefile::Savefile;
 use sources::setup_sources_page;
 use sources::update_sources_list;
 use uuid::Uuid;
 use view::AsampoView;
-
-mod ext;
-mod menus;
-mod model;
-mod samples;
-mod savefile;
-mod sources;
-mod view;
-
-use ext::WithModel;
-use model::{AppFlags, AppModel, AppModelPtr, AppValues};
-
-use crate::savefile::Savefile;
 
 #[derive(Debug)]
 enum AppMessage {
