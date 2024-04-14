@@ -104,8 +104,4 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
             update(model_ptr.clone(), &view, AppMessage::SamplesFilterChanged(e.text().to_string()));
         }),
     );
-    // clone!(@strong appstate => move |entry: &gtk::Entry| {
-    //     apply_samples_filter(appstate.clone(), entry.text().as_ref());
-    // }),
-    // );
 }

@@ -27,7 +27,7 @@ where
 pub trait ClonedUpdateWith<T, F>
 where
     Self: Sized,
-    F: Fn(Self) -> T,
+    F: FnOnce(Self) -> T,
 {
     fn cloned_update_with(&self, f: F) -> T;
 }
@@ -35,7 +35,7 @@ where
 impl<T, F> ClonedUpdateWith<T, F> for HashMap<Uuid, Source>
 where
     Self: Clone,
-    F: Fn(Self) -> T,
+    F: FnOnce(Self) -> T,
 {
     fn cloned_update_with(&self, f: F) -> T {
         f(self.clone())
