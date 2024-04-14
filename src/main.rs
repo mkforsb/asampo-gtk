@@ -15,6 +15,7 @@ use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc};
 
 use anyhow::anyhow;
 use gtk::{
+    gdk::Display,
     gio::ApplicationFlags,
     glib::{clone, ExitCode},
     prelude::*,
@@ -328,12 +329,22 @@ fn main() -> ExitCode {
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
+
     app.connect_command_line(clone!(@strong app =>  move |_, _| {
         app.activate();
         0
     }));
 
     app.connect_activate(|app| {
+        let css_provider = gtk::CssProvider::new();
+        css_provider.load_from_resource("/style.css");
+
+        gtk::style_context_add_provider_for_display(
+            &Display::default().expect("There should be an available display"),
+            &css_provider,
+            gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
+        );
+
         let (tx, rx) = mpsc::channel();
         let audiothread_handle = Rc::new(audiothread::spawn(
             rx,

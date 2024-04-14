@@ -2,5 +2,6 @@
 <gresources>
   <gresource prefix="/">
     <file compressed="true" preprocess="xml-stripblanks">asampo.ui</file>
+    <file compressed="true">style.css</file>
   </gresource>
 </gresources>

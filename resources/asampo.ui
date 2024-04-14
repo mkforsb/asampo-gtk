@@ -3,11 +3,11 @@
   <menu id="main-menu">
     <section>
       <item>
-        <attribute name="label" translatable="yes">_Open</attribute>
+        <attribute name="label" translatable="yes">_Open workspace</attribute>
         <attribute name="action">app.open_savefile</attribute>
       </item>
       <item>
-        <attribute name="label" translatable="yes">_Save</attribute>
+        <attribute name="label" translatable="yes">_Save workspace</attribute>
         <attribute name="action">app.save</attribute>
       </item>
       <item>
@@ -64,8 +64,184 @@
                 <property name="name">settings</property>
                 <property name="title">Settings</property>
                 <property name="child">
-                  <object class="GtkLabel">
-                    <property name="label">This is the settings page</property>
+                  <object class="GtkScrolledWindow">
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                            <property name="margin-top">20</property>
+                            <property name="width-request">510</property>
+                            <property name="hexpand">false</property>
+                            <property name="halign">GTK_ALIGN_CENTER</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="label">Audio</property>
+                                <property name="css-classes">settings-group-title</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkFrame">
+                            <property name="css-classes">settings-group</property>
+                            <property name="width-request">500</property>
+                            <property name="hexpand">false</property>
+                            <property name="halign">GTK_ALIGN_CENTER</property>
+                            <child>
+                              <object class="GtkGrid">
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="halign">GTK_ALIGN_START</property>
+                                    <property name="label">Output sample rate:</property>
+                                    <layout>
+                                      <property name="row">0</property>
+                                      <property name="column">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkDropDown">
+                                    <property name="model">
+                                      <object class="GtkStringList">
+                                        <items>
+                                          <item>44100 Hz</item>
+                                          <item>48000 Hz</item>
+                                          <item>96000 Hz</item>
+                                          <item>192000 Hz</item>
+                                        </items>
+                                      </object>
+                                    </property>
+                                    <layout>
+                                      <property name="row">0</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="halign">GTK_ALIGN_START</property>
+                                    <property name="label">Buffer size (samples):</property>
+                                    <layout>
+                                      <property name="row">1</property>
+                                      <property name="column">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkAdjustment" id="settings-bufsize">
+                                    <property name="lower">64</property>
+                                    <property name="upper">8192</property>
+                                    <property name="value">1024</property>
+                                    <property name="step-increment">64</property>
+                                    <property name="page-increment">512</property>
+                                  </object>
+                                  <object class="GtkBox">
+                                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                                    <layout>
+                                      <property name="row">1</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                    <child>
+                                      <object class="GtkSpinButton">
+                                        <property name="visible">True</property>
+                                        <property name="can-focus">True</property>
+                                        <property name="adjustment">settings-bufsize</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="label">~21 ms</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="halign">GTK_ALIGN_START</property>
+                                    <property name="label">Sample rate conversion quality:</property>
+                                    <layout>
+                                      <property name="row">2</property>
+                                      <property name="column">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkDropDown">
+                                    <property name="model">
+                                      <object class="GtkStringList">
+                                        <items>
+                                          <item>Fastest</item>
+                                          <item>Low</item>
+                                          <item>Medium</item>
+                                          <item>High</item>
+                                        </items>
+                                      </object>
+                                    </property>
+                                    <layout>
+                                      <property name="row">2</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                            <property name="margin-top">20</property>
+                            <property name="width-request">510</property>
+                            <property name="hexpand">false</property>
+                            <property name="halign">GTK_ALIGN_CENTER</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="label">Paths</property>
+                                <property name="css-classes">settings-group-title</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkFrame">
+                            <property name="css-classes">settings-group</property>
+                            <property name="width-request">500</property>
+                            <property name="hexpand">false</property>
+                            <property name="halign">GTK_ALIGN_CENTER</property>
+                            <child>
+                              <object class="GtkGrid">
+                                <child>
+                                  <object class="GtkLabel">
+                                    <property name="halign">GTK_ALIGN_START</property>
+                                    <property name="label">Configuration:</property>
+                                    <layout>
+                                      <property name="row">0</property>
+                                      <property name="column">0</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkEntry">
+                                    <property name="hexpand">true</property>
+                                    <property name="buffer">
+                                      <object class="GtkEntryBuffer">
+                                        <property name="text">/home/user/.config/asampo/asampo.conf</property>
+                                      </object>
+                                    </property>
+                                    <layout>
+                                      <property name="row">0</property>
+                                      <property name="column">1</property>
+                                    </layout>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
                   </object>
                 </property>
               </object>

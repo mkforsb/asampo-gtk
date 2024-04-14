@@ -1,0 +1,15 @@
+frame.settings-group {
+    padding: 16px;
+}
+
+label.settings-group-title {
+    font-size: 120%;
+}
+
+frame.settings-group grid > * {
+  margin: 4px;
+}
+
+frame.settings-group grid > * > * {
+  margin: 4px;
+}
