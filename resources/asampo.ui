@@ -26,6 +26,7 @@
     <property name="default_height">800</property>
     <child type="titlebar">
       <object class="GtkHeaderBar">
+        <property name="decoration-layout">:menu,minimize,maximize,close</property>
         <property name="title-widget">
           <object class="GtkBox">
             <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
