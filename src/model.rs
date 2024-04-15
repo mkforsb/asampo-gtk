@@ -39,6 +39,7 @@ pub struct AppValues {
     pub sources_add_fs_path_entry: String,
     pub sources_add_fs_extensions_entry: String,
     pub samples_list_filter: String,
+    pub settings_latency_approx_label: String,
 }
 
 #[derive(Clone, Debug)]
@@ -64,11 +65,19 @@ impl AppModel {
         tx: Option<mpsc::Sender<audiothread::Message>>,
         handle: Option<Rc<JoinHandle<()>>>,
     ) -> Self {
+        let settings_latency_approx_label = match &config {
+            Some(conf) => conf.fmt_latency_approx(),
+            None => "???".to_string(),
+        };
+
         AppModel {
             config,
             savefile,
             flags: AppFlags::default(),
-            values: AppValues::default(),
+            values: AppValues {
+                settings_latency_approx_label,
+                ..AppValues::default()
+            },
             audiothread_tx: tx,
             _audiothread_handle: handle,
             sources: HashMap::new(),

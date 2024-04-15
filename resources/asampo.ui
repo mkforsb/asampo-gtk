@@ -177,7 +177,7 @@
                                       </object>
                                     </child>
                                     <child>
-                                      <object class="GtkLabel" id="config_latency_approx_label">
+                                      <object class="GtkLabel" id="settings_latency_approx_label">
                                         <property name="width-request">100</property>
                                         <property name="label">~21 ms</property>
                                       </object>

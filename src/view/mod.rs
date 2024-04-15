@@ -5,6 +5,7 @@
 pub mod dialogs;
 pub mod menus;
 pub mod samples;
+pub mod settings;
 pub mod sources;
 
 use std::ops::Deref;
@@ -26,7 +27,7 @@ pub struct AsampoViewState {
     pub settings_buffer_size_entry: gtk::TemplateChild<gtk::SpinButton>,
 
     #[template_child]
-    pub config_latency_approx_label: gtk::TemplateChild<gtk::Label>,
+    pub settings_latency_approx_label: gtk::TemplateChild<gtk::Label>,
 
     #[template_child]
     pub settings_sample_rate_conversion_quality_entry: gtk::TemplateChild<gtk::DropDown>,

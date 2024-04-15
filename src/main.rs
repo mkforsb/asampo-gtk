@@ -34,12 +34,15 @@ use savefile::Savefile;
 use view::{
     menus::build_actions,
     samples::{setup_samples_page, SampleListEntry},
+    settings::setup_settings_page,
     sources::{setup_sources_page, update_sources_list},
     AsampoView,
 };
 
 #[derive(Debug)]
 enum AppMessage {
+    SettingsOutputSampleRateChanged(u32),
+    SettingsBufferSizeChanged(u16),
     AddFilesystemSourceNameChanged(String),
     AddFilesystemSourcePathChanged(String),
     AddFilesystemSourcePathBrowseClicked,
@@ -89,6 +92,26 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
     }
 
     match message {
+        AppMessage::SettingsOutputSampleRateChanged(rate) => todo!(),
+
+        AppMessage::SettingsBufferSizeChanged(samples) => {
+            let new_config = AppConfig {
+                buffer_size_samples: samples,
+                ..model.config.expect("There should be an active config")
+            };
+
+            let settings_latency_approx_label = new_config.fmt_latency_approx();
+
+            Ok(AppModel {
+                config: Some(new_config),
+                values: AppValues {
+                    settings_latency_approx_label,
+                    ..model.values
+                },
+                ..model
+            })
+        },
+
         AppMessage::AddFilesystemSourceNameChanged(text) => {
             Ok(check_sources_add_fs_valid(AppModel {
                 values: AppValues {
@@ -289,6 +312,8 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         };
     }
 
+    maybe_update_entry_text!(old, new, view, settings_latency_approx_label);
+
     maybe_update_entry_text!(old, new, view, sources_add_fs_name_entry);
     maybe_update_entry_text!(old, new, view, sources_add_fs_path_entry);
     maybe_update_entry_text!(old, new, view, sources_add_fs_extensions_entry);
@@ -387,6 +412,7 @@ fn main() -> ExitCode {
         );
         let model_ptr = Rc::new(Cell::new(Some(model.clone())));
 
+        setup_settings_page(model_ptr.clone(), &view);
         setup_sources_page(model_ptr.clone(), &view);
         setup_samples_page(model_ptr.clone(), &view);
 
