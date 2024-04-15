@@ -15,7 +15,7 @@ use gtk::{gio::ListStore, prelude::*};
 use libasampo::{prelude::*, samples::Sample, sources::Source};
 use uuid::Uuid;
 
-use crate::{ext::ClonedUpdateWith, view::samples::SampleListEntry};
+use crate::{config::AppConfig, ext::ClonedUpdateWith, view::samples::SampleListEntry};
 
 #[derive(Debug, Clone)]
 pub struct AppFlags {
@@ -43,6 +43,7 @@ pub struct AppValues {
 
 #[derive(Clone, Debug)]
 pub struct AppModel {
+    pub config: Option<AppConfig>,
     pub savefile: Option<String>,
     pub flags: AppFlags,
     pub values: AppValues,
@@ -58,11 +59,13 @@ pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
 
 impl AppModel {
     pub fn new(
+        config: Option<AppConfig>,
         savefile: Option<String>,
         tx: Option<mpsc::Sender<audiothread::Message>>,
         handle: Option<Rc<JoinHandle<()>>>,
     ) -> Self {
         AppModel {
+            config,
             savefile,
             flags: AppFlags::default(),
             values: AppValues::default(),

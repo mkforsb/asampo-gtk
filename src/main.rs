@@ -379,7 +379,12 @@ fn main() -> ExitCode {
 
         let view = AsampoView::new(app);
 
-        let model = AppModel::new(None, Some(tx.clone()), Some(audiothread_handle.clone()));
+        let model = AppModel::new(
+            Some(config),
+            None,
+            Some(tx.clone()),
+            Some(audiothread_handle.clone()),
+        );
         let model_ptr = Rc::new(Cell::new(Some(model.clone())));
 
         setup_sources_page(model_ptr.clone(), &view);

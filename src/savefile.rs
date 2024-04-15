@@ -16,7 +16,7 @@ pub struct SavefileV1 {
 
 impl SavefileV1 {
     pub fn into_appmodel(self) -> Result<AppModel, anyhow::Error> {
-        let mut model = AppModel::new(None, None, None);
+        let mut model = AppModel::new(None, None, None, None);
 
         for src in self.sources {
             let source = src.into_domain();
