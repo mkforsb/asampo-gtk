@@ -2,6 +2,8 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
+mod config;
+mod configfile;
 mod ext;
 mod model;
 mod savefile;
