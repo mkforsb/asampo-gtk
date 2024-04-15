@@ -13,3 +13,9 @@ frame.settings-group grid > * {
 frame.settings-group grid > * > * {
   margin: 4px;
 }
+
+listview row {
+    padding: 4px;
+    border-bottom: 1px solid #eee;
+    margin-left: 6px;
+}
