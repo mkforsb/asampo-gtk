@@ -16,6 +16,21 @@ pub struct AsampoViewState {
     pub main_menu_button: gtk::TemplateChild<gtk::MenuButton>,
 
     #[template_child]
+    pub settings_output_sample_rate_entry: gtk::TemplateChild<gtk::DropDown>,
+
+    #[template_child]
+    pub settings_buffer_size_entry: gtk::TemplateChild<gtk::SpinButton>,
+
+    #[template_child]
+    pub config_latency_approx_label: gtk::TemplateChild<gtk::Label>,
+
+    #[template_child]
+    pub settings_sample_rate_conversion_quality_entry: gtk::TemplateChild<gtk::DropDown>,
+
+    #[template_child]
+    pub settings_config_save_path_entry: gtk::TemplateChild<gtk::Entry>,
+
+    #[template_child]
     pub sources_add_frame: gtk::TemplateChild<gtk::Frame>,
 
     #[template_child]

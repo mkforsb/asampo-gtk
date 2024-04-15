@@ -128,7 +128,7 @@
                                   </object>
                                 </child>
                                 <child>
-                                  <object class="GtkDropDown" id="settings_output_sample_rate_dropdown">
+                                  <object class="GtkDropDown" id="settings_output_sample_rate_entry">
                                     <property name="model">
                                       <object class="GtkStringList">
                                         <items>
@@ -170,14 +170,14 @@
                                       <property name="column">1</property>
                                     </layout>
                                     <child>
-                                      <object class="GtkSpinButton">
+                                      <object class="GtkSpinButton" id="settings_buffer_size_entry">
                                         <property name="visible">True</property>
                                         <property name="can-focus">True</property>
                                         <property name="adjustment">settings-bufsize-adjustment</property>
                                       </object>
                                     </child>
                                     <child>
-                                      <object class="GtkLabel">
+                                      <object class="GtkLabel" id="config_latency_approx_label">
                                         <property name="width-request">100</property>
                                         <property name="label">~21 ms</property>
                                       </object>
@@ -195,7 +195,7 @@
                                   </object>
                                 </child>
                                 <child>
-                                  <object class="GtkDropDown">
+                                  <object class="GtkDropDown" id="settings_sample_rate_conversion_quality_entry">
                                     <property name="model">
                                       <object class="GtkStringList">
                                         <items>
@@ -250,7 +250,7 @@
                                   </object>
                                 </child>
                                 <child>
-                                  <object class="GtkEntry">
+                                  <object class="GtkEntry" id="settings_config_save_path_entry">
                                     <property name="hexpand">true</property>
                                     <property name="buffer">
                                       <object class="GtkEntryBuffer">
