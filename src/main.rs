@@ -274,14 +274,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             log::log!(log::Level::Info, "Loading from {filename}");
 
             match Savefile::load(&filename) {
-                Ok(mut loaded_app_model) => {
-                    loaded_app_model.audiothread_tx = model.audiothread_tx;
-                    loaded_app_model._audiothread_handle = model._audiothread_handle;
-
+                Ok(loaded_app_model) => {
                     loaded_app_model.load_enabled_sources()?;
                     loaded_app_model.populate_samples_listmodel();
 
-                    Ok(loaded_app_model)
+                    Ok(AppModel {
+                        sources_order: loaded_app_model.sources_order,
+                        sources: loaded_app_model.sources,
+                        samples_listview_model: loaded_app_model.samples_listview_model,
+                        ..model
+                    })
                 }
                 Err(e) => Err(e),
             }
