@@ -12,6 +12,8 @@ mod view;
 use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc};
 
 use anyhow::anyhow;
+use config::AppConfig;
+use configfile::ConfigFile;
 use gtk::{
     gdk::Display,
     gio::ApplicationFlags,
@@ -334,6 +336,7 @@ fn main() -> ExitCode {
     }));
 
     app.connect_activate(|app| {
+        // init css
         let css_provider = gtk::CssProvider::new();
         css_provider.load_from_resource("/style.css");
 
@@ -343,14 +346,34 @@ fn main() -> ExitCode {
             gtk::STYLE_PROVIDER_PRIORITY_APPLICATION,
         );
 
+        // init config
+        let config = match ConfigFile::load(&ConfigFile::default_path()) {
+            Ok(loaded_config) => {
+                log::log!(
+                    log::Level::Info,
+                    "Loaded config: {}",
+                    loaded_config.config_save_path
+                );
+                loaded_config
+            }
+            Err(e) => {
+                log::log!(log::Level::Error, "Error loading config: {e:?}");
+                log::log!(log::Level::Info, "Using default config");
+                AppConfig::default()
+            }
+        };
+
+        ConfigFile::save(&config, &ConfigFile::default_path()).unwrap();
+
+        // init audio
         let (tx, rx) = mpsc::channel();
         let audiothread_handle = Rc::new(audiothread::spawn(
             rx,
             Some(
                 audiothread::Opts::default()
                     .with_name("Asampo")
-                    .with_sr_conv_quality(audiothread::Quality::Fastest)
-                    .with_bufsize_n_stereo_samples(1024),
+                    .with_sr_conv_quality(config.sample_rate_conversion_quality.clone())
+                    .with_bufsize_n_stereo_samples(config.buffer_size_samples.into()),
             ),
         ));
 
