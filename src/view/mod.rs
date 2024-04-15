@@ -1,3 +1,8 @@
+pub mod dialogs;
+pub mod menus;
+pub mod samples;
+pub mod sources;
+
 use std::ops::Deref;
 
 use gtk::glib;

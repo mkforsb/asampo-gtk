@@ -15,8 +15,7 @@ use gtk::{gio::ListStore, prelude::*};
 use libasampo::{prelude::*, samples::Sample, sources::Source};
 use uuid::Uuid;
 
-use crate::ext::ClonedUpdateWith;
-use crate::samples::SampleListEntry;
+use crate::{ext::ClonedUpdateWith, view::samples::SampleListEntry};
 
 #[derive(Debug, Clone)]
 pub struct AppFlags {
@@ -72,7 +71,7 @@ impl AppModel {
             sources: HashMap::new(),
             sources_order: Vec::new(),
             samples: Rc::new(RefCell::new(Vec::new())),
-            samples_listview_model: ListStore::new::<crate::samples::SampleListEntry>(),
+            samples_listview_model: ListStore::new::<SampleListEntry>(),
         }
     }
 

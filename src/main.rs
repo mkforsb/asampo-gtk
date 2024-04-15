@@ -2,13 +2,9 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-mod dialogs;
 mod ext;
-mod menus;
 mod model;
-mod samples;
 mod savefile;
-mod sources;
 mod view;
 
 use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc};
@@ -21,21 +17,22 @@ use gtk::{
     prelude::*,
     Application,
 };
+use uuid::Uuid;
 
 use libasampo::{
     prelude::*,
-    sources::{file_system_source::FilesystemSource, Source, SourceTrait},
+    sources::{file_system_source::FilesystemSource, Source},
 };
 
 use ext::WithModel;
-use menus::build_actions;
 use model::{AppFlags, AppModel, AppModelPtr, AppValues};
-use samples::{setup_samples_page, SampleListEntry};
 use savefile::Savefile;
-use sources::setup_sources_page;
-use sources::update_sources_list;
-use uuid::Uuid;
-use view::AsampoView;
+use view::{
+    menus::build_actions,
+    samples::{setup_samples_page, SampleListEntry},
+    sources::{setup_sources_page, update_sources_list},
+    AsampoView,
+};
 
 #[derive(Debug)]
 enum AppMessage {
@@ -126,7 +123,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     if let Some(name) = std::path::Path::new(&text)
                         .file_name()
                         .and_then(|s| s.to_str())
-                        .and_then(|s| Some(s.to_string()))
+                        .map(|s| s.to_string())
                     {
                         name
                     } else {
@@ -293,7 +290,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     maybe_update_entry_text!(old, new, view, sources_add_fs_extensions_entry);
 
     if new.flags.sources_add_fs_browse {
-        dialogs::choose_folder(
+        view::dialogs::choose_folder(
             model_ptr.clone(),
             view,
             AppMessage::AddFilesystemSourcePathBrowseSubmitted,
@@ -328,7 +325,6 @@ fn main() -> ExitCode {
         .application_id("se.neode.Asampo")
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
-
 
     app.connect_command_line(clone!(@strong app =>  move |_, _| {
         app.activate();
