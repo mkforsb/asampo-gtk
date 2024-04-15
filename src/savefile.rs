@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-use std::io::Write;
+use std::{io::Write, path::Path};
 
 use libasampo::{prelude::*, serialize::IntoDomain};
 use serde::{Deserialize, Serialize};
@@ -49,6 +49,10 @@ impl Savefile {
         let json = serde_json::to_string(&Savefile::V1(SavefileV1::from_appmodel(model)))?;
 
         {
+            if let Some(path) = Path::new(filename).parent() {
+                std::fs::create_dir_all(path)?;
+            }
+
             let mut fd = std::fs::OpenOptions::new()
                 .create(true)
                 .write(true)
