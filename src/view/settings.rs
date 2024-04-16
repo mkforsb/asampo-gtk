@@ -5,14 +5,29 @@
 use gtk::{
     glib::{clone, Object},
     prelude::*,
-    StringObject,
+    StringList, StringObject,
 };
 
-use crate::{config::AppConfig, ext::*, model::AppModelPtr, update, AppMessage};
+use crate::{
+    config::{self, OptionMapExt},
+    ext::*,
+    model::AppModelPtr,
+    update, AppMessage,
+};
 
 use super::AsampoView;
 
 pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
+    view.settings_output_sample_rate_entry
+        .set_model(Some(&StringList::new(
+            &config::OUTPUT_SAMPLE_RATE_OPTIONS.keys(),
+        )));
+
+    view.settings_sample_rate_conversion_quality_entry
+        .set_model(Some(&StringList::new(
+            &config::SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS.keys(),
+        )));
+
     // we don't want to trigger signals in setup_settings_page(), so update the settings
     // view before hooking up the signals.
     update_settings_page(model_ptr.clone(), view);
@@ -21,16 +36,7 @@ pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
         .connect_selected_item_notify(
             clone!(@strong model_ptr, @strong view => move |e: &gtk::DropDown| {
                 update(model_ptr.clone(), &view, AppMessage::SettingsOutputSampleRateChanged(
-                    strs_dropdown_map_selected(e, |s| match s {
-                        "44100 Hz" => 44100,
-                        "48000 Hz" => 48000,
-                        "96000 Hz" => 96000,
-                        "192000 Hz" => 192000,
-                        _ => {
-                            log::log!(log::Level::Error, "Unknown sample rate setting");
-                            AppConfig::default().output_samplerate_hz
-                        }
-                    })
+                    strs_dropdown_get_selected(e)
                 ))
             }),
         );
@@ -130,8 +136,4 @@ fn strs_dropdown_get_selected(e: &gtk::DropDown) -> String {
         .expect("ListModel should contain StringObject items")
         .string()
         .to_string()
-}
-
-fn strs_dropdown_map_selected<T>(e: &gtk::DropDown, f: fn(&str) -> T) -> T {
-    f(&strs_dropdown_get_selected(e))
 }

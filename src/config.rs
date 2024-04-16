@@ -33,6 +33,35 @@ impl Default for AppConfig {
     }
 }
 
+pub trait OptionMapExt<T> {
+    fn key(&self, key: &str) -> Option<&T>;
+    fn keys(&self) -> Vec<&'static str>;
+}
+
+impl<T> OptionMapExt<T> for [(&'static str, T)] {
+    fn key(&self, key: &str) -> Option<&T> {
+        self.iter().find(|(k, _v)| *k == key).map(|(_k, v)| v)
+    }
+
+    fn keys(&self) -> Vec<&'static str> {
+        self.iter().map(|(key, _)| *key).collect()
+    }
+}
+
+pub const OUTPUT_SAMPLE_RATE_OPTIONS: [(&str, u32); 4] = [
+    ("44.1 kHz", 44100),
+    ("48 kHz", 48000),
+    ("96 kHz", 96000),
+    ("192 kHz", 192000),
+];
+
+pub const SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS: [(&str, audiothread::Quality); 4] = [
+    ("Fastest", audiothread::Quality::Fastest),
+    ("Low", audiothread::Quality::Low),
+    ("Medium", audiothread::Quality::Medium),
+    ("High", audiothread::Quality::High),
+];
+
 impl AppConfig {
     pub fn fmt_latency_approx(&self) -> String {
         let samples = self.buffer_size_samples as f32;

@@ -28,6 +28,7 @@ use libasampo::{
     sources::{file_system_source::FilesystemSource, Source},
 };
 
+use config::OptionMapExt;
 use ext::WithModel;
 use model::{AppFlags, AppModel, AppModelPtr, AppValues};
 use savefile::Savefile;
@@ -41,7 +42,7 @@ use view::{
 
 #[derive(Debug)]
 enum AppMessage {
-    SettingsOutputSampleRateChanged(u32),
+    SettingsOutputSampleRateChanged(String),
     SettingsBufferSizeChanged(u16),
     SettingsSampleRateConversionQualityChanged(String),
     AddFilesystemSourceNameChanged(String),
@@ -94,9 +95,18 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
     }
 
     match message {
-        AppMessage::SettingsOutputSampleRateChanged(rate) => {
+        AppMessage::SettingsOutputSampleRateChanged(choice) => {
             let new_config = AppConfig {
-                output_samplerate_hz: rate,
+                output_samplerate_hz: match config::OUTPUT_SAMPLE_RATE_OPTIONS.key(&choice) {
+                    Some(value) => *value,
+                    None => {
+                        log::log!(
+                            log::Level::Error,
+                            "Unknown output sample rate setting, using default"
+                        );
+                        AppConfig::default().output_samplerate_hz
+                    }
+                },
                 ..model.config.expect("There should be an active config")
             };
 
@@ -130,14 +140,13 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             })
         }
 
-        AppMessage::SettingsSampleRateConversionQualityChanged(quality) => Ok(AppModel {
+        AppMessage::SettingsSampleRateConversionQualityChanged(choice) => Ok(AppModel {
             config: Some(AppConfig {
-                sample_rate_conversion_quality: match quality.as_str() {
-                    "Fastest" => audiothread::Quality::Fastest,
-                    "Low" => audiothread::Quality::Low,
-                    "Medium" => audiothread::Quality::Medium,
-                    "High" => audiothread::Quality::High,
-                    _ => {
+                sample_rate_conversion_quality: match config::SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS
+                    .key(&choice)
+                {
+                    Some(value) => value.clone(),
+                    None => {
                         log::log!(
                             log::Level::Error,
                             "Unknown sample rate conversion quality setting, using default"
