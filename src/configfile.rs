@@ -6,7 +6,7 @@ use std::{io::Write, path::Path};
 
 use serde::{Deserialize, Serialize};
 
-use crate::config::{AppConfig, SampleListPlaybackBehavior};
+use crate::config::{AppConfig, SamplePlaybackBehavior};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AudioOutput {
@@ -32,7 +32,7 @@ pub struct ConfigFileV1 {
     sample_rate_conversion_quality: audiothread::Quality,
 
     config_save_path: String,
-    sample_list_playback_behavior: SampleListPlaybackBehavior,
+    sample_playback_behavior: SamplePlaybackBehavior,
 }
 
 impl ConfigFileV1 {
@@ -42,7 +42,7 @@ impl ConfigFileV1 {
             buffer_size_samples: self.buffer_size_samples,
             sample_rate_conversion_quality: self.sample_rate_conversion_quality.clone(),
             config_save_path: self.config_save_path,
-            sample_list_playback_behavior: self.sample_list_playback_behavior,
+            sample_playback_behavior: self.sample_playback_behavior,
         }
     }
 
@@ -53,7 +53,7 @@ impl ConfigFileV1 {
             buffer_size_samples: config.buffer_size_samples,
             sample_rate_conversion_quality: config.sample_rate_conversion_quality.clone(),
             config_save_path: config.config_save_path.clone(),
-            sample_list_playback_behavior: config.sample_list_playback_behavior.clone(),
+            sample_playback_behavior: config.sample_playback_behavior.clone(),
         }
     }
 }

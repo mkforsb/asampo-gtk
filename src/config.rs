@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 use crate::configfile::ConfigFile;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum SampleListPlaybackBehavior {
+pub enum SamplePlaybackBehavior {
     PlaySingleSample,
-    KeepPlayingPreviousSample,
+    PlayUntilEnd,
 }
 
 #[derive(Debug, Clone)]
@@ -18,7 +18,7 @@ pub struct AppConfig {
     pub buffer_size_samples: u16,
     pub sample_rate_conversion_quality: audiothread::Quality,
     pub config_save_path: String,
-    pub sample_list_playback_behavior: SampleListPlaybackBehavior,
+    pub sample_playback_behavior: SamplePlaybackBehavior,
 }
 
 impl Default for AppConfig {
@@ -28,7 +28,7 @@ impl Default for AppConfig {
             buffer_size_samples: 1024,
             sample_rate_conversion_quality: audiothread::Quality::Fastest,
             config_save_path: ConfigFile::default_path(),
-            sample_list_playback_behavior: SampleListPlaybackBehavior::KeepPlayingPreviousSample,
+            sample_playback_behavior: SamplePlaybackBehavior::PlayUntilEnd,
         }
     }
 }
