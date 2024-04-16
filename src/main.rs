@@ -43,6 +43,7 @@ use view::{
 enum AppMessage {
     SettingsOutputSampleRateChanged(u32),
     SettingsBufferSizeChanged(u16),
+    SettingsSampleRateConversionQualityChanged(String),
     AddFilesystemSourceNameChanged(String),
     AddFilesystemSourcePathChanged(String),
     AddFilesystemSourcePathBrowseClicked,
@@ -93,7 +94,23 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
     }
 
     match message {
-        AppMessage::SettingsOutputSampleRateChanged(rate) => todo!(),
+        AppMessage::SettingsOutputSampleRateChanged(rate) => {
+            let new_config = AppConfig {
+                output_samplerate_hz: rate,
+                ..model.config.expect("There should be an active config")
+            };
+
+            let settings_latency_approx_label = new_config.fmt_latency_approx();
+
+            Ok(AppModel {
+                config: Some(new_config),
+                values: AppValues {
+                    settings_latency_approx_label,
+                    ..model.values
+                },
+                ..model
+            })
+        }
 
         AppMessage::SettingsBufferSizeChanged(samples) => {
             let new_config = AppConfig {
@@ -112,6 +129,26 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ..model
             })
         }
+
+        AppMessage::SettingsSampleRateConversionQualityChanged(quality) => Ok(AppModel {
+            config: Some(AppConfig {
+                sample_rate_conversion_quality: match quality.as_str() {
+                    "Fastest" => audiothread::Quality::Fastest,
+                    "Low" => audiothread::Quality::Low,
+                    "Medium" => audiothread::Quality::Medium,
+                    "High" => audiothread::Quality::High,
+                    _ => {
+                        log::log!(
+                            log::Level::Error,
+                            "Unknown sample rate conversion quality setting, using default"
+                        );
+                        AppConfig::default().sample_rate_conversion_quality
+                    }
+                },
+                ..model.config.expect("There should be an active config")
+            }),
+            ..model
+        }),
 
         AppMessage::AddFilesystemSourceNameChanged(text) => {
             Ok(check_sources_add_fs_valid(AppModel {

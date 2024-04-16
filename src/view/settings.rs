@@ -37,9 +37,26 @@ pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
 
     view.settings_buffer_size_entry.connect_value_changed(
         clone!(@strong model_ptr, @strong view => move |e: &gtk::SpinButton| {
-            update(model_ptr.clone(), &view, AppMessage::SettingsBufferSizeChanged(e.value() as u16))
-        })
+            update(
+                model_ptr.clone(),
+                &view,
+                AppMessage::SettingsBufferSizeChanged(e.value() as u16)
+            )
+        }),
     );
+
+    view.settings_sample_rate_conversion_quality_entry
+        .connect_selected_item_notify(
+            clone!(@strong model_ptr, @strong view => move |e: &gtk::DropDown| {
+                update(
+                    model_ptr.clone(),
+                    &view,
+                    AppMessage::SettingsSampleRateConversionQualityChanged(
+                        strs_dropdown_get_selected(e)
+                    )
+                )
+            }),
+        );
 }
 
 pub fn update_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
