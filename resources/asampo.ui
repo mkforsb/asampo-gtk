@@ -251,6 +251,7 @@
                                 </child>
                                 <child>
                                   <object class="GtkEntry" id="settings_config_save_path_entry">
+                                    <property name="sensitive">false</property>
                                     <property name="hexpand">true</property>
                                     <property name="buffer">
                                       <object class="GtkEntryBuffer">
