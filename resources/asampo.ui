@@ -129,16 +129,7 @@
                                 </child>
                                 <child>
                                   <object class="GtkDropDown" id="settings_output_sample_rate_entry">
-                                    <property name="model">
-                                      <object class="GtkStringList">
-                                        <items>
-                                          <item>44100 Hz</item>
-                                          <item>48000 Hz</item>
-                                          <item>96000 Hz</item>
-                                          <item>192000 Hz</item>
-                                        </items>
-                                      </object>
-                                    </property>
+
                                     <layout>
                                       <property name="row">1</property>
                                       <property name="column">1</property>
@@ -196,16 +187,7 @@
                                 </child>
                                 <child>
                                   <object class="GtkDropDown" id="settings_sample_rate_conversion_quality_entry">
-                                    <property name="model">
-                                      <object class="GtkStringList">
-                                        <items>
-                                          <item>Fastest</item>
-                                          <item>Low</item>
-                                          <item>Medium</item>
-                                          <item>High</item>
-                                        </items>
-                                      </object>
-                                    </property>
+
                                     <layout>
                                       <property name="row">3</property>
                                       <property name="column">1</property>
@@ -251,14 +233,7 @@
                                 </child>
                                 <child>
                                   <object class="GtkDropDown" id="settings_sample_playback_behavior_entry">
-                                    <property name="model"> -->
-                                      <object class="GtkStringList"> -->
-                                        <items> -->
-                                          <item>Play samples until end (overlap OK)</item> -->
-                                          <item>Limit to playing single sample</item> -->
-                                        </items>
-                                      </object>
-                                    </property>
+
                                     <layout>
                                       <property name="row">0</property>
                                       <property name="column">1</property>
