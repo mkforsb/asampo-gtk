@@ -28,6 +28,11 @@ pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
             &config::SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS.keys(),
         )));
 
+    view.settings_sample_playback_behavior_entry
+        .set_model(Some(&StringList::new(
+            &config::SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS.keys(),
+        )));
+
     // we don't want to trigger signals in setup_settings_page(), so update the settings
     // view before hooking up the signals.
     update_settings_page(model_ptr.clone(), view);
@@ -58,6 +63,19 @@ pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
                     model_ptr.clone(),
                     &view,
                     AppMessage::SettingsSampleRateConversionQualityChanged(
+                        strs_dropdown_get_selected(e)
+                    )
+                )
+            }),
+        );
+
+    view.settings_sample_playback_behavior_entry
+        .connect_selected_item_notify(
+            clone!(@strong model_ptr, @strong view => move |e: &gtk::DropDown| {
+                update(
+                    model_ptr.clone(),
+                    &view,
+                    AppMessage::SettingsSamplePlaybackBehaviorChanged(
                         strs_dropdown_get_selected(e)
                     )
                 )

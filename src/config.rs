@@ -62,6 +62,17 @@ pub const SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS: [(&str, audiothread::Quality);
     ("High", audiothread::Quality::High),
 ];
 
+pub const SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS: [(&str, SamplePlaybackBehavior); 2] = [
+    (
+        "Limit to playing single sample",
+        SamplePlaybackBehavior::PlaySingleSample,
+    ),
+    (
+        "Play samples until end (overlap OK)",
+        SamplePlaybackBehavior::PlayUntilEnd,
+    ),
+];
+
 impl AppConfig {
     pub fn fmt_latency_approx(&self) -> String {
         let samples = self.buffer_size_samples as f32;

@@ -45,6 +45,7 @@ enum AppMessage {
     SettingsOutputSampleRateChanged(String),
     SettingsBufferSizeChanged(u16),
     SettingsSampleRateConversionQualityChanged(String),
+    SettingsSamplePlaybackBehaviorChanged(String),
     AddFilesystemSourceNameChanged(String),
     AddFilesystemSourcePathChanged(String),
     AddFilesystemSourcePathBrowseClicked,
@@ -152,6 +153,25 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                             "Unknown sample rate conversion quality setting, using default"
                         );
                         AppConfig::default().sample_rate_conversion_quality
+                    }
+                },
+                ..model.config.expect("There should be an active config")
+            }),
+            ..model
+        }),
+
+        AppMessage::SettingsSamplePlaybackBehaviorChanged(choice) => Ok(AppModel {
+            config: Some(AppConfig {
+                sample_playback_behavior: match config::SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS
+                    .key(&choice)
+                {
+                    Some(value) => value.clone(),
+                    None => {
+                        log::log!(
+                            log::Level::Error,
+                            "Unknown sample playback behavior setting, using default"
+                        );
+                        AppConfig::default().sample_playback_behavior
                     }
                 },
                 ..model.config.expect("There should be an active config")
