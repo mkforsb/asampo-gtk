@@ -1,4 +1,4 @@
-use gtk::{gio::ActionEntry, glib::clone, prelude::*, Application, DialogError};
+use gtk::{gio::ActionEntry, glib::clone, prelude::*, Application};
 
 use crate::{model::AppModelPtr, update, view::AsampoView, AppMessage};
 
@@ -32,11 +32,7 @@ pub fn build_actions(app: &Application, model_ptr: AppModelPtr, view: &AsampoVie
                                 )
                             ),
 
-                            Err(e) => match e.kind::<DialogError>() {
-                                Some(DialogError::Dismissed) => (),
-                                Some(DialogError::Cancelled) => (),
-                                _ => log::log!(log::Level::Error, "{e}"),
-                            }
+                            Err(e) => update(model_ptr.clone(), &view, AppMessage::DialogError(e)),
                         }
                     })
                 );
@@ -82,11 +78,7 @@ pub fn build_actions(app: &Application, model_ptr: AppModelPtr, view: &AsampoVie
                                 )
                             ),
 
-                            Err(e) => match e.kind::<DialogError>() {
-                                Some(DialogError::Dismissed) => (),
-                                Some(DialogError::Cancelled) => (),
-                                _ => log::log!(log::Level::Error, "{e}"),
-                            }
+                            Err(e) => update(model_ptr.clone(), &view, AppMessage::DialogError(e)),
                         }
                     })
                 );

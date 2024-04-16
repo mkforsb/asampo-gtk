@@ -19,7 +19,7 @@ use gtk::{
     gio::ApplicationFlags,
     glib::{clone, ExitCode},
     prelude::*,
-    Application,
+    Application, DialogError,
 };
 use uuid::Uuid;
 
@@ -57,6 +57,7 @@ enum AppMessage {
     SourceDeleteClicked(Uuid),
     LoadFromSavefile(String),
     SaveToSavefile(String),
+    DialogError(gtk::glib::Error),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -110,7 +111,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 },
                 ..model
             })
-        },
+        }
 
         AppMessage::AddFilesystemSourceNameChanged(text) => {
             Ok(check_sources_add_fs_valid(AppModel {
@@ -300,6 +301,20 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
                 Err(e) => Err(e),
             }
+        }
+
+        AppMessage::DialogError(error) => {
+            match error.kind::<DialogError>() {
+                Some(e) => match e {
+                    DialogError::Failed => log::log!(log::Level::Error, "Dialog failed: {e:?}"),
+                    DialogError::Cancelled => (),
+                    DialogError::Dismissed => (),
+                    _ => log::log!(log::Level::Error, "Dialog error: {e:?}"),
+                },
+                None => log::log!(log::Level::Error, "Unknown dialog error: {error:?}"),
+            };
+
+            Ok(model)
         }
     }
 }
