@@ -18,15 +18,15 @@ use uuid::Uuid;
 use crate::{config::AppConfig, ext::ClonedUpdateWith, view::samples::SampleListEntry};
 
 #[derive(Debug, Clone)]
-pub struct AppFlags {
+pub struct ViewFlags {
     pub sources_add_fs_fields_valid: bool,
     pub sources_add_fs_browse: bool,
 }
 
 #[allow(clippy::derivable_impls)]
-impl Default for AppFlags {
+impl Default for ViewFlags {
     fn default() -> Self {
-        AppFlags {
+        ViewFlags {
             sources_add_fs_fields_valid: false,
             sources_add_fs_browse: false,
         }
@@ -34,7 +34,7 @@ impl Default for AppFlags {
 }
 
 #[derive(Default, Debug, Clone)]
-pub struct AppValues {
+pub struct ViewValues {
     pub sources_add_fs_name_entry: String,
     pub sources_add_fs_path_entry: String,
     pub sources_add_fs_extensions_entry: String,
@@ -46,8 +46,8 @@ pub struct AppValues {
 pub struct AppModel {
     pub config: Option<AppConfig>,
     pub savefile: Option<String>,
-    pub flags: AppFlags,
-    pub values: AppValues,
+    pub viewflags: ViewFlags,
+    pub viewvalues: ViewValues,
     pub audiothread_tx: Option<Sender<audiothread::Message>>,
     pub _audiothread_handle: Option<Rc<JoinHandle<()>>>,
     pub sources: HashMap<Uuid, Source>,
@@ -73,10 +73,10 @@ impl AppModel {
         AppModel {
             config,
             savefile,
-            flags: AppFlags::default(),
-            values: AppValues {
+            viewflags: ViewFlags::default(),
+            viewvalues: ViewValues {
                 settings_latency_approx_label,
-                ..AppValues::default()
+                ..ViewValues::default()
             },
             audiothread_tx: tx,
             _audiothread_handle: handle,
@@ -192,7 +192,7 @@ impl AppModel {
     }
 
     pub fn populate_samples_listmodel(&self) {
-        let filter = &self.values.samples_list_filter;
+        let filter = &self.viewvalues.samples_list_filter;
         self.samples_listview_model.remove_all();
 
         if filter.is_empty() {

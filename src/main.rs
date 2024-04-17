@@ -30,7 +30,7 @@ use libasampo::{
 
 use config::OptionMapExt;
 use ext::WithModel;
-use model::{AppFlags, AppModel, AppModelPtr, AppValues};
+use model::{AppModel, AppModelPtr, ViewFlags, ViewValues};
 use savefile::Savefile;
 use view::{
     menus::build_actions,
@@ -85,11 +85,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
     fn check_sources_add_fs_valid(model: AppModel) -> AppModel {
         #[allow(clippy::needless_update)]
         AppModel {
-            flags: AppFlags {
-                sources_add_fs_fields_valid: !model.values.sources_add_fs_name_entry.is_empty()
-                    && !model.values.sources_add_fs_path_entry.is_empty()
-                    && !model.values.sources_add_fs_extensions_entry.is_empty(),
-                ..model.flags
+            viewflags: ViewFlags {
+                sources_add_fs_fields_valid: !model.viewvalues.sources_add_fs_name_entry.is_empty()
+                    && !model.viewvalues.sources_add_fs_path_entry.is_empty()
+                    && !model.viewvalues.sources_add_fs_extensions_entry.is_empty(),
+                ..model.viewflags
             },
             ..model
         }
@@ -115,9 +115,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(AppModel {
                 config: Some(new_config),
-                values: AppValues {
+                viewvalues: ViewValues {
                     settings_latency_approx_label,
-                    ..model.values
+                    ..model.viewvalues
                 },
                 ..model
             })
@@ -133,9 +133,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(AppModel {
                 config: Some(new_config),
-                values: AppValues {
+                viewvalues: ViewValues {
                     settings_latency_approx_label,
-                    ..model.values
+                    ..model.viewvalues
                 },
                 ..model
             })
@@ -181,9 +181,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::AddFilesystemSourceNameChanged(text) => {
             Ok(check_sources_add_fs_valid(AppModel {
-                values: AppValues {
+                viewvalues: ViewValues {
                     sources_add_fs_name_entry: text,
-                    ..model.values
+                    ..model.viewvalues
                 },
                 ..model
             }))
@@ -191,29 +191,30 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::AddFilesystemSourcePathChanged(text) => {
             Ok(check_sources_add_fs_valid(AppModel {
-                values: AppValues {
+                viewvalues: ViewValues {
                     sources_add_fs_path_entry: text,
-                    ..model.values
+                    ..model.viewvalues
                 },
                 ..model
             }))
         }
 
         AppMessage::AddFilesystemSourcePathBrowseClicked => Ok(AppModel {
-            flags: AppFlags {
+            viewflags: ViewFlags {
                 sources_add_fs_browse: true,
-                ..model.flags
+                ..model.viewflags
             },
             ..model
         }),
 
         AppMessage::AddFilesystemSourcePathBrowseSubmitted(text) => Ok(AppModel {
-            flags: AppFlags {
+            viewflags: ViewFlags {
                 sources_add_fs_browse: false,
-                ..model.flags
+                ..model.viewflags
             },
-            values: AppValues {
-                sources_add_fs_name_entry: if model.values.sources_add_fs_name_entry.is_empty() {
+            viewvalues: ViewValues {
+                sources_add_fs_name_entry: if model.viewvalues.sources_add_fs_name_entry.is_empty()
+                {
                     if let Some(name) = std::path::Path::new(&text)
                         .file_name()
                         .and_then(|s| s.to_str())
@@ -221,13 +222,13 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     {
                         name
                     } else {
-                        model.values.sources_add_fs_name_entry
+                        model.viewvalues.sources_add_fs_name_entry
                     }
                 } else {
-                    model.values.sources_add_fs_name_entry
+                    model.viewvalues.sources_add_fs_name_entry
                 },
                 sources_add_fs_path_entry: text,
-                ..model.values
+                ..model.viewvalues
             },
             ..model
         }),
@@ -236,9 +237,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             log::log!(log::Level::Debug, "Error browsing for folder: {error:?}");
 
             Ok(AppModel {
-                flags: AppFlags {
+                viewflags: ViewFlags {
                     sources_add_fs_browse: false,
-                    ..model.flags
+                    ..model.viewflags
                 },
                 ..model
             })
@@ -246,9 +247,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::AddFilesystemSourceExtensionsChanged(text) => {
             Ok(check_sources_add_fs_valid(AppModel {
-                values: AppValues {
+                viewvalues: ViewValues {
                     sources_add_fs_extensions_entry: text,
-                    ..model.values
+                    ..model.viewvalues
                 },
                 ..model
             }))
@@ -257,10 +258,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         // TODO: more validation, e.g is the path readable
         AppMessage::AddFilesystemSourceClicked => {
             let new_source = Source::FilesystemSource(FilesystemSource::new_named(
-                model.values.sources_add_fs_name_entry.clone(),
-                model.values.sources_add_fs_path_entry.clone(),
+                model.viewvalues.sources_add_fs_name_entry.clone(),
+                model.viewvalues.sources_add_fs_path_entry.clone(),
                 model
-                    .values
+                    .viewvalues
                     .sources_add_fs_extensions_entry
                     .split(',')
                     .map(|s| s.trim().to_string())
@@ -272,16 +273,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(AppModel {
                 #[allow(clippy::needless_update)]
-                flags: AppFlags {
+                viewflags: ViewFlags {
                     sources_add_fs_fields_valid: false,
-                    ..model.flags
+                    ..model.viewflags
                 },
 
-                values: AppValues {
+                viewvalues: ViewValues {
                     sources_add_fs_name_entry: String::from(""),
                     sources_add_fs_path_entry: String::from(""),
                     sources_add_fs_extensions_entry: String::from(""),
-                    ..model.values
+                    ..model.viewvalues
                 },
 
                 ..model
@@ -321,9 +322,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SamplesFilterChanged(text) => Ok(AppModel {
-            values: AppValues {
+            viewvalues: ViewValues {
                 samples_list_filter: text,
-                ..model.values
+                ..model.viewvalues
             },
             ..model
         }
@@ -390,22 +391,23 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 }
 
 fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &AsampoView) {
-    macro_rules! maybe_update_entry_text {
+    macro_rules! maybe_update_text {
         ($old:ident, $new:ident, $view:ident, $entry:ident) => {
-            if $old.values.$entry != $new.values.$entry && $view.$entry.text() != $new.values.$entry
+            if $old.viewvalues.$entry != $new.viewvalues.$entry
+                && $view.$entry.text() != $new.viewvalues.$entry
             {
-                $view.$entry.set_text(&$new.values.$entry);
+                $view.$entry.set_text(&$new.viewvalues.$entry);
             }
         };
     }
 
-    maybe_update_entry_text!(old, new, view, settings_latency_approx_label);
+    maybe_update_text!(old, new, view, settings_latency_approx_label);
 
-    maybe_update_entry_text!(old, new, view, sources_add_fs_name_entry);
-    maybe_update_entry_text!(old, new, view, sources_add_fs_path_entry);
-    maybe_update_entry_text!(old, new, view, sources_add_fs_extensions_entry);
+    maybe_update_text!(old, new, view, sources_add_fs_name_entry);
+    maybe_update_text!(old, new, view, sources_add_fs_path_entry);
+    maybe_update_text!(old, new, view, sources_add_fs_extensions_entry);
 
-    if new.flags.sources_add_fs_browse {
+    if new.viewflags.sources_add_fs_browse {
         view::dialogs::choose_folder(
             model_ptr.clone(),
             view,
@@ -414,9 +416,9 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         );
     }
 
-    if old.flags.sources_add_fs_fields_valid != new.flags.sources_add_fs_fields_valid {
+    if old.viewflags.sources_add_fs_fields_valid != new.viewflags.sources_add_fs_fields_valid {
         view.sources_add_fs_add_button
-            .set_sensitive(new.flags.sources_add_fs_fields_valid);
+            .set_sensitive(new.viewflags.sources_add_fs_fields_valid);
     }
 
     if old.sources != new.sources {
