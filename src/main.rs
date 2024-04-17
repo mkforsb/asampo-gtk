@@ -359,6 +359,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                         },
                         sources_order: loaded_app_model.sources_order,
                         sources: loaded_app_model.sources,
+                        samples: loaded_app_model.samples,
                         ..model
                     })
                 }
