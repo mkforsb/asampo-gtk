@@ -98,7 +98,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
     match message {
         AppMessage::SettingsOutputSampleRateChanged(choice) => {
             let new_config = AppConfig {
-                output_samplerate_hz: match config::OUTPUT_SAMPLE_RATE_OPTIONS.key(&choice) {
+                output_samplerate_hz: match config::OUTPUT_SAMPLE_RATE_OPTIONS.value_for(&choice) {
                     Some(value) => *value,
                     None => {
                         log::log!(
@@ -144,7 +144,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::SettingsSampleRateConversionQualityChanged(choice) => Ok(AppModel {
             config: Some(AppConfig {
                 sample_rate_conversion_quality: match config::SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS
-                    .key(&choice)
+                    .value_for(&choice)
                 {
                     Some(value) => value.clone(),
                     None => {
@@ -163,7 +163,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::SettingsSamplePlaybackBehaviorChanged(choice) => Ok(AppModel {
             config: Some(AppConfig {
                 sample_playback_behavior: match config::SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS
-                    .key(&choice)
+                    .value_for(&choice)
                 {
                     Some(value) => value.clone(),
                     None => {
@@ -232,13 +232,17 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             ..model
         }),
 
-        AppMessage::AddFilesystemSourcePathBrowseError(_) => Ok(AppModel {
-            flags: AppFlags {
-                sources_add_fs_browse: false,
-                ..model.flags
-            },
-            ..model
-        }),
+        AppMessage::AddFilesystemSourcePathBrowseError(error) => {
+            log::log!(log::Level::Debug, "Error browsing for folder: {error:?}");
+
+            Ok(AppModel {
+                flags: AppFlags {
+                    sources_add_fs_browse: false,
+                    ..model.flags
+                },
+                ..model
+            })
+        }
 
         AppMessage::AddFilesystemSourceExtensionsChanged(text) => {
             Ok(check_sources_add_fs_valid(AppModel {

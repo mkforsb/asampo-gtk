@@ -84,27 +84,39 @@ pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
 }
 
 pub fn update_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
-    model_ptr.with_model(|model| {
-        let config = model.config.as_ref().expect("A config should be present");
+    fn set_dropdown_choice<T: PartialEq>(
+        dropdown: &gtk::DropDown,
+        options: &[(&'static str, T)],
+        choice: &T,
+    ) {
+        let key = (*options)
+            .key_for(choice)
+            .expect("Active choice should have an associated key");
 
-        let rate_fmt = format!("{} Hz", config.output_samplerate_hz);
-
-        if let Some(rate_idx) = view
-            .settings_output_sample_rate_entry
+        if let Some(position) = dropdown
             .model()
-            .expect("Sample rate dropdown should have a model")
+            .expect("Dropdown should have a model")
             .iter()
             .position(|x: Result<Object, _>| {
                 x.expect("ListModel should not be mutated while iterating")
                     .dynamic_cast_ref::<StringObject>()
                     .expect("ListModel should contain StringObject items")
                     .string()
-                    == rate_fmt
+                    == key
             })
         {
-            view.settings_output_sample_rate_entry
-                .set_selected(rate_idx.try_into().unwrap());
+            dropdown.set_selected(position.try_into().unwrap());
         }
+    }
+
+    model_ptr.with_model(|model| {
+        let config = model.config.as_ref().expect("A config should be present");
+
+        set_dropdown_choice(
+            &view.settings_output_sample_rate_entry,
+            &config::OUTPUT_SAMPLE_RATE_OPTIONS,
+            &config.output_samplerate_hz,
+        );
 
         view.settings_buffer_size_entry
             .set_value(config.buffer_size_samples.into());
@@ -112,29 +124,17 @@ pub fn update_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
         view.settings_latency_approx_label
             .set_text(&model.values.settings_latency_approx_label);
 
-        let conv_fmt = match config.sample_rate_conversion_quality {
-            audiothread::Quality::Fastest => String::from("Fastest"),
-            audiothread::Quality::Low => String::from("Low"),
-            audiothread::Quality::Medium => String::from("Medium"),
-            audiothread::Quality::High => String::from("High"),
-        };
+        set_dropdown_choice(
+            &view.settings_sample_rate_conversion_quality_entry,
+            &config::SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS,
+            &config.sample_rate_conversion_quality,
+        );
 
-        if let Some(conv_idx) = view
-            .settings_sample_rate_conversion_quality_entry
-            .model()
-            .expect("Conversion quality dropdown should have a model")
-            .iter()
-            .position(|x: Result<Object, _>| {
-                x.expect("ListModel should not be mutated while iterating")
-                    .dynamic_cast_ref::<StringObject>()
-                    .expect("ListModel should contain StringObject items")
-                    .string()
-                    == conv_fmt
-            })
-        {
-            view.settings_sample_rate_conversion_quality_entry
-                .set_selected(conv_idx.try_into().unwrap());
-        }
+        set_dropdown_choice(
+            &view.settings_sample_playback_behavior_entry,
+            &config::SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS,
+            &config.sample_playback_behavior,
+        );
 
         if view.settings_config_save_path_entry.text() != config.config_save_path {
             view.settings_config_save_path_entry

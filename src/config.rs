@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::configfile::ConfigFile;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SamplePlaybackBehavior {
     PlaySingleSample,
     PlayUntilEnd,
@@ -34,13 +34,21 @@ impl Default for AppConfig {
 }
 
 pub trait OptionMapExt<T> {
-    fn key(&self, key: &str) -> Option<&T>;
+    fn value_for(&self, key: &str) -> Option<&T>;
+    fn key_for(&self, value: &T) -> Option<&str>;
     fn keys(&self) -> Vec<&'static str>;
 }
 
-impl<T> OptionMapExt<T> for [(&'static str, T)] {
-    fn key(&self, key: &str) -> Option<&T> {
+impl<T> OptionMapExt<T> for [(&'static str, T)]
+where
+    T: std::cmp::PartialEq,
+{
+    fn value_for(&self, key: &str) -> Option<&T> {
         self.iter().find(|(k, _v)| *k == key).map(|(_k, v)| v)
+    }
+
+    fn key_for(&self, value: &T) -> Option<&str> {
+        self.iter().find(|(_k, v)| v == value).map(|(k, _v)| *k)
     }
 
     fn keys(&self) -> Vec<&'static str> {
@@ -64,11 +72,11 @@ pub const SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS: [(&str, audiothread::Quality);
 
 pub const SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS: [(&str, SamplePlaybackBehavior); 2] = [
     (
-        "Limit to playing single sample",
+        "Play only most recently selected sample",
         SamplePlaybackBehavior::PlaySingleSample,
     ),
     (
-        "Play samples until end (overlap OK)",
+        "Let each sample play to completion",
         SamplePlaybackBehavior::PlayUntilEnd,
     ),
 ];
