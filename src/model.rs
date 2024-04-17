@@ -33,13 +33,27 @@ impl Default for ViewFlags {
     }
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub struct ViewValues {
     pub sources_add_fs_name_entry: String,
     pub sources_add_fs_path_entry: String,
     pub sources_add_fs_extensions_entry: String,
     pub samples_list_filter: String,
     pub settings_latency_approx_label: String,
+    pub samples_listview_model: ListStore,
+}
+
+impl Default for ViewValues {
+    fn default() -> Self {
+        ViewValues {
+            sources_add_fs_name_entry: String::default(),
+            sources_add_fs_path_entry: String::default(),
+            sources_add_fs_extensions_entry: String::default(),
+            samples_list_filter: String::default(),
+            settings_latency_approx_label: String::default(),
+            samples_listview_model: ListStore::new::<SampleListEntry>(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -53,7 +67,6 @@ pub struct AppModel {
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
     pub samples: Rc<RefCell<Vec<Sample>>>,
-    pub samples_listview_model: ListStore,
 }
 
 pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
@@ -76,6 +89,7 @@ impl AppModel {
             viewflags: ViewFlags::default(),
             viewvalues: ViewValues {
                 settings_latency_approx_label,
+                samples_listview_model: ListStore::new::<SampleListEntry>(),
                 ..ViewValues::default()
             },
             audiothread_tx: tx,
@@ -83,7 +97,6 @@ impl AppModel {
             sources: HashMap::new(),
             sources_order: Vec::new(),
             samples: Rc::new(RefCell::new(Vec::new())),
-            samples_listview_model: ListStore::new::<SampleListEntry>(),
         }
     }
 
@@ -193,7 +206,7 @@ impl AppModel {
 
     pub fn populate_samples_listmodel(&self) {
         let filter = &self.viewvalues.samples_list_filter;
-        self.samples_listview_model.remove_all();
+        self.viewvalues.samples_listview_model.remove_all();
 
         if filter.is_empty() {
             let samples = self
@@ -203,7 +216,8 @@ impl AppModel {
                 .map(|s| SampleListEntry::new(s.clone()))
                 .collect::<Vec<_>>();
 
-            self.samples_listview_model
+            self.viewvalues
+                .samples_listview_model
                 .extend_from_slice(samples.as_slice());
         } else {
             let fragments = filter.split(' ').map(|s| s.to_string()).collect::<Vec<_>>();
@@ -211,7 +225,7 @@ impl AppModel {
             let mut samples = self.samples.borrow().clone();
             samples.retain(|x| fragments.iter().all(|frag| x.uri().contains(frag)));
 
-            self.samples_listview_model.extend_from_slice(
+            self.viewvalues.samples_listview_model.extend_from_slice(
                 samples
                     .iter()
                     .map(|s| SampleListEntry::new(s.clone()))
@@ -223,7 +237,7 @@ impl AppModel {
         log::log!(
             log::Level::Debug,
             "showing {} samples",
-            self.samples_listview_model.n_items()
+            self.viewvalues.samples_listview_model.n_items()
         );
     }
 }

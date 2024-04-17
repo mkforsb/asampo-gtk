@@ -291,7 +291,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SampleClicked(index) => {
-            let item = model.samples_listview_model.item(index);
+            let item = model.viewvalues.samples_listview_model.item(index);
 
             match item
                 .and_dynamic_cast_ref::<SampleListEntry>()
@@ -351,9 +351,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     loaded_app_model.populate_samples_listmodel();
 
                     Ok(AppModel {
+                        viewvalues: ViewValues {
+                            samples_listview_model: loaded_app_model
+                                .viewvalues
+                                .samples_listview_model,
+                            ..model.viewvalues
+                        },
                         sources_order: loaded_app_model.sources_order,
                         sources: loaded_app_model.sources,
-                        samples_listview_model: loaded_app_model.samples_listview_model,
                         ..model
                     })
                 }
@@ -425,10 +430,10 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         update_sources_list(model_ptr, new.clone(), view);
     }
 
-    if old.samples_listview_model != new.samples_listview_model {
+    if old.viewvalues.samples_listview_model != new.viewvalues.samples_listview_model {
         view.samples_listview
             .set_model(Some(&gtk::SingleSelection::new(Some(
-                new.samples_listview_model.clone(),
+                new.viewvalues.samples_listview_model.clone(),
             ))));
     }
 }
