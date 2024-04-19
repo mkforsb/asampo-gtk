@@ -599,8 +599,6 @@ mod tests {
             .expect("Should be able to create temporary file")
             .into_temp_path();
 
-        println!("using tmpfile {tmpfile:?}");
-
         let (uuid, src) = make_fake_source("abc123", "", &[]);
 
         Savefile::save(
