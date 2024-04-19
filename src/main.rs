@@ -7,6 +7,7 @@ mod configfile;
 mod ext;
 mod model;
 mod savefile;
+mod testutils;
 mod view;
 
 use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc};
@@ -31,7 +32,13 @@ use libasampo::{
 use config::OptionMapExt;
 use ext::WithModel;
 use model::{AppModel, AppModelPtr, ViewFlags, ViewValues};
+
+#[cfg(not(test))]
 use savefile::Savefile;
+
+#[cfg(test)]
+use testutils::savefile_for_test::Savefile;
+
 use view::{
     menus::build_actions,
     samples::{setup_samples_page, SampleListEntry},
@@ -517,4 +524,108 @@ fn main() -> ExitCode {
     });
 
     app.run()
+}
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashMap;
+
+    use libasampo::{
+        samples::{BasicSample, Sample},
+        sources::FakeSource,
+    };
+
+    use super::*;
+    use crate::testutils::savefile_for_test;
+
+    fn make_fake_source(name: &str, uri: &str, samples: &[&str]) -> (Uuid, FakeSource) {
+        let uuid = Uuid::new_v4();
+
+        let source = FakeSource {
+            name: Some(name.to_string()),
+            uri: uri.to_string(),
+            uuid,
+            list: samples
+                .iter()
+                .map(|s| {
+                    Sample::BasicSample(BasicSample::new(
+                        s.to_string(),
+                        s.to_string(),
+                        libasampo::samples::SampleMetadata {
+                            rate: 48000,
+                            channels: 2,
+                            src_fmt_display: "PCM".to_string(),
+                        },
+                        Some(uuid),
+                    ))
+                })
+                .collect(),
+            list_error: None,
+            stream: HashMap::new(),
+            stream_error: None,
+            enabled: true,
+        };
+
+        (uuid, source)
+    }
+
+    #[test]
+    fn test_bug_loading_savefile_samples_not_assigned() {
+        savefile_for_test::LOAD.set(Some(|_| -> Result<AppModel, anyhow::Error> {
+            let (_, source) = make_fake_source("", "", &["first.wav"]);
+
+            Ok(AppModel::new(Some(AppConfig::default()), None, None, None)
+                .add_source(Source::FakeSource(source)))
+        }));
+
+        let model = AppModel::new(Some(AppConfig::default()), None, None, None);
+        let model = update_model(model, AppMessage::LoadFromSavefile("".to_string())).unwrap();
+
+        let (uuid, source) = make_fake_source("", "", &["second.wav"]);
+        let model = model
+            .add_source(Source::FakeSource(source))
+            .enable_source(uuid)
+            .unwrap();
+
+        assert_eq!(model.samples.borrow().len(), 2);
+    }
+
+    #[test]
+    fn test_using_real_savefile_in_test() {
+        savefile_for_test::LOAD.set(Some(|fnam| savefile::Savefile::load(fnam)));
+        savefile_for_test::SAVE.set(Some(|model, fnam| savefile::Savefile::save(model, fnam)));
+
+        let tmpfile = tempfile::NamedTempFile::new()
+            .expect("Should be able to create temporary file")
+            .into_temp_path();
+
+        println!("using tmpfile {tmpfile:?}");
+
+        let (uuid, src) = make_fake_source("abc123", "", &[]);
+
+        Savefile::save(
+            &AppModel::new(Some(AppConfig::default()), None, None, None)
+                .add_source(Source::FakeSource(src)),
+            &tmpfile
+                .to_str()
+                .expect("Temporary file should have UTF-8 filename"),
+        )
+        .expect("Should be able to Savefile::save to a temporary file");
+
+        let model = Savefile::load(
+            &tmpfile
+                .to_str()
+                .expect("Temporary file should have UTF-8 filename"),
+        )
+        .expect("Should be able to Savefile::load from temporary file");
+
+        assert_eq!(
+            model
+                .sources
+                .get(&uuid)
+                .expect("Loaded model should contain the fake source")
+                .name(),
+            Some("abc123")
+        );
+    }
 }
