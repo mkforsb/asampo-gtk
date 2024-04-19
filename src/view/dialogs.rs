@@ -1,3 +1,7 @@
+// MIT License
+//
+// Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
+
 use gtk::{glib::clone, prelude::*};
 
 use crate::{model::AppModelPtr, update, view::AsampoView, AppMessage};

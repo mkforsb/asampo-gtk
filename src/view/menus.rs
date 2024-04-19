@@ -1,3 +1,7 @@
+// MIT License
+//
+// Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
+
 use gtk::{gio::ActionEntry, glib::clone, prelude::*, Application};
 
 use crate::{model::AppModelPtr, update, view::AsampoView, AppMessage};

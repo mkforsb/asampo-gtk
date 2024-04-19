@@ -1,3 +1,7 @@
+// MIT License
+//
+// Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
+
 use std::cell::RefCell;
 
 use gtk::{
