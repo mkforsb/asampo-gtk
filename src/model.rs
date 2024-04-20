@@ -59,6 +59,7 @@ impl Default for ViewValues {
 #[derive(Clone, Debug)]
 pub struct AppModel {
     pub config: Option<AppConfig>,
+    pub config_save_timeout: Option<u32>,
     pub savefile: Option<String>,
     pub viewflags: ViewFlags,
     pub viewvalues: ViewValues,
@@ -85,6 +86,7 @@ impl AppModel {
 
         AppModel {
             config,
+            config_save_timeout: None,
             savefile,
             viewflags: ViewFlags::default(),
             viewvalues: ViewValues {

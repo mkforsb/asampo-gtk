@@ -49,6 +49,7 @@ use view::{
 
 #[derive(Debug)]
 enum AppMessage {
+    TimerTick,
     SettingsOutputSampleRateChanged(String),
     SettingsBufferSizeChanged(u16),
     SettingsSampleRateConversionQualityChanged(String),
@@ -71,7 +72,10 @@ enum AppMessage {
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
-    log::log!(log::Level::Debug, "{message:?}");
+    match message {
+        AppMessage::TimerTick => (),
+        _ => log::log!(log::Level::Debug, "{message:?}"),
+    }
 
     let old_model = model_ptr.take().unwrap();
 
@@ -103,6 +107,31 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
     }
 
     match message {
+        AppMessage::TimerTick => {
+            if let Some(0) = model.config_save_timeout {
+                let config = model
+                    .config
+                    .as_ref()
+                    .expect("There should be an active config");
+
+                log::log!(
+                    log::Level::Info,
+                    "Saving config to {:?}",
+                    config.config_save_path
+                );
+                ConfigFile::save(config, &config.config_save_path)?;
+            }
+
+            Ok(AppModel {
+                config_save_timeout: match model.config_save_timeout {
+                    Some(0) => None,
+                    Some(n) => Some(n - 1),
+                    None => None,
+                },
+                ..model
+            })
+        }
+
         AppMessage::SettingsOutputSampleRateChanged(choice) => {
             let new_config = AppConfig {
                 output_samplerate_hz: match config::OUTPUT_SAMPLE_RATE_OPTIONS.value_for(&choice) {
@@ -122,6 +151,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(AppModel {
                 config: Some(new_config),
+                config_save_timeout: Some(3),
                 viewvalues: ViewValues {
                     settings_latency_approx_label,
                     ..model.viewvalues
@@ -140,6 +170,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(AppModel {
                 config: Some(new_config),
+                config_save_timeout: Some(3),
                 viewvalues: ViewValues {
                     settings_latency_approx_label,
                     ..model.viewvalues
@@ -164,6 +195,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 },
                 ..model.config.expect("There should be an active config")
             }),
+            config_save_timeout: Some(3),
             ..model
         }),
 
@@ -183,6 +215,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 },
                 ..model.config.expect("There should be an active config")
             }),
+            config_save_timeout: Some(3),
             ..model
         }),
 
@@ -518,9 +551,17 @@ fn main() -> ExitCode {
         setup_sources_page(model_ptr.clone(), &view);
         setup_samples_page(model_ptr.clone(), &view);
 
-        build_actions(app, model_ptr, &view);
+        build_actions(app, model_ptr.clone(), &view);
 
         view.present();
+
+        gtk::glib::timeout_add_seconds_local(
+            1,
+            clone!(@strong model_ptr, @strong view => move || {
+                update(model_ptr.clone(), &view, AppMessage::TimerTick);
+                gtk::glib::ControlFlow::Continue
+            }),
+        );
     });
 
     app.run()
