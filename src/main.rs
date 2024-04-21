@@ -10,7 +10,7 @@ mod savefile;
 mod testutils;
 mod view;
 
-use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc};
+use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc, thread, time::Duration};
 
 use anyhow::anyhow;
 use config::AppConfig;
@@ -120,16 +120,41 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     config.config_save_path
                 );
                 ConfigFile::save(config, &config.config_save_path)?;
-            }
 
-            Ok(AppModel {
-                config_save_timeout: match model.config_save_timeout {
-                    Some(0) => None,
-                    Some(n) => Some(n - 1),
-                    None => None,
-                },
-                ..model
-            })
+                log::log!(log::Level::Info, "Respawning audiothread with new config");
+
+                if let Some(prev_tx) = model.audiothread_tx {
+                    match prev_tx.send(audiothread::Message::Shutdown()) {
+                        Ok(_) => thread::sleep(Duration::from_millis(10)),
+                        Err(e) => {
+                            log::log!(log::Level::Error, "Error shutting down audiothread: {e:?}")
+                        }
+                    }
+                }
+
+                let (tx, rx) = mpsc::channel();
+
+                Ok(AppModel {
+                    config_save_timeout: None,
+                    audiothread_tx: Some(tx),
+                    _audiothread_handle: Some(Rc::new(audiothread::spawn(
+                        rx,
+                        Some(
+                            audiothread::Opts::default()
+                                .with_name("asampo")
+                                .with_sample_rate(config.output_samplerate_hz)
+                                .with_sr_conv_quality(config.sample_rate_conversion_quality.clone())
+                                .with_bufsize_n_stereo_samples(config.buffer_size_samples.into()),
+                        ),
+                    ))),
+                    ..model
+                })
+            } else {
+                Ok(AppModel {
+                    config_save_timeout: model.config_save_timeout.map(|n| n - 1),
+                    ..model
+                })
+            }
         }
 
         AppMessage::SettingsOutputSampleRateChanged(choice) => {
@@ -531,7 +556,7 @@ fn main() -> ExitCode {
             rx,
             Some(
                 audiothread::Opts::default()
-                    .with_name("Asampo")
+                    .with_name("asampo")
                     .with_sr_conv_quality(config.sample_rate_conversion_quality.clone())
                     .with_bufsize_n_stereo_samples(config.buffer_size_samples.into()),
             ),
@@ -633,8 +658,8 @@ mod tests {
 
     #[test]
     fn test_using_real_savefile_in_test() {
-        savefile_for_test::LOAD.set(Some(|fnam| savefile::Savefile::load(fnam)));
-        savefile_for_test::SAVE.set(Some(|model, fnam| savefile::Savefile::save(model, fnam)));
+        savefile_for_test::LOAD.set(Some(savefile::Savefile::load));
+        savefile_for_test::SAVE.set(Some(savefile::Savefile::save));
 
         let tmpfile = tempfile::NamedTempFile::new()
             .expect("Should be able to create temporary file")
@@ -645,14 +670,14 @@ mod tests {
         Savefile::save(
             &AppModel::new(Some(AppConfig::default()), None, None, None)
                 .add_source(Source::FakeSource(src)),
-            &tmpfile
+            tmpfile
                 .to_str()
                 .expect("Temporary file should have UTF-8 filename"),
         )
         .expect("Should be able to Savefile::save to a temporary file");
 
         let model = Savefile::load(
-            &tmpfile
+            tmpfile
                 .to_str()
                 .expect("Temporary file should have UTF-8 filename"),
         )
