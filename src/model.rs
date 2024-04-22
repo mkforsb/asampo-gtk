@@ -58,6 +58,7 @@ impl Default for ViewValues {
 
 #[derive(Clone, Debug)]
 pub struct AppModel {
+    pub timer_enabled: bool,
     pub config: Option<AppConfig>,
     pub config_save_timeout: Option<u32>,
     pub savefile: Option<String>,
@@ -85,6 +86,7 @@ impl AppModel {
         };
 
         AppModel {
+            timer_enabled: true,
             config,
             config_save_timeout: None,
             savefile,

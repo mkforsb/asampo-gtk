@@ -4,7 +4,10 @@
 
 mod config;
 mod configfile;
+
+#[macro_use]
 mod ext;
+
 mod model;
 mod savefile;
 mod testutils;
@@ -30,7 +33,7 @@ use libasampo::{
 };
 
 use config::OptionMapExt;
-use ext::WithModel;
+use ext::{PeekModel, WithModel};
 use model::{AppModel, AppModelPtr, ViewFlags, ViewValues};
 
 #[cfg(not(test))]
@@ -75,6 +78,11 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
     match message {
         AppMessage::TimerTick => (),
         _ => log::log!(log::Level::Debug, "{message:?}"),
+    }
+
+    match message {
+        AppMessage::TimerTick if !peek_model!(model_ptr, timer_enabled) => return,
+        _ => (),
     }
 
     let old_model = model_ptr.take().unwrap();
@@ -269,6 +277,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 sources_add_fs_browse: true,
                 ..model.viewflags
             },
+            timer_enabled: false,
             ..model
         }),
 
@@ -295,6 +304,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 sources_add_fs_path_entry: text,
                 ..model.viewvalues
             },
+            timer_enabled: true,
             ..model
         }),
 
@@ -306,6 +316,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     sources_add_fs_browse: false,
                     ..model.viewflags
                 },
+                timer_enabled: true,
                 ..model
             })
         }
