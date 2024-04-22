@@ -423,21 +423,17 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             match Savefile::load(&filename) {
                 Ok(loaded_app_model) => {
-                    loaded_app_model.load_enabled_sources()?;
-                    loaded_app_model.populate_samples_listmodel();
-
-                    Ok(AppModel {
-                        viewvalues: ViewValues {
-                            samples_listview_model: loaded_app_model
-                                .viewvalues
-                                .samples_listview_model,
-                            ..model.viewvalues
-                        },
-                        sources_order: loaded_app_model.sources_order,
+                    let model = AppModel {
                         sources: loaded_app_model.sources,
-                        samples: loaded_app_model.samples,
+                        sources_order: loaded_app_model.sources_order,
                         ..model
-                    })
+                    };
+
+                    model.samples.borrow_mut().clear();
+                    model.load_enabled_sources()?;
+                    model.populate_samples_listmodel();
+
+                    Ok(model)
                 }
                 Err(e) => Err(e),
             }
@@ -484,7 +480,6 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     }
 
     maybe_update_text!(old, new, view, settings_latency_approx_label);
-
     maybe_update_text!(old, new, view, sources_add_fs_name_entry);
     maybe_update_text!(old, new, view, sources_add_fs_path_entry);
     maybe_update_text!(old, new, view, sources_add_fs_extensions_entry);
@@ -505,13 +500,6 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
 
     if old.sources != new.sources {
         update_sources_list(model_ptr, new.clone(), view);
-    }
-
-    if old.viewvalues.samples_listview_model != new.viewvalues.samples_listview_model {
-        view.samples_listview
-            .set_model(Some(&gtk::SingleSelection::new(Some(
-                new.viewvalues.samples_listview_model.clone(),
-            ))));
     }
 }
 

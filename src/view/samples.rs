@@ -15,6 +15,7 @@ use gtk::{
         Object,
     },
     prelude::*,
+    EventControllerKey, GestureClick,
 };
 use libasampo::{prelude::*, samples::Sample};
 
@@ -84,10 +85,6 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
         label.set_label(SampleListEntryState::from_obj(&entry).value.borrow().uri());
     });
 
-    let sample_clicked = clone!(@strong model_ptr, @strong view => move |_: &gtk::ListView, pos| {
-        update(model_ptr.clone(), &view, AppMessage::SampleClicked(pos));
-    });
-
     let selectmodel = gtk::SingleSelection::new(None::<gtk::gio::ListStore>);
 
     model_ptr.with_model(|model| {
@@ -99,9 +96,40 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
         .settings()
         .set_property("gtk-double-click-time", 0);
 
-    view.samples_listview.connect_activate(sample_clicked);
     view.samples_listview.set_model(Some(&selectmodel));
     view.samples_listview.set_factory(Some(&factory));
+
+    let clicked = GestureClick::new();
+
+    clicked.connect_released(
+        clone!(@strong model_ptr, @strong view => move |_, _, _, _| {
+            update(
+                model_ptr.clone(),
+                &view,
+                AppMessage::SampleClicked(
+                    view.samples_listview.model().unwrap().selection().minimum()
+                )
+            );
+        }),
+    );
+
+    view.samples_listview.add_controller(clicked);
+
+    let keyed = EventControllerKey::new();
+
+    keyed.connect_key_released(
+        clone!(@strong model_ptr, @strong view => move |_, _, _, _| {
+            update(
+                model_ptr.clone(),
+                &view,
+                AppMessage::SampleClicked(
+                    view.samples_listview.model().unwrap().selection().minimum()
+                )
+            );
+        }),
+    );
+
+    view.samples_listview.add_controller(keyed);
 
     view.samples_list_filter_entry.connect_changed(
         clone!(@strong model_ptr, @strong view => move |e: &gtk::Entry| {

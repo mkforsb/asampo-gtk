@@ -637,7 +637,6 @@
                         <child>
                           <object class="GtkListView" id="samples_listview">
                               <property name="vexpand">true</property>
-                              <property name="single_click_activate">true</property>
                           </object>
                         </child>
                       </object>
