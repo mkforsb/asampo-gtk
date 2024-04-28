@@ -671,11 +671,6 @@
                         <child>
                           <object class="GtkLabel">
                             <property name="label">bassdrum-4mics-br-stereo-soft2.wav</property>
-                            <layout>
-                              <property name="row">1</property>
-                              <property name="column">0</property>
-                              <property name="column-span">2</property>
-                            </layout>
                           </object>
                         </child>
                         <child>
@@ -684,7 +679,7 @@
                               <object class="GtkLabel">
                                 <property name="label">Format:</property>
                                 <layout>
-                                  <property name="row">3</property>
+                                  <property name="row">0</property>
                                   <property name="column">0</property>
                                 </layout>
                               </object>
@@ -693,7 +688,7 @@
                               <object class="GtkLabel">
                                 <property name="label">PCM S16LE</property>
                                 <layout>
-                                  <property name="row">3</property>
+                                  <property name="row">0</property>
                                   <property name="column">1</property>
                                 </layout>
                               </object>
@@ -702,7 +697,7 @@
                               <object class="GtkLabel">
                                 <property name="label">Sample rate:</property>
                                 <layout>
-                                  <property name="row">4</property>
+                                  <property name="row">1</property>
                                   <property name="column">0</property>
                                 </layout>
                               </object>
@@ -711,7 +706,7 @@
                               <object class="GtkLabel">
                                 <property name="label">44.1 kHz</property>
                                 <layout>
-                                  <property name="row">4</property>
+                                  <property name="row">1</property>
                                   <property name="column">1</property>
                                 </layout>
                               </object>
@@ -720,7 +715,7 @@
                               <object class="GtkLabel">
                                 <property name="label">Size:</property>
                                 <layout>
-                                  <property name="row">5</property>
+                                  <property name="row">2</property>
                                   <property name="column">0</property>
                                 </layout>
                               </object>
@@ -729,7 +724,7 @@
                               <object class="GtkLabel">
                                 <property name="label">3 381 KiB</property>
                                 <layout>
-                                  <property name="row">5</property>
+                                  <property name="row">2</property>
                                   <property name="column">1</property>
                                 </layout>
                               </object>
@@ -738,7 +733,7 @@
                               <object class="GtkLabel">
                                 <property name="label">Length:</property>
                                 <layout>
-                                  <property name="row">6</property>
+                                  <property name="row">3</property>
                                   <property name="column">0</property>
                                 </layout>
                               </object>
@@ -747,7 +742,7 @@
                               <object class="GtkLabel">
                                 <property name="label">4.2 seconds</property>
                                 <layout>
-                                  <property name="row">6</property>
+                                  <property name="row">3</property>
                                   <property name="column">1</property>
                                 </layout>
                               </object>
@@ -756,7 +751,7 @@
                               <object class="GtkLabel">
                                 <property name="label">Source:</property>
                                 <layout>
-                                  <property name="row">7</property>
+                                  <property name="row">4</property>
                                   <property name="column">0</property>
                                 </layout>
                               </object>
@@ -765,7 +760,7 @@
                               <object class="GtkLabel">
                                 <property name="label">Drumkits</property>
                                 <layout>
-                                  <property name="row">7</property>
+                                  <property name="row">4</property>
                                   <property name="column">1</property>
                                 </layout>
                               </object>
