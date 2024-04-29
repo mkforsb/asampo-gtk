@@ -657,6 +657,8 @@ mod tests {
 
     #[test]
     fn test_using_real_savefile_in_test() {
+        use libasampo::sources::{file_system_source::FilesystemSource, Source};
+
         savefile_for_test::LOAD.set(Some(savefile::Savefile::load));
         savefile_for_test::SAVE.set(Some(savefile::Savefile::save));
 
@@ -664,11 +666,16 @@ mod tests {
             .expect("Should be able to create temporary file")
             .into_temp_path();
 
-        let (uuid, src) = make_fake_source("abc123", "", &[]);
+        let src = Source::FilesystemSource(FilesystemSource::new_named(
+            "abc123".to_string(),
+            "/tmp".to_string(),
+            ["mp3".to_string()].to_vec(),
+        ));
+
+        let uuid = *src.uuid();
 
         Savefile::save(
-            &AppModel::new(Some(AppConfig::default()), None, None, None)
-                .add_source(Source::FakeSource(src)),
+            &AppModel::new(Some(AppConfig::default()), None, None, None).add_source(src),
             tmpfile
                 .to_str()
                 .expect("Temporary file should have UTF-8 filename"),
