@@ -596,7 +596,7 @@ mod tests {
     use std::collections::HashMap;
 
     use libasampo::{
-        samples::{BasicSample, Sample},
+        samples::{BaseSample, Sample},
         sources::FakeSource,
     };
 
@@ -613,7 +613,7 @@ mod tests {
             list: samples
                 .iter()
                 .map(|s| {
-                    Sample::BasicSample(BasicSample::new(
+                    Sample::BaseSample(BaseSample::new(
                         s.to_string(),
                         s.to_string(),
                         libasampo::samples::SampleMetadata {
