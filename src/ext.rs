@@ -4,8 +4,7 @@
 
 use std::{cell::Cell, collections::HashMap};
 
-use libasampo::sources::Source;
-use uuid::Uuid;
+use anyhow::anyhow;
 
 pub trait WithModel<T, F>
 where
@@ -52,20 +51,71 @@ macro_rules! peek_model {
     };
 }
 
-pub trait ClonedUpdateWith<T, F>
-where
-    Self: Sized,
-    F: FnOnce(Self) -> T,
-{
-    fn cloned_update_with(&self, f: F) -> T;
-}
-
-impl<T, F> ClonedUpdateWith<T, F> for HashMap<Uuid, Source>
+pub trait ClonedHashMapExt<K, V>
 where
     Self: Clone,
-    F: FnOnce(Self) -> T,
+    K: Eq + std::hash::Hash,
 {
-    fn cloned_update_with(&self, f: F) -> T {
+    fn cloned_update_with<T, F>(&self, f: F) -> Result<T, anyhow::Error>
+    where
+        F: FnOnce(Self) -> Result<T, anyhow::Error>;
+
+    fn clone_and_remove(&self, key: &K) -> Result<Self, anyhow::Error>;
+    fn clone_and_insert(&self, key: K, value: V) -> Self;
+}
+
+impl<K, V> ClonedHashMapExt<K, V> for HashMap<K, V>
+where
+    Self: Clone,
+    K: Eq + std::hash::Hash,
+{
+    fn cloned_update_with<T, F>(&self, f: F) -> Result<T, anyhow::Error>
+    where
+        F: FnOnce(Self) -> Result<T, anyhow::Error>,
+    {
         f(self.clone())
+    }
+
+    fn clone_and_remove(&self, key: &K) -> Result<Self, anyhow::Error> {
+        let mut result = self.clone();
+        result.remove(key).ok_or(anyhow!("Key not present"))?;
+        Ok(result)
+    }
+
+    fn clone_and_insert(&self, key: K, value: V) -> Self {
+        let mut result = self.clone();
+        result.insert(key, value);
+        result
+    }
+}
+
+pub trait ClonedVecExt<T> {
+    fn clone_and_remove(&self, item: &T) -> Result<Self, anyhow::Error>
+    where
+        Self: Sized;
+
+    fn clone_and_push(&self, item: T) -> Self;
+}
+
+impl<T> ClonedVecExt<T> for Vec<T>
+where
+    T: Clone + Eq,
+{
+    fn clone_and_remove(&self, item: &T) -> Result<Self, anyhow::Error> {
+        let mut result = self.clone();
+
+        let index = result
+            .iter()
+            .position(|val| val == item)
+            .ok_or(anyhow!("Item not found"))?;
+
+        result.remove(index);
+        Ok(result)
+    }
+
+    fn clone_and_push(&self, item: T) -> Self {
+        let mut result = self.clone();
+        result.push(item);
+        result
     }
 }

@@ -15,7 +15,7 @@ use gtk::{gio::ListStore, prelude::*};
 use libasampo::{prelude::*, samples::Sample, sources::Source};
 use uuid::Uuid;
 
-use crate::{config::AppConfig, ext::ClonedUpdateWith, view::samples::SampleListEntry};
+use crate::{config::AppConfig, ext::{ClonedHashMapExt, ClonedVecExt}, view::samples::SampleListEntry};
 
 #[derive(Debug, Clone)]
 pub struct ViewFlags {
@@ -176,25 +176,9 @@ impl AppModel {
     }
 
     pub fn remove_source(self, uuid: Uuid) -> Result<Self, anyhow::Error> {
-        let mut new_order = self.sources_order.clone();
-
-        new_order.remove(
-            new_order
-                .iter()
-                .position(|x| *x == uuid)
-                .ok_or(anyhow!("Failed to remove source: uuid not found!"))?,
-        );
-
         Ok(AppModel {
-            sources_order: new_order,
-            sources: self.sources.cloned_update_with(
-                |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
-                    match s.remove(&uuid) {
-                        Some(_) => Ok(s),
-                        None => Err(anyhow!("Failed to remove source")),
-                    }
-                },
-            )?,
+            sources_order: self.sources_order.clone_and_remove(&uuid)?,
+            sources: self.sources.clone_and_remove(&uuid)?,
             ..self.disable_source(uuid)?
         })
     }
