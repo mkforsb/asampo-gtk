@@ -12,10 +12,14 @@ use std::{
 
 use anyhow::anyhow;
 use gtk::{gio::ListStore, prelude::*};
-use libasampo::{prelude::*, samples::Sample, sources::Source};
+use libasampo::{prelude::*, samples::Sample, samplesets::SampleSet, sources::Source};
 use uuid::Uuid;
 
-use crate::{config::AppConfig, ext::{ClonedHashMapExt, ClonedVecExt}, view::samples::SampleListEntry};
+use crate::{
+    config::AppConfig,
+    ext::{ClonedHashMapExt, ClonedVecExt},
+    view::samples::SampleListEntry,
+};
 
 #[derive(Debug, Clone)]
 pub struct ViewFlags {
@@ -69,6 +73,8 @@ pub struct AppModel {
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
     pub samples: Rc<RefCell<Vec<Sample>>>,
+    pub samplesets: HashMap<Uuid, SampleSet>,
+    pub samplesets_order: Vec<Uuid>,
 }
 
 pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
@@ -101,6 +107,8 @@ impl AppModel {
             sources: HashMap::new(),
             sources_order: Vec::new(),
             samples: Rc::new(RefCell::new(Vec::new())),
+            samplesets: HashMap::new(),
+            samplesets_order: Vec::new(),
         }
     }
 
@@ -227,5 +235,46 @@ impl AppModel {
             "showing {} samples",
             self.viewvalues.samples_listview_model.n_items()
         );
+    }
+
+    pub fn add_sampleset(self, set: SampleSet) -> Self {
+        AppModel {
+            samplesets_order: self.samplesets_order.clone_and_push(*set.uuid()),
+            samplesets: self.samplesets.clone_and_insert(*set.uuid(), set),
+            ..self
+        }
+    }
+
+    pub fn remove_sampleset(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
+        Ok(AppModel {
+            samplesets_order: self.samplesets_order.clone_and_remove(&uuid)?,
+            samplesets: self.samplesets.clone_and_remove(&uuid)?,
+            ..self
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use libasampo::samplesets::BaseSampleSet;
+
+    use super::*;
+
+    #[test]
+    fn test_add_remove_sampleset() {
+        let model = AppModel::new(None, None, None, None);
+        let set = BaseSampleSet::new("Favorites");
+
+        let model = model.add_sampleset(SampleSet::BaseSampleSet(set.clone()));
+
+        assert!(model.samplesets.contains_key(set.uuid()));
+        assert_eq!(
+            model.samplesets.get(set.uuid()).unwrap().name(),
+            "Favorites"
+        );
+
+        let model = model.remove_sampleset(set.uuid()).unwrap();
+
+        assert!(!model.samplesets.contains_key(set.uuid()));
     }
 }
