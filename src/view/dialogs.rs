@@ -30,3 +30,13 @@ pub fn choose_folder(
         }),
     );
 }
+
+pub fn alert(_model_ptr: AppModelPtr, view: &AsampoView, message: &str, detail: &str) {
+    let dialog = gtk::AlertDialog::builder()
+        .modal(true)
+        .message(message)
+        .detail(detail)
+        .build();
+
+    dialog.show(Some(view));
+}

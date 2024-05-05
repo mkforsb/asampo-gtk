@@ -43,12 +43,30 @@ use savefile::Savefile;
 use testutils::savefile_for_test::Savefile;
 
 use view::{
+    dialogs,
     menus::build_actions,
     samples::{setup_samples_page, SampleListEntry},
     settings::setup_settings_page,
     sources::{setup_sources_page, update_sources_list},
     AsampoView,
 };
+
+#[derive(Debug)]
+enum ErrorWithEffect {
+    AlertDialog { text: String, detail: String },
+}
+
+impl std::fmt::Display for ErrorWithEffect {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ErrorWithEffect::AlertDialog { text, detail } => {
+                f.write_str(&format!("{}: {}", text, detail))
+            }
+        }
+    }
+}
+
+impl std::error::Error for ErrorWithEffect {}
 
 #[derive(Debug)]
 enum AppMessage {
@@ -96,6 +114,16 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
         Err(e) => {
             model_ptr.set(Some(old_model));
             log::log!(log::Level::Error, "{}", e.to_string());
+
+            if e.is::<ErrorWithEffect>() {
+                let e = e.downcast::<ErrorWithEffect>().unwrap();
+
+                match e {
+                    ErrorWithEffect::AlertDialog { text, detail } => {
+                        dialogs::alert(model_ptr.clone(), &view, &text, &detail)
+                    }
+                }
+            }
         }
     }
 }
@@ -435,7 +463,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
                     Ok(model)
                 }
-                Err(e) => Err(e),
+                Err(e) => Err(anyhow::Error::new(ErrorWithEffect::AlertDialog {
+                    text: "Error loading savefile".to_string(),
+                    detail: e.to_string(),
+                })),
             }
         }
 
@@ -485,7 +516,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     maybe_update_text!(old, new, view, sources_add_fs_extensions_entry);
 
     if new.viewflags.sources_add_fs_browse {
-        view::dialogs::choose_folder(
+        dialogs::choose_folder(
             model_ptr.clone(),
             view,
             AppMessage::AddFilesystemSourcePathBrowseSubmitted,
