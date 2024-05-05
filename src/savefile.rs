@@ -4,14 +4,18 @@
 
 use std::{io::Write, path::Path};
 
-use libasampo::{prelude::*, serialize::IntoDomain};
+use libasampo::{
+    self as la,
+    prelude::*,
+    serialize::{TryFromDomain, TryIntoDomain},
+};
 use serde::{Deserialize, Serialize};
 
 use crate::model::AppModel;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SavefileV1 {
-    sources: Vec<libasampo::serialize::Source>,
+    sources: Vec<la::serialize::Source>,
 }
 
 impl SavefileV1 {
@@ -19,7 +23,7 @@ impl SavefileV1 {
         let mut model = AppModel::new(None, None, None, None);
 
         for src in self.sources {
-            let source = src.into_domain();
+            let source = src.try_into_domain()?;
 
             model.sources_order.push(*source.uuid());
             model.sources.insert(*source.uuid(), source);
@@ -28,14 +32,16 @@ impl SavefileV1 {
         Ok(model)
     }
 
-    pub fn from_appmodel(model: &AppModel) -> SavefileV1 {
-        SavefileV1 {
+    pub fn from_appmodel(model: &AppModel) -> Result<SavefileV1, anyhow::Error> {
+        Ok(SavefileV1 {
             sources: model
                 .sources_order
                 .iter()
-                .map(|uuid| model.sources.get(uuid).unwrap().clone().into())
-                .collect::<Vec<libasampo::serialize::Source>>(),
-        }
+                .map(|uuid| {
+                    la::serialize::Source::try_from_domain(model.sources.get(uuid).unwrap())
+                })
+                .collect::<Result<Vec<la::serialize::Source>, la::errors::Error>>()?,
+        })
     }
 }
 
@@ -46,13 +52,13 @@ pub enum Savefile {
 
 impl Savefile {
     pub fn save(model: &AppModel, filename: &str) -> Result<(), anyhow::Error> {
-        let json = serde_json::to_string(&Savefile::V1(SavefileV1::from_appmodel(model)))?;
+        let json = serde_json::to_string(&Savefile::V1(SavefileV1::from_appmodel(model)?))?;
+
+        if let Some(path) = Path::new(filename).parent() {
+            std::fs::create_dir_all(path)?;
+        }
 
         {
-            if let Some(path) = Path::new(filename).parent() {
-                std::fs::create_dir_all(path)?;
-            }
-
             let mut fd = std::fs::OpenOptions::new()
                 .create(true)
                 .write(true)

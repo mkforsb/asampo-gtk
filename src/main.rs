@@ -596,7 +596,7 @@ mod tests {
     use std::collections::HashMap;
 
     use libasampo::{
-        samples::{BaseSample, Sample},
+        samples::{BaseSample, Sample, SampleURI},
         sources::FakeSource,
     };
 
@@ -614,9 +614,9 @@ mod tests {
                 .iter()
                 .map(|s| {
                     Sample::BaseSample(BaseSample::new(
-                        s.to_string(),
-                        s.to_string(),
-                        libasampo::samples::SampleMetadata {
+                        &SampleURI(s.to_string()),
+                        s,
+                        &libasampo::samples::SampleMetadata {
                             rate: 48000,
                             channels: 2,
                             src_fmt_display: "PCM".to_string(),
