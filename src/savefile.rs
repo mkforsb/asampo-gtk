@@ -16,6 +16,7 @@ use crate::model::AppModel;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SavefileV1 {
     sources: Vec<la::serialize::Source>,
+    samplesets: Vec<la::serialize::SampleSet>,
 }
 
 impl SavefileV1 {
@@ -27,6 +28,13 @@ impl SavefileV1 {
 
             model.sources_order.push(*source.uuid());
             model.sources.insert(*source.uuid(), source);
+        }
+
+        for set in self.samplesets {
+            let sampleset = set.try_into_domain()?;
+
+            model.samplesets_order.push(*sampleset.uuid());
+            model.samplesets.insert(*sampleset.uuid(), sampleset);
         }
 
         Ok(model)
@@ -41,6 +49,14 @@ impl SavefileV1 {
                     la::serialize::Source::try_from_domain(model.sources.get(uuid).unwrap())
                 })
                 .collect::<Result<Vec<la::serialize::Source>, la::errors::Error>>()?,
+
+            samplesets: model
+                .samplesets_order
+                .iter()
+                .map(|uuid| {
+                    la::serialize::SampleSet::try_from_domain(model.samplesets.get(uuid).unwrap())
+                })
+                .collect::<Result<Vec<la::serialize::SampleSet>, la::errors::Error>>()?,
         })
     }
 }
