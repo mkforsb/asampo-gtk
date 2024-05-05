@@ -68,7 +68,7 @@ pub enum Savefile {
 
 impl Savefile {
     pub fn save(model: &AppModel, filename: &str) -> Result<(), anyhow::Error> {
-        let json = serde_json::to_string(&Savefile::V1(SavefileV1::from_appmodel(model)?))?;
+        let json = serde_json::to_string_pretty(&Savefile::V1(SavefileV1::from_appmodel(model)?))?;
 
         if let Some(path) = Path::new(filename).parent() {
             std::fs::create_dir_all(path)?;
