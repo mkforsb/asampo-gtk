@@ -216,10 +216,18 @@ impl AppModel {
                 .samples_listview_model
                 .extend_from_slice(samples.as_slice());
         } else {
-            let fragments = filter.split(' ').map(|s| s.to_string()).collect::<Vec<_>>();
+            let fragments = filter
+                .split(' ')
+                .map(|s| s.to_string().to_lowercase())
+                .collect::<Vec<_>>();
 
             let mut samples = self.samples.borrow().clone();
-            samples.retain(|x| fragments.iter().all(|frag| x.uri().contains(frag)));
+
+            samples.retain(|x| {
+                fragments
+                    .iter()
+                    .all(|frag| x.uri().to_lowercase().contains(frag))
+            });
 
             self.viewvalues.samples_listview_model.extend_from_slice(
                 samples
