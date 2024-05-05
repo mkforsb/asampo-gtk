@@ -5,6 +5,7 @@
 pub mod dialogs;
 pub mod menus;
 pub mod samples;
+pub mod sets;
 pub mod settings;
 pub mod sources;
 
@@ -85,6 +86,12 @@ pub struct AsampoViewState {
 
     #[template_child]
     pub samples_listview: gtk::TemplateChild<gtk::ListView>,
+
+    #[template_child]
+    pub samplesets_add_name_entry: gtk::TemplateChild<gtk::Entry>,
+
+    #[template_child]
+    pub samplesets_add_add_button: gtk::TemplateChild<gtk::Button>,
 }
 
 impl WidgetImpl for AsampoViewState {}

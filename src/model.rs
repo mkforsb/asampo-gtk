@@ -25,6 +25,7 @@ use crate::{
 pub struct ViewFlags {
     pub sources_add_fs_fields_valid: bool,
     pub sources_add_fs_browse: bool,
+    pub samplesets_add_fields_valid: bool,
 }
 
 #[allow(clippy::derivable_impls)]
@@ -33,6 +34,7 @@ impl Default for ViewFlags {
         ViewFlags {
             sources_add_fs_fields_valid: false,
             sources_add_fs_browse: false,
+            samplesets_add_fields_valid: false,
         }
     }
 }
@@ -45,6 +47,7 @@ pub struct ViewValues {
     pub samples_list_filter: String,
     pub settings_latency_approx_label: String,
     pub samples_listview_model: ListStore,
+    pub samplesets_add_name_entry: String,
 }
 
 impl Default for ViewValues {
@@ -56,6 +59,7 @@ impl Default for ViewValues {
             samples_list_filter: String::default(),
             settings_latency_approx_label: String::default(),
             samples_listview_model: ListStore::new::<SampleListEntry>(),
+            samplesets_add_name_entry: String::default(),
         }
     }
 }

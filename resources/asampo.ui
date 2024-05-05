@@ -829,8 +829,165 @@
                 <property name="name">sets</property>
                 <property name="title">Sets</property>
                 <property name="child">
-                  <object class="GtkLabel">
-                    <property name="label">This is the sets page</property>
+                  <object class="GtkPaned">
+                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                    <property name="wide-handle">true</property>
+                    <property name="position">600</property>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="label">New set:</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkEntry" id="samplesets_add_name_entry">
+                                <property name="placeholder_text">Name</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="samplesets_add_add_button">
+                                <property name="sensitive">false</property>
+                                <property name="label">Add</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow">
+                            <child>
+                              <object class="GtkListBox">
+                                <property name="vexpand">true</property>
+                                <child>
+                                  <object class="GtkListBoxRow">
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="halign">GTK_ALIGN_START</property>
+                                        <property name="label">Kicks</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkListBoxRow">
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="halign">GTK_ALIGN_START</property>
+                                        <property name="label">Distorted</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkListBoxRow">
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="halign">GTK_ALIGN_START</property>
+                                        <property name="label">Jungle</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkBox">
+                        <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="label">Kicks</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkDropDown">
+                                <property name="model">
+                                  <object class="GtkStringList">
+                                    <items>
+                                      <item>No labelling</item>
+                                      <item>Drumkit labelling (8 pads)</item>
+                                    </items>
+                                  </object>
+                                </property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow">
+                            <child>
+                              <object class="GtkListBox">
+                                <property name="vexpand">true</property>
+                                <child>
+                                  <object class="GtkListBoxRow">
+                                    <child>
+                                      <object class="GtkBox">
+                                        <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <property name="halign">GTK_ALIGN_START</property>
+                                            <property name="label">1.wav</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkDropDown">
+                                            <property name="model">
+                                              <object class="GtkStringList">
+                                                <items>
+                                                  <item>None</item>
+                                                  <item>Bass drum</item>
+                                                  <item>Snare</item>
+                                                  <item>Clap</item>
+                                                  <item>Closed hihat</item>
+                                                  <item>Open hihat</item>
+                                                  <item>Rimshot</item>
+                                                  <item>Ride cymbal</item>
+                                                  <item>Crash cymbal</item>
+                                                </items>
+                                              </object>
+                                            </property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkListBoxRow">
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="halign">GTK_ALIGN_START</property>
+                                        <property name="label">2.wav</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkListBoxRow">
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="halign">GTK_ALIGN_START</property>
+                                        <property name="label">3.wav</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                      </object>
+                    </child>
                   </object>
                 </property>
               </object>

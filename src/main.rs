@@ -29,6 +29,7 @@ use uuid::Uuid;
 
 use libasampo::{
     prelude::*,
+    samplesets::{BaseSampleSet, SampleSet},
     sources::{file_system_source::FilesystemSource, Source},
 };
 
@@ -46,6 +47,7 @@ use view::{
     dialogs,
     menus::build_actions,
     samples::{setup_samples_page, SampleListEntry},
+    sets::setup_sets_page,
     settings::setup_settings_page,
     sources::{setup_sources_page, update_sources_list},
     AsampoView,
@@ -90,6 +92,8 @@ enum AppMessage {
     LoadFromSavefile(String),
     SaveToSavefile(String),
     DialogError(gtk::glib::Error),
+    AddSampleSetNameChanged(String),
+    AddSampleSetClicked(),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -496,6 +500,40 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(model)
         }
+
+        AppMessage::AddSampleSetNameChanged(text) => Ok(check_sources_add_fs_valid(AppModel {
+            viewflags: ViewFlags {
+                samplesets_add_fields_valid: !text.is_empty(),
+                ..model.viewflags
+            },
+            viewvalues: ViewValues {
+                samplesets_add_name_entry: text,
+                ..model.viewvalues
+            },
+            ..model
+        })),
+
+        AppMessage::AddSampleSetClicked() => {
+            assert!(!model.viewvalues.samplesets_add_name_entry.is_empty());
+
+            let set = SampleSet::BaseSampleSet(BaseSampleSet::new(
+                &model.viewvalues.samplesets_add_name_entry,
+            ));
+
+            let result = model.add_sampleset(set);
+
+            Ok(AppModel {
+                viewflags: ViewFlags {
+                    samplesets_add_fields_valid: false,
+                    ..result.viewflags
+                },
+                viewvalues: ViewValues {
+                    samplesets_add_name_entry: "".to_string(),
+                    ..result.viewvalues
+                },
+                ..result
+            })
+        }
     }
 }
 
@@ -514,6 +552,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     maybe_update_text!(old, new, view, sources_add_fs_name_entry);
     maybe_update_text!(old, new, view, sources_add_fs_path_entry);
     maybe_update_text!(old, new, view, sources_add_fs_extensions_entry);
+    maybe_update_text!(old, new, view, samplesets_add_name_entry);
 
     if new.viewflags.sources_add_fs_browse {
         dialogs::choose_folder(
@@ -527,6 +566,11 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     if old.viewflags.sources_add_fs_fields_valid != new.viewflags.sources_add_fs_fields_valid {
         view.sources_add_fs_add_button
             .set_sensitive(new.viewflags.sources_add_fs_fields_valid);
+    }
+
+    if old.viewflags.samplesets_add_fields_valid != new.viewflags.samplesets_add_fields_valid {
+        view.samplesets_add_add_button
+            .set_sensitive(new.viewflags.samplesets_add_fields_valid);
     }
 
     if old.sources != new.sources {
@@ -605,6 +649,7 @@ fn main() -> ExitCode {
         setup_settings_page(model_ptr.clone(), &view);
         setup_sources_page(model_ptr.clone(), &view);
         setup_samples_page(model_ptr.clone(), &view);
+        setup_sets_page(model_ptr.clone(), &view);
 
         build_actions(app, model_ptr.clone(), &view);
 
