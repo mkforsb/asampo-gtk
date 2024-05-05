@@ -345,7 +345,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             ));
 
             let uuid = *new_source.uuid();
-            let model = model.add_source(new_source).enable_source(uuid).unwrap();
+            let model = model.add_source(new_source).enable_source(&uuid).unwrap();
 
             Ok(AppModel {
                 #[allow(clippy::needless_update)]
@@ -407,15 +407,15 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         .map_ref(AppModel::populate_samples_listmodel)),
 
         AppMessage::SourceEnabled(uuid) => Ok(model
-            .enable_source(uuid)?
+            .enable_source(&uuid)?
             .map_ref(AppModel::populate_samples_listmodel)),
 
         AppMessage::SourceDisabled(uuid) => Ok(model
-            .disable_source(uuid)?
+            .disable_source(&uuid)?
             .map_ref(AppModel::populate_samples_listmodel)),
 
         AppMessage::SourceDeleteClicked(uuid) => Ok(model
-            .remove_source(uuid)?
+            .remove_source(&uuid)?
             .map_ref(AppModel::populate_samples_listmodel)),
 
         AppMessage::LoadFromSavefile(filename) => {
@@ -649,7 +649,7 @@ mod tests {
         let (uuid, source) = make_fake_source("", "", &["second.wav"]);
         let model = model
             .add_source(Source::FakeSource(source))
-            .enable_source(uuid)
+            .enable_source(&uuid)
             .unwrap();
 
         assert_eq!(model.samples.borrow().len(), 2);

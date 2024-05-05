@@ -136,10 +136,10 @@ impl AppModel {
         Ok(())
     }
 
-    pub fn enable_source(self, uuid: Uuid) -> Result<Self, anyhow::Error> {
+    pub fn enable_source(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
         self.samples.borrow_mut().extend(
             self.sources
-                .get(&uuid)
+                .get(uuid)
                 .ok_or_else(|| anyhow!("Failed to enable source: uuid not found!"))?
                 .list()?,
         );
@@ -147,7 +147,7 @@ impl AppModel {
         Ok(AppModel {
             sources: self.sources.cloned_update_with(
                 |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
-                    s.get_mut(&uuid)
+                    s.get_mut(uuid)
                         .ok_or_else(|| anyhow!("Failed to enable source: uuid not found!"))?
                         .enable();
                     Ok(s)
@@ -157,15 +157,15 @@ impl AppModel {
         })
     }
 
-    pub fn disable_source(self, uuid: Uuid) -> Result<Self, anyhow::Error> {
+    pub fn disable_source(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
         self.samples
             .borrow_mut()
-            .retain(|s| s.source_uuid() != Some(&uuid));
+            .retain(|s| s.source_uuid() != Some(uuid));
 
         Ok(AppModel {
             sources: self.sources.cloned_update_with(
                 |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
-                    s.get_mut(&uuid)
+                    s.get_mut(uuid)
                         .ok_or_else(|| anyhow!("Failed to disable source: uuid not found!"))?
                         .disable();
                     Ok(s)
@@ -175,10 +175,10 @@ impl AppModel {
         })
     }
 
-    pub fn remove_source(self, uuid: Uuid) -> Result<Self, anyhow::Error> {
+    pub fn remove_source(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
         Ok(AppModel {
-            sources_order: self.sources_order.clone_and_remove(&uuid)?,
-            sources: self.sources.clone_and_remove(&uuid)?,
+            sources_order: self.sources_order.clone_and_remove(uuid)?,
+            sources: self.sources.clone_and_remove(uuid)?,
             ..self.disable_source(uuid)?
         })
     }
