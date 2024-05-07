@@ -9,9 +9,11 @@ pub mod savefile_for_test {
     use crate::model::AppModel;
 
     thread_local! {
+        #[allow(clippy::type_complexity)]
         pub static SAVE: Cell<Option<fn(&AppModel, &str) -> Result<(), anyhow::Error>>>
             = Cell::new(None);
 
+        #[allow(clippy::type_complexity)]
         pub static LOAD: Cell<Option<fn(&str) -> Result<AppModel, anyhow::Error>>>
             = Cell::new(None);
     }
