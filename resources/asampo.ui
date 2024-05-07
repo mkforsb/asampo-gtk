@@ -663,14 +663,14 @@
                       <object class="GtkBox">
                         <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
                         <child>
-                          <object class="GtkDrawingArea" id="waveform">
+                          <object class="GtkDrawingArea" id="samples_sidebar_waveform">
                             <property name="content-width">300</property>
                             <property name="content-height">72</property>
                           </object>
                         </child>
                         <child>
-                          <object class="GtkLabel">
-                            <property name="label">bassdrum-4mics-br-stereo-soft2.wav</property>
+                          <object class="GtkLabel" id="samples_sidebar_name_label">
+                            <property name="label"></property>
                           </object>
                         </child>
                         <child>
@@ -685,8 +685,8 @@
                               </object>
                             </child>
                             <child>
-                              <object class="GtkLabel">
-                                <property name="label">PCM S16LE</property>
+                              <object class="GtkLabel" id="samples_sidebar_format_label">
+                                <property name="label">-</property>
                                 <layout>
                                   <property name="row">0</property>
                                   <property name="column">1</property>
@@ -703,8 +703,8 @@
                               </object>
                             </child>
                             <child>
-                              <object class="GtkLabel">
-                                <property name="label">44.1 kHz</property>
+                              <object class="GtkLabel" id="samples_sidebar_rate_label">
+                                <property name="label">-</property>
                                 <layout>
                                   <property name="row">1</property>
                                   <property name="column">1</property>
@@ -721,8 +721,8 @@
                               </object>
                             </child>
                             <child>
-                              <object class="GtkLabel">
-                                <property name="label">3 381 KiB</property>
+                              <object class="GtkLabel" id="samples_sidebar_size_label">
+                                <property name="label">-</property>
                                 <layout>
                                   <property name="row">2</property>
                                   <property name="column">1</property>
@@ -739,8 +739,8 @@
                               </object>
                             </child>
                             <child>
-                              <object class="GtkLabel">
-                                <property name="label">4.2 seconds</property>
+                              <object class="GtkLabel" id="samples_sidebar_length_label">
+                                <property name="label">-</property>
                                 <layout>
                                   <property name="row">3</property>
                                   <property name="column">1</property>
@@ -757,8 +757,8 @@
                               </object>
                             </child>
                             <child>
-                              <object class="GtkLabel">
-                                <property name="label">Drumkits</property>
+                              <object class="GtkLabel" id="samples_sidebar_source_label">
+                                <property name="label">-</property>
                                 <layout>
                                   <property name="row">4</property>
                                   <property name="column">1</property>
@@ -781,37 +781,7 @@
                             <child>
                               <object class="GtkFrame">
                                 <child>
-                                  <object class="GtkListBox">
-                                    <child>
-                                      <object class="GtkListBoxRow">
-                                        <child>
-                                          <object class="GtkLabel">
-                                            <property name="halign">GTK_ALIGN_START</property>
-                                            <property name="label">Kicks</property>
-                                          </object>
-                                        </child>
-                                      </object>
-                                    </child>
-                                    <child>
-                                      <object class="GtkListBoxRow">
-                                        <child>
-                                          <object class="GtkLabel">
-                                            <property name="halign">GTK_ALIGN_START</property>
-                                            <property name="label">Distorted</property>
-                                          </object>
-                                        </child>
-                                      </object>
-                                    </child>
-                                    <child>
-                                      <object class="GtkListBoxRow">
-                                        <child>
-                                          <object class="GtkLabel">
-                                            <property name="halign">GTK_ALIGN_START</property>
-                                            <property name="label">Jungle</property>
-                                          </object>
-                                        </child>
-                                      </object>
-                                    </child>
+                                  <object class="GtkListBox" id="samples_sidebar_sets_list">
                                   </object>
                                 </child>
                               </object>

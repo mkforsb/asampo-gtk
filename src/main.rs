@@ -11,6 +11,7 @@ mod ext;
 mod model;
 mod savefile;
 mod testutils;
+mod util;
 mod view;
 
 use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc, thread, time::Duration};
@@ -53,7 +54,7 @@ use view::{
     AsampoView,
 };
 
-use crate::view::sets::update_samplesets_list;
+use crate::view::{samples::update_samples_sidebar, sets::update_samplesets_list};
 
 #[derive(Debug)]
 enum ErrorWithEffect {
@@ -425,7 +426,13 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                         ),
                     )?;
 
-                    Ok(model)
+                    Ok(AppModel {
+                        viewvalues: ViewValues {
+                            samples_selected_sample: Some(sample.borrow().clone()),
+                            ..model.viewvalues
+                        },
+                        ..model
+                    })
                 }
                 None => Err(anyhow!("Could not obtain clicked sample (this is a bug)")),
             }
@@ -572,13 +579,17 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             .set_sensitive(new.viewflags.sources_add_fs_fields_valid);
     }
 
+    if old.sources != new.sources {
+        update_sources_list(model_ptr.clone(), new.clone(), view);
+    }
+
     if old.viewflags.samplesets_add_fields_valid != new.viewflags.samplesets_add_fields_valid {
         view.samplesets_add_add_button
             .set_sensitive(new.viewflags.samplesets_add_fields_valid);
     }
 
-    if old.sources != new.sources {
-        update_sources_list(model_ptr.clone(), new.clone(), view);
+    if old.viewvalues.samples_selected_sample != new.viewvalues.samples_selected_sample {
+        update_samples_sidebar(model_ptr.clone(), new.clone(), view);
     }
 
     if old.samplesets != new.samplesets {
@@ -704,6 +715,8 @@ mod tests {
                             rate: 48000,
                             channels: 2,
                             src_fmt_display: "PCM".to_string(),
+                            size_bytes: Some(0),
+                            length_millis: Some(0),
                         },
                         Some(uuid),
                     ))

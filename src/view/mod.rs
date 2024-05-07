@@ -91,7 +91,28 @@ pub struct AsampoViewState {
     pub samples_listview: gtk::TemplateChild<gtk::ListView>,
 
     #[template_child]
-    pub waveform: gtk::TemplateChild<gtk::DrawingArea>,
+    pub samples_sidebar_waveform: gtk::TemplateChild<gtk::DrawingArea>,
+
+    #[template_child]
+    pub samples_sidebar_name_label: gtk::TemplateChild<gtk::Label>,
+
+    #[template_child]
+    pub samples_sidebar_format_label: gtk::TemplateChild<gtk::Label>,
+
+    #[template_child]
+    pub samples_sidebar_rate_label: gtk::TemplateChild<gtk::Label>,
+
+    #[template_child]
+    pub samples_sidebar_size_label: gtk::TemplateChild<gtk::Label>,
+
+    #[template_child]
+    pub samples_sidebar_length_label: gtk::TemplateChild<gtk::Label>,
+
+    #[template_child]
+    pub samples_sidebar_source_label: gtk::TemplateChild<gtk::Label>,
+
+    #[template_child]
+    pub samples_sidebar_sets_list: gtk::TemplateChild<gtk::ListBox>,
 
     #[template_child]
     pub samplesets_add_name_entry: gtk::TemplateChild<gtk::Entry>,

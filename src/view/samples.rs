@@ -19,7 +19,7 @@ use gtk::{
 };
 use libasampo::{prelude::*, samples::Sample};
 
-use crate::{update, view::AsampoView, AppMessage, AppModelPtr, WithModel};
+use crate::{model::AppModel, update, util, view::AsampoView, AppMessage, AppModelPtr, WithModel};
 
 #[derive(Default, Debug)]
 pub struct SampleListEntryState {
@@ -136,4 +136,57 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
             update(model_ptr.clone(), &view, AppMessage::SamplesFilterChanged(e.text().to_string()));
         }),
     );
+}
+
+pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
+    match &model.viewvalues.samples_selected_sample {
+        Some(sample) => {
+            view.samples_sidebar_name_label.set_text(sample.name());
+
+            view.samples_sidebar_rate_label
+                .set_text(&format!("{} Hz", sample.metadata().rate));
+
+            view.samples_sidebar_format_label
+                .set_text(&sample.metadata().src_fmt_display);
+
+            view.samples_sidebar_size_label.set_text(&format!(
+                "{}",
+                util::readable_size(sample.metadata().size_bytes)
+            ));
+
+            view.samples_sidebar_length_label.set_text(&format!(
+                "{}",
+                util::readable_length(sample.metadata().length_millis)
+            ));
+
+            match sample.source_uuid() {
+                Some(uuid) => view.samples_sidebar_source_label.set_text(
+                    model
+                        .sources
+                        .get(uuid)
+                        .map_or("???", |src| src.name().unwrap_or("Unnamed")),
+                ),
+                None => view.samples_sidebar_source_label.set_text("-"),
+            };
+
+            view.samples_sidebar_sets_list.remove_all();
+
+            for uuid in &model.samplesets_order {
+                let set = model.samplesets.get(uuid).unwrap();
+
+                if set.contains(sample) {
+                    view.samples_sidebar_sets_list
+                        .append(&gtk::Label::builder().label(set.name()).build());
+                }
+            }
+        }
+        None => {
+            view.samples_sidebar_name_label.set_text("-");
+            view.samples_sidebar_rate_label.set_text("-");
+            view.samples_sidebar_format_label.set_text("-");
+            view.samples_sidebar_size_label.set_text("-");
+            view.samples_sidebar_length_label.set_text("-");
+            view.samples_sidebar_source_label.set_text("-");
+        }
+    }
 }
