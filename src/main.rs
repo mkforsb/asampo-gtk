@@ -126,7 +126,7 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
 
                 match e {
                     ErrorWithEffect::AlertDialog { text, detail } => {
-                        dialogs::alert(model_ptr.clone(), &view, &text, &detail)
+                        dialogs::alert(model_ptr.clone(), view, &text, &detail)
                     }
                 }
             }

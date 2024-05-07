@@ -25,7 +25,7 @@ pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
     );
 }
 
-pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
+pub fn update_samplesets_list(_model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
     view.samplesets_list.remove_all();
 
     for uuid in model.samplesets_order.iter() {

@@ -259,8 +259,8 @@ impl AppModel {
 
     pub fn remove_sampleset(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
         Ok(AppModel {
-            samplesets_order: self.samplesets_order.clone_and_remove(&uuid)?,
-            samplesets: self.samplesets.clone_and_remove(&uuid)?,
+            samplesets_order: self.samplesets_order.clone_and_remove(uuid)?,
+            samplesets: self.samplesets.clone_and_remove(uuid)?,
             ..self
         })
     }
