@@ -10,13 +10,21 @@ use crate::{update, view::AsampoView, AppMessage, AppModel, AppModelPtr};
 pub fn setup_sources_page(model_ptr: AppModelPtr, view: &AsampoView) {
     view.sources_add_fs_name_entry.connect_changed(
         clone!(@strong model_ptr, @strong view => move |e: &gtk::Entry| {
-            update(model_ptr.clone(), &view, AppMessage::AddFilesystemSourceNameChanged(e.text().to_string()));
+            update(
+                model_ptr.clone(),
+                &view,
+                AppMessage::AddFilesystemSourceNameChanged(e.text().to_string())
+            );
         }),
     );
 
     view.sources_add_fs_path_entry.connect_changed(
         clone!(@strong model_ptr, @strong view => move |e: &gtk::Entry| {
-            update(model_ptr.clone(), &view, AppMessage::AddFilesystemSourcePathChanged(e.text().to_string()));
+            update(
+                model_ptr.clone(),
+                &view,
+                AppMessage::AddFilesystemSourcePathChanged(e.text().to_string())
+            );
         }),
     );
 
@@ -28,7 +36,11 @@ pub fn setup_sources_page(model_ptr: AppModelPtr, view: &AsampoView) {
 
     view.sources_add_fs_extensions_entry.connect_changed(
         clone!(@strong model_ptr, @strong view => move |e: &gtk::Entry| {
-            update(model_ptr.clone(), &view, AppMessage::AddFilesystemSourceExtensionsChanged(e.text().to_string()));
+            update(
+                model_ptr.clone(),
+                &view,
+                AppMessage::AddFilesystemSourceExtensionsChanged(e.text().to_string())
+            );
         }),
     );
 
