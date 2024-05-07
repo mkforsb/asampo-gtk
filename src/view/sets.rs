@@ -1,7 +1,7 @@
 // MIT License
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
-use gtk::{glib::clone, prelude::*};
+use gtk::{glib::clone, prelude::*, GestureClick};
 use libasampo::samplesets::SampleSetOps;
 
 use crate::{
@@ -50,6 +50,14 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
         let label = label_raw.dynamic_cast_ref::<gtk::Label>().unwrap();
 
         label.set_text(model.samplesets.get(uuid).unwrap().name());
+
+        let clicked = GestureClick::new();
+
+        clicked.connect_pressed(|e: &GestureClick, _, _, _| {
+            e.widget().activate();
+        });
+
+        row.add_controller(clicked);
 
         view.samplesets_list.append(row);
     }
