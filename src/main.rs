@@ -53,6 +53,8 @@ use view::{
     AsampoView,
 };
 
+use crate::view::sets::update_samplesets_list;
+
 #[derive(Debug)]
 enum ErrorWithEffect {
     AlertDialog { text: String, detail: String },
@@ -574,7 +576,11 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     }
 
     if old.sources != new.sources {
-        update_sources_list(model_ptr, new.clone(), view);
+        update_sources_list(model_ptr.clone(), new.clone(), view);
+    }
+
+    if old.samplesets != new.samplesets {
+        update_samplesets_list(model_ptr, new.clone(), view);
     }
 }
 
