@@ -23,15 +23,16 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct ViewFlags {
+    pub timer_enabled: bool,
     pub sources_add_fs_fields_valid: bool,
     pub sources_add_fs_browse: bool,
     pub samplesets_add_fields_valid: bool,
 }
 
-#[allow(clippy::derivable_impls)]
 impl Default for ViewFlags {
     fn default() -> Self {
         ViewFlags {
+            timer_enabled: true,
             sources_add_fs_fields_valid: false,
             sources_add_fs_browse: false,
             samplesets_add_fields_valid: false,
@@ -68,7 +69,6 @@ impl Default for ViewValues {
 
 #[derive(Clone, Debug)]
 pub struct AppModel {
-    pub timer_enabled: bool,
     pub config: Option<AppConfig>,
     pub config_save_timeout: Option<u32>,
     pub savefile: Option<String>,
@@ -98,7 +98,6 @@ impl AppModel {
         };
 
         AppModel {
-            timer_enabled: true,
             config,
             config_save_timeout: None,
             savefile,

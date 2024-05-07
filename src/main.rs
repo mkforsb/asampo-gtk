@@ -106,7 +106,7 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
     }
 
     match message {
-        AppMessage::TimerTick if !peek_model!(model_ptr, timer_enabled) => return,
+        AppMessage::TimerTick if !peek_model!(model_ptr, viewflags.timer_enabled) => return,
         _ => (),
     }
 
@@ -309,15 +309,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::AddFilesystemSourcePathBrowseClicked => Ok(AppModel {
             viewflags: ViewFlags {
+                timer_enabled: false,
                 sources_add_fs_browse: true,
                 ..model.viewflags
             },
-            timer_enabled: false,
             ..model
         }),
 
         AppMessage::AddFilesystemSourcePathBrowseSubmitted(text) => Ok(AppModel {
             viewflags: ViewFlags {
+                timer_enabled: true,
                 sources_add_fs_browse: false,
                 ..model.viewflags
             },
@@ -339,7 +340,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 sources_add_fs_path_entry: text,
                 ..model.viewvalues
             },
-            timer_enabled: true,
             ..model
         }),
 
@@ -348,10 +348,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(AppModel {
                 viewflags: ViewFlags {
+                    timer_enabled: true,
                     sources_add_fs_browse: false,
                     ..model.viewflags
                 },
-                timer_enabled: true,
                 ..model
             })
         }
