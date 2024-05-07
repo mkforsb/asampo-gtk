@@ -860,38 +860,8 @@
                         <child>
                           <object class="GtkScrolledWindow">
                             <child>
-                              <object class="GtkListBox">
+                              <object class="GtkListBox" id="samplesets_list">
                                 <property name="vexpand">true</property>
-                                <child>
-                                  <object class="GtkListBoxRow">
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="halign">GTK_ALIGN_START</property>
-                                        <property name="label">Kicks</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkListBoxRow">
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="halign">GTK_ALIGN_START</property>
-                                        <property name="label">Distorted</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkListBoxRow">
-                                    <child>
-                                      <object class="GtkLabel">
-                                        <property name="halign">GTK_ALIGN_START</property>
-                                        <property name="label">Jungle</property>
-                                      </object>
-                                    </child>
-                                  </object>
-                                </child>
                               </object>
                             </child>
                           </object>

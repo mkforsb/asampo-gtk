@@ -22,6 +22,9 @@ pub struct AsampoViewState {
     pub main_menu_button: gtk::TemplateChild<gtk::MenuButton>,
 
     #[template_child]
+    pub stack: gtk::TemplateChild<gtk::Stack>,
+
+    #[template_child]
     pub settings_output_sample_rate_entry: gtk::TemplateChild<gtk::DropDown>,
 
     #[template_child]
@@ -88,10 +91,16 @@ pub struct AsampoViewState {
     pub samples_listview: gtk::TemplateChild<gtk::ListView>,
 
     #[template_child]
+    pub waveform: gtk::TemplateChild<gtk::DrawingArea>,
+
+    #[template_child]
     pub samplesets_add_name_entry: gtk::TemplateChild<gtk::Entry>,
 
     #[template_child]
     pub samplesets_add_add_button: gtk::TemplateChild<gtk::Button>,
+
+    #[template_child]
+    pub samplesets_list: gtk::TemplateChild<gtk::ListBox>,
 }
 
 impl WidgetImpl for AsampoViewState {}
