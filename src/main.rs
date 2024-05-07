@@ -460,6 +460,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     let model = AppModel {
                         sources: loaded_app_model.sources,
                         sources_order: loaded_app_model.sources_order,
+                        samplesets: loaded_app_model.samplesets,
+                        samplesets_order: loaded_app_model.samplesets_order,
                         ..model
                     };
 
