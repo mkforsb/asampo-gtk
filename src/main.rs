@@ -94,6 +94,7 @@ enum AppMessage {
     AddFilesystemSourceClicked,
     SampleClicked(u32),
     SamplesFilterChanged(String),
+    SampleSidebarAddToSetClicked,
     SourceEnabled(Uuid),
     SourceDisabled(Uuid),
     SourceDeleteClicked(Uuid),
@@ -454,6 +455,15 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
         .map_ref(AppModel::populate_samples_listmodel)),
 
+        AppMessage::SampleSidebarAddToSetClicked => Ok(AppModel {
+            viewflags: ViewFlags {
+                timer_enabled: false,
+                samples_sidebar_add_to_set_show_dialog: true,
+                ..model.viewflags
+            },
+            ..model
+        }),
+
         AppMessage::SourceEnabled(uuid) => Ok(model
             .enable_source(&uuid)?
             .map_ref(AppModel::populate_samples_listmodel)),
@@ -553,9 +563,57 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             })
         }
 
-        AppMessage::InputDialogCanceled(context) => Ok(model),
+        AppMessage::InputDialogCanceled(context) => match context {
+            InputDialogContext::AddToSampleset => Ok(AppModel {
+                viewflags: ViewFlags {
+                    samples_sidebar_add_to_set_show_dialog: false,
+                    ..model.viewflags
+                },
+                ..model
+            }),
+        },
 
-        AppMessage::InputDialogSubmitted(context, text) => Ok(model),
+        AppMessage::InputDialogSubmitted(context, text) => match context {
+            InputDialogContext::AddToSampleset => {
+                let mut result = match model.samplesets.iter().find(|(_, set)| set.name() == text) {
+                    Some(_) => model,
+                    None => {
+                        model.add_sampleset(SampleSet::BaseSampleSet(BaseSampleSet::new(&text)))
+                    }
+                };
+
+                let sample = result
+                    .viewvalues
+                    .samples_selected_sample
+                    .as_ref()
+                    .ok_or(anyhow!("No selected sample"))?;
+
+                let source = result
+                    .sources
+                    .get(
+                        sample
+                            .source_uuid()
+                            .ok_or(anyhow!("Selected sample has no source"))?,
+                    )
+                    .ok_or(anyhow!("Could not obtain source for selected sample"))?;
+
+                result
+                    .samplesets
+                    .iter_mut()
+                    .find(|(_, set)| set.name() == text)
+                    .unwrap()
+                    .1
+                    .add(source, &sample)?;
+
+                Ok(AppModel {
+                    viewflags: ViewFlags {
+                        samples_sidebar_add_to_set_show_dialog: false,
+                        ..result.viewflags
+                    },
+                    ..result
+                })
+            }
+        },
     }
 }
 
@@ -585,6 +643,18 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         );
     }
 
+    if new.viewflags.samples_sidebar_add_to_set_show_dialog {
+        dialogs::input(
+            model_ptr.clone(),
+            view,
+            InputDialogContext::AddToSampleset,
+            "Add to set",
+            "Name of set:",
+            "Favorites",
+            "Add",
+        );
+    }
+
     if old.viewflags.sources_add_fs_fields_valid != new.viewflags.sources_add_fs_fields_valid {
         view.sources_add_fs_add_button
             .set_sensitive(new.viewflags.sources_add_fs_fields_valid);
@@ -611,7 +681,11 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     }
 
     if old.samplesets != new.samplesets {
-        update_samplesets_list(model_ptr, new.clone(), view);
+        update_samplesets_list(model_ptr.clone(), new.clone(), view);
+
+        if new.viewvalues.samples_selected_sample.is_some() {
+            update_samples_sidebar(model_ptr, new, view);
+        }
     }
 }
 

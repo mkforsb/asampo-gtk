@@ -26,6 +26,7 @@ pub struct ViewFlags {
     pub timer_enabled: bool,
     pub sources_add_fs_fields_valid: bool,
     pub sources_add_fs_browse: bool,
+    pub samples_sidebar_add_to_set_show_dialog: bool,
     pub samples_sidebar_add_to_prev_enabled: bool,
     pub samplesets_add_fields_valid: bool,
 }
@@ -36,6 +37,7 @@ impl Default for ViewFlags {
             timer_enabled: true,
             sources_add_fs_fields_valid: false,
             sources_add_fs_browse: false,
+            samples_sidebar_add_to_set_show_dialog: false,
             samples_sidebar_add_to_prev_enabled: false,
             samplesets_add_fields_valid: false,
         }
