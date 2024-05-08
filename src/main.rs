@@ -73,6 +73,11 @@ impl std::fmt::Display for ErrorWithEffect {
 
 impl std::error::Error for ErrorWithEffect {}
 
+#[derive(Debug, Clone)]
+enum InputDialogContext {
+    AddToSampleset,
+}
+
 #[derive(Debug)]
 enum AppMessage {
     TimerTick,
@@ -97,6 +102,8 @@ enum AppMessage {
     DialogError(gtk::glib::Error),
     AddSampleSetNameChanged(String),
     AddSampleSetClicked,
+    InputDialogSubmitted(InputDialogContext, String),
+    InputDialogCanceled(InputDialogContext),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -545,6 +552,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ..result
             })
         }
+
+        AppMessage::InputDialogCanceled(context) => Ok(model),
+
+        AppMessage::InputDialogSubmitted(context, text) => Ok(model),
     }
 }
 

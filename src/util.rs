@@ -2,6 +2,8 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
+use gtk::{glib::object::IsA, prelude::*};
+
 const GIBIBYTE: u64 = 1024 * 1024 * 1024;
 const MEBIBYTE: u64 = 1024 * 1024;
 const KIBIBYTE: u64 = 1024;
@@ -60,4 +62,39 @@ pub fn readable_length(millis: Option<u64>) -> String {
     } else {
         "Unknown".to_string()
     }
+}
+
+pub fn gtk_find_child_by_builder_id(
+    root: &impl IsA<gtk::Widget>,
+    id: &str,
+) -> Option<gtk::Widget> {
+    let buildable_id = root
+        .dynamic_cast_ref::<gtk::Buildable>()
+        .unwrap()
+        .buildable_id();
+
+    if let Some(id_str) = buildable_id {
+        if id_str == id {
+            return Some(root.clone().into());
+        }
+    }
+
+    let mut child = root.first_child();
+
+    if child.is_some() {
+        loop {
+            if let Some(widget) = gtk_find_child_by_builder_id(child.as_ref().clone().unwrap(), id)
+            {
+                return Some(widget);
+            }
+
+            child = child.as_ref().unwrap().next_sibling();
+
+            if child.is_none() {
+                break;
+            }
+        }
+    }
+
+    None
 }
