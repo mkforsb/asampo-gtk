@@ -583,13 +583,20 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         update_sources_list(model_ptr.clone(), new.clone(), view);
     }
 
+    if old.viewvalues.samples_selected_sample != new.viewvalues.samples_selected_sample {
+        update_samples_sidebar(model_ptr.clone(), new.clone(), view);
+    }
+
+    if old.viewflags.samples_sidebar_add_to_prev_enabled
+        != new.viewflags.samples_sidebar_add_to_prev_enabled
+    {
+        view.samples_sidebar_add_to_prev_button
+            .set_sensitive(new.viewflags.samples_sidebar_add_to_prev_enabled);
+    }
+
     if old.viewflags.samplesets_add_fields_valid != new.viewflags.samplesets_add_fields_valid {
         view.samplesets_add_add_button
             .set_sensitive(new.viewflags.samplesets_add_fields_valid);
-    }
-
-    if old.viewvalues.samples_selected_sample != new.viewvalues.samples_selected_sample {
-        update_samples_sidebar(model_ptr.clone(), new.clone(), view);
     }
 
     if old.samplesets != new.samplesets {

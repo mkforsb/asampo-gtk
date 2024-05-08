@@ -788,6 +788,22 @@
                             </child>
                           </object>
                         </child>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                            <child>
+                              <object class="GtkButton" id="samples_sidebar_add_to_set_button">
+                                <property name="label">Add to ...</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="samples_sidebar_add_to_prev_button">
+                                <property name="label">Add to 'Favorites'</property>
+                                <property name="sensitive">false</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
                       </object>
                     </child>
                   </object>

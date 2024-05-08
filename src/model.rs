@@ -26,6 +26,7 @@ pub struct ViewFlags {
     pub timer_enabled: bool,
     pub sources_add_fs_fields_valid: bool,
     pub sources_add_fs_browse: bool,
+    pub samples_sidebar_add_to_prev_enabled: bool,
     pub samplesets_add_fields_valid: bool,
 }
 
@@ -35,6 +36,7 @@ impl Default for ViewFlags {
             timer_enabled: true,
             sources_add_fs_fields_valid: false,
             sources_add_fs_browse: false,
+            samples_sidebar_add_to_prev_enabled: false,
             samplesets_add_fields_valid: false,
         }
     }
@@ -49,6 +51,7 @@ pub struct ViewValues {
     pub settings_latency_approx_label: String,
     pub samples_listview_model: ListStore,
     pub samples_selected_sample: Option<Sample>,
+    pub samples_most_recent_added_set: Option<Uuid>,
     pub samplesets_add_name_entry: String,
 }
 
@@ -62,6 +65,7 @@ impl Default for ViewValues {
             settings_latency_approx_label: String::default(),
             samples_listview_model: ListStore::new::<SampleListEntry>(),
             samples_selected_sample: None,
+            samples_most_recent_added_set: None,
             samplesets_add_name_entry: String::default(),
         }
     }

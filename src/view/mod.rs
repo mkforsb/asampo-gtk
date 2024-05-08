@@ -115,6 +115,12 @@ pub struct AsampoViewState {
     pub samples_sidebar_sets_list: gtk::TemplateChild<gtk::ListBox>,
 
     #[template_child]
+    pub samples_sidebar_add_to_set_button: gtk::TemplateChild<gtk::Button>,
+
+    #[template_child]
+    pub samples_sidebar_add_to_prev_button: gtk::TemplateChild<gtk::Button>,
+
+    #[template_child]
     pub samplesets_add_name_entry: gtk::TemplateChild<gtk::Entry>,
 
     #[template_child]
