@@ -96,7 +96,7 @@ enum AppMessage {
     SaveToSavefile(String),
     DialogError(gtk::glib::Error),
     AddSampleSetNameChanged(String),
-    AddSampleSetClicked(),
+    AddSampleSetClicked,
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -524,7 +524,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             ..model
         })),
 
-        AppMessage::AddSampleSetClicked() => {
+        AppMessage::AddSampleSetClicked => {
             assert!(!model.viewvalues.samplesets_add_name_entry.is_empty());
 
             let set = SampleSet::BaseSampleSet(BaseSampleSet::new(

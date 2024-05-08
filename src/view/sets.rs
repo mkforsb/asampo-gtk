@@ -20,7 +20,7 @@ pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
 
     view.samplesets_add_add_button.connect_clicked(
         clone!(@strong model_ptr, @strong view => move |_e: &gtk::Button| {
-            update(model_ptr.clone(), &view, AppMessage::AddSampleSetClicked());
+            update(model_ptr.clone(), &view, AppMessage::AddSampleSetClicked);
         }),
     );
 }
