@@ -603,7 +603,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     .find(|(_, set)| set.name() == text)
                     .unwrap()
                     .1
-                    .add(source, &sample)?;
+                    .add(source, sample)?;
 
                 Ok(AppModel {
                     viewflags: ViewFlags {

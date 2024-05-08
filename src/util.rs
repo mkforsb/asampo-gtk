@@ -35,18 +35,18 @@ pub fn readable_length(millis: Option<u64>) -> String {
 
             if ms >= 2 * HOUR {
                 fragments.push(format!("{} hours", ms / HOUR));
-                ms = ms % HOUR;
+                ms %= HOUR;
             } else if ms >= HOUR {
                 fragments.push(format!("{} hour", ms / HOUR));
-                ms = ms % HOUR;
+                ms %= HOUR;
             }
 
             if ms >= 2 * MINUTE {
                 fragments.push(format!("{} minutes", ms / MINUTE));
-                ms = ms % MINUTE;
+                ms %= MINUTE;
             } else if ms >= MINUTE {
                 fragments.push(format!("{} minute", ms / MINUTE));
-                ms = ms % MINUTE;
+                ms %= MINUTE;
             }
 
             if ms >= 2 * SECOND {
@@ -64,10 +64,7 @@ pub fn readable_length(millis: Option<u64>) -> String {
     }
 }
 
-pub fn gtk_find_child_by_builder_id(
-    root: &impl IsA<gtk::Widget>,
-    id: &str,
-) -> Option<gtk::Widget> {
+pub fn gtk_find_child_by_builder_id(root: &impl IsA<gtk::Widget>, id: &str) -> Option<gtk::Widget> {
     let buildable_id = root
         .dynamic_cast_ref::<gtk::Buildable>()
         .unwrap()
@@ -83,8 +80,7 @@ pub fn gtk_find_child_by_builder_id(
 
     if child.is_some() {
         loop {
-            if let Some(widget) = gtk_find_child_by_builder_id(child.as_ref().clone().unwrap(), id)
-            {
+            if let Some(widget) = gtk_find_child_by_builder_id(child.as_ref().unwrap(), id) {
                 return Some(widget);
             }
 
