@@ -156,10 +156,10 @@ pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &A
                 .set_text(&sample.metadata().src_fmt_display);
 
             view.samples_sidebar_size_label
-                .set_text(&util::readable_size(sample.metadata().size_bytes).to_string());
+                .set_text(&util::readable_size(sample.metadata().size_bytes));
 
             view.samples_sidebar_length_label
-                .set_text(&util::readable_length(sample.metadata().length_millis).to_string());
+                .set_text(&util::readable_length(sample.metadata().length_millis));
 
             match sample.source_uuid() {
                 Some(uuid) => view.samples_sidebar_source_label.set_text(
