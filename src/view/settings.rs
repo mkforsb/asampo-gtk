@@ -2,17 +2,15 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-use gtk::{
-    glib::{clone, Object},
-    prelude::*,
-    StringList, StringObject,
-};
+use gtk::{glib::clone, prelude::*, StringList};
 
 use crate::{
     config,
     ext::{OptionMapExt, WithModel},
     model::AppModelPtr,
-    update, AppMessage,
+    update,
+    util::{set_dropdown_choice, strs_dropdown_get_selected},
+    AppMessage,
 };
 
 use super::AsampoView;
@@ -84,31 +82,6 @@ pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
 }
 
 pub fn update_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
-    fn set_dropdown_choice<T: PartialEq>(
-        dropdown: &gtk::DropDown,
-        options: &[(&'static str, T)],
-        choice: &T,
-    ) {
-        let key = (*options)
-            .key_for(choice)
-            .expect("Active choice should have an associated key");
-
-        if let Some(position) = dropdown
-            .model()
-            .expect("Dropdown should have a model")
-            .iter()
-            .position(|x: Result<Object, _>| {
-                x.expect("ListModel should not be mutated while iterating")
-                    .dynamic_cast_ref::<StringObject>()
-                    .expect("ListModel should contain StringObject items")
-                    .string()
-                    == key
-            })
-        {
-            dropdown.set_selected(position.try_into().unwrap());
-        }
-    }
-
     model_ptr.with_model(|model| {
         let config = model.config.as_ref().expect("A config should be present");
 
@@ -143,15 +116,4 @@ pub fn update_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
 
         model
     })
-}
-
-fn strs_dropdown_get_selected(e: &gtk::DropDown) -> String {
-    e.model()
-        .expect("Dropdown should have a model")
-        .item(e.selected())
-        .expect("Selected item should be obtainable from model")
-        .dynamic_cast_ref::<StringObject>()
-        .expect("ListModel should contain StringObject items")
-        .string()
-        .to_string()
 }

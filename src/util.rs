@@ -4,6 +4,8 @@
 
 use gtk::{glib::object::IsA, prelude::*};
 
+use crate::ext::OptionMapExt;
+
 const GIBIBYTE: u64 = 1024 * 1024 * 1024;
 const MEBIBYTE: u64 = 1024 * 1024;
 const KIBIBYTE: u64 = 1024;
@@ -93,4 +95,40 @@ pub fn gtk_find_child_by_builder_id(root: &impl IsA<gtk::Widget>, id: &str) -> O
     }
 
     None
+}
+
+pub fn strs_dropdown_get_selected(e: &gtk::DropDown) -> String {
+    e.model()
+        .expect("Dropdown should have a model")
+        .item(e.selected())
+        .expect("Selected item should be obtainable from model")
+        .dynamic_cast_ref::<gtk::StringObject>()
+        .expect("ListModel should contain StringObject items")
+        .string()
+        .to_string()
+}
+
+pub fn set_dropdown_choice<T: PartialEq>(
+    dropdown: &gtk::DropDown,
+    options: &[(&'static str, T)],
+    choice: &T,
+) {
+    let key = (*options)
+        .key_for(choice)
+        .expect("Active choice should have an associated key");
+
+    if let Some(position) = dropdown
+        .model()
+        .expect("Dropdown should have a model")
+        .iter()
+        .position(|x: Result<gtk::glib::Object, _>| {
+            x.expect("ListModel should not be mutated while iterating")
+                .dynamic_cast_ref::<gtk::StringObject>()
+                .expect("ListModel should contain StringObject items")
+                .string()
+                == key
+        })
+    {
+        dropdown.set_selected(position.try_into().unwrap());
+    }
 }
