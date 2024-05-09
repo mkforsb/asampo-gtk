@@ -30,6 +30,7 @@ use uuid::Uuid;
 
 use libasampo::{
     prelude::*,
+    samples::Sample,
     samplesets::{BaseSampleSet, SampleSet},
     sources::{file_system_source::FilesystemSource, Source},
 };
@@ -54,7 +55,10 @@ use view::{
     AsampoView,
 };
 
-use crate::view::{samples::update_samples_sidebar, sets::update_samplesets_list};
+use crate::view::{
+    samples::update_samples_sidebar,
+    sets::{update_samplesets_detail, update_samplesets_list},
+};
 
 #[derive(Debug)]
 enum ErrorWithEffect {
@@ -98,6 +102,7 @@ enum AppMessage {
     AddFilesystemSourceExtensionsChanged(String),
     AddFilesystemSourceClicked,
     SampleListSampleSelected(u32),
+    SampleSetSampleSelected(Sample),
     SamplesFilterChanged(String),
     SampleSidebarAddToSetClicked,
     SampleSidebarAddToMostRecentlyUsedSetClicked,
@@ -113,6 +118,7 @@ enum AppMessage {
     InputDialogSubmitted(InputDialogContext, String),
     InputDialogCanceled(InputDialogContext),
     SelectFolderDialogOpened(SelectFolderDialogContext),
+    SampleSetSelected(Uuid),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -644,6 +650,41 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ..model
             }),
         },
+
+        AppMessage::SampleSetSelected(uuid) => {
+            let _ = model
+                .samplesets
+                .get(&uuid)
+                .ok_or(anyhow!("Sample set not found (by uuid)"))?;
+
+            Ok(AppModel {
+                viewvalues: ViewValues {
+                    samplesets_selected_set: Some(uuid),
+                    ..model.viewvalues
+                },
+                ..model
+            })
+        }
+
+        AppMessage::SampleSetSampleSelected(sample) => {
+            let stream = model
+                .sources
+                .get(
+                    sample
+                        .source_uuid()
+                        .ok_or(anyhow!("Sample missing source uuid"))?,
+                )
+                .ok_or(anyhow!("Failed to get source for sample"))?
+                .stream(&sample)?;
+
+            model.audiothread_tx.as_ref().unwrap().send(
+                audiothread::Message::PlaySymphoniaSource(
+                    audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
+                ),
+            )?;
+
+            Ok(model)
+        }
     }
 }
 
@@ -720,6 +761,10 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     if old.viewflags.samplesets_add_fields_valid != new.viewflags.samplesets_add_fields_valid {
         view.samplesets_add_add_button
             .set_sensitive(new.viewflags.samplesets_add_fields_valid);
+    }
+
+    if old.viewvalues.samplesets_selected_set != new.viewvalues.samplesets_selected_set {
+        update_samplesets_detail(model_ptr.clone(), new.clone(), view);
     }
 
     if old.samplesets != new.samplesets {

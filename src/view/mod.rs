@@ -128,6 +128,15 @@ pub struct AsampoViewState {
 
     #[template_child]
     pub samplesets_list: gtk::TemplateChild<gtk::ListBox>,
+
+    #[template_child]
+    pub samplesets_detail_name_label: gtk::TemplateChild<gtk::Label>,
+
+    #[template_child]
+    pub samplesets_detail_labelling_kind_entry: gtk::TemplateChild<gtk::DropDown>,
+
+    #[template_child]
+    pub samplesets_detail_sample_list: gtk::TemplateChild<gtk::ListBox>,
 }
 
 impl WidgetImpl for AsampoViewState {}

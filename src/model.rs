@@ -54,6 +54,7 @@ pub struct ViewValues {
     pub samples_selected_sample: Option<Sample>,
     pub samples_set_most_recently_used: Option<Uuid>,
     pub samplesets_add_name_entry: String,
+    pub samplesets_selected_set: Option<Uuid>,
 }
 
 impl Default for ViewValues {
@@ -68,6 +69,7 @@ impl Default for ViewValues {
             samples_selected_sample: None,
             samples_set_most_recently_used: None,
             samplesets_add_name_entry: String::default(),
+            samplesets_selected_set: None,
         }
     }
 }
