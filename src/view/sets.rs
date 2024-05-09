@@ -91,15 +91,14 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
         Some(set) => {
             view.samplesets_detail_name_label.set_text(set.name());
 
-            let mut row_index = 0;
 
-            for sample in set.list().iter() {
+            for (row_index, sample) in set.list().iter().enumerate() {
                 view.samplesets_detail_sample_list
                     .append(&gtk::Label::builder().label(sample.name()).build());
 
                 let row = view
                     .samplesets_detail_sample_list
-                    .row_at_index(row_index)
+                    .row_at_index(row_index.try_into().unwrap())
                     .unwrap();
 
                 let clicked = GestureClick::new();
@@ -124,12 +123,10 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
                         );
                     }),
                 );
-
-                row_index += 1;
             }
         }
         None => {
-            view.samplesets_detail_name_label.set_text(&"");
+            view.samplesets_detail_name_label.set_text("");
         }
     }
 }
