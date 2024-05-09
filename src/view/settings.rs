@@ -9,8 +9,8 @@ use gtk::{
 };
 
 use crate::{
-    config::{self, OptionMapExt},
-    ext::*,
+    config,
+    ext::{OptionMapExt, WithModel},
     model::AppModelPtr,
     update, AppMessage,
 };

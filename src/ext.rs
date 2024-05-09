@@ -126,3 +126,26 @@ where
         result
     }
 }
+
+pub trait OptionMapExt<T> {
+    fn value_for(&self, key: &str) -> Option<&T>;
+    fn key_for(&self, value: &T) -> Option<&str>;
+    fn keys(&self) -> Vec<&'static str>;
+}
+
+impl<T> OptionMapExt<T> for [(&'static str, T)]
+where
+    T: std::cmp::PartialEq,
+{
+    fn value_for(&self, key: &str) -> Option<&T> {
+        self.iter().find(|(k, _v)| *k == key).map(|(_k, v)| v)
+    }
+
+    fn key_for(&self, value: &T) -> Option<&str> {
+        self.iter().find(|(_k, v)| v == value).map(|(k, _v)| *k)
+    }
+
+    fn keys(&self) -> Vec<&'static str> {
+        self.iter().map(|(key, _)| *key).collect()
+    }
+}

@@ -35,8 +35,7 @@ use libasampo::{
     sources::{file_system_source::FilesystemSource, Source},
 };
 
-use config::OptionMapExt;
-use ext::WithModel;
+use ext::{OptionMapExt, WithModel};
 use model::{AppModel, AppModelPtr, ViewFlags, ViewValues};
 
 #[cfg(not(test))]
