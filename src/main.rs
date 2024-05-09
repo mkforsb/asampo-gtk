@@ -97,7 +97,7 @@ enum AppMessage {
     AddFilesystemSourcePathBrowseError(gtk::glib::Error),
     AddFilesystemSourceExtensionsChanged(String),
     AddFilesystemSourceClicked,
-    SampleSelected(u32),
+    SampleListSampleSelected(u32),
     SamplesFilterChanged(String),
     SampleSidebarAddToSetClicked,
     SampleSidebarAddToMostRecentlyUsedSetClicked,
@@ -456,7 +456,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             .map_ref(AppModel::populate_samples_listmodel))
         }
 
-        AppMessage::SampleSelected(index) => {
+        AppMessage::SampleListSampleSelected(index) => {
             let item = model.viewvalues.samples_listview_model.item(index);
 
             match item

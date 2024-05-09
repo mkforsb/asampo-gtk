@@ -106,7 +106,7 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
             update(
                 model_ptr.clone(),
                 &view,
-                AppMessage::SampleSelected(
+                AppMessage::SampleListSampleSelected(
                     view.samples_listview.model().unwrap().selection().minimum()
                 )
             );
@@ -122,7 +122,7 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
             update(
                 model_ptr.clone(),
                 &view,
-                AppMessage::SampleSelected(
+                AppMessage::SampleListSampleSelected(
                     view.samples_listview.model().unwrap().selection().minimum()
                 )
             );
