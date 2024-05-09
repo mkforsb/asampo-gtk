@@ -142,6 +142,16 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
             update(model_ptr.clone(), &view, AppMessage::SampleSidebarAddToSetClicked);
         }),
     );
+
+    view.samples_sidebar_add_to_prev_button.connect_clicked(
+        clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
+            update(
+                model_ptr.clone(),
+                &view,
+                AppMessage::SampleSidebarAddToMostRecentlyUsedSetClicked
+            );
+        }),
+    );
 }
 
 pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {

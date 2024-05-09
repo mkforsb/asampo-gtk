@@ -100,6 +100,7 @@ enum AppMessage {
     SampleClicked(u32),
     SamplesFilterChanged(String),
     SampleSidebarAddToSetClicked,
+    SampleSidebarAddToMostRecentlyUsedSetClicked,
     SourceEnabled(Uuid),
     SourceDisabled(Uuid),
     SourceDeleteClicked(Uuid),
@@ -143,6 +144,63 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
             }
         }
     }
+}
+
+fn get_or_create_sampleset(model: AppModel, name: &str) -> Result<(AppModel, Uuid), anyhow::Error> {
+    match model
+        .samplesets
+        .iter()
+        .find(|(_, set)| set.name() == name)
+        .map(|(uuid, _)| *uuid)
+    {
+        Some(uuid) => Ok((model, uuid)),
+        None => {
+            let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new(&name));
+            let new_uuid = new_set.uuid().clone();
+
+            Ok((model.add_sampleset(new_set), new_uuid))
+        }
+    }
+}
+
+fn add_selected_sample_to_sampleset_by_uuid(
+    model: AppModel,
+    uuid: &Uuid,
+) -> Result<AppModel, anyhow::Error> {
+    let sample = model
+        .viewvalues
+        .samples_selected_sample
+        .as_ref()
+        .ok_or(anyhow!("No selected sample"))?;
+
+    let source = model
+        .sources
+        .get(
+            sample
+                .source_uuid()
+                .ok_or(anyhow!("Selected sample has no source"))?,
+        )
+        .ok_or(anyhow!("Could not obtain source for selected sample"))?;
+
+    let mut model = model.clone();
+
+    model
+        .samplesets
+        .get_mut(uuid)
+        .ok_or(anyhow!("Sample set not found (by uuid)"))?
+        .add(source, sample)?;
+
+    Ok(AppModel {
+        viewflags: ViewFlags {
+            samples_sidebar_add_to_prev_enabled: true,
+            ..model.viewflags
+        },
+        viewvalues: ViewValues {
+            samples_set_most_recently_used: Some(*uuid),
+            ..model.viewvalues
+        },
+        ..model
+    })
 }
 
 fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow::Error> {
@@ -452,6 +510,15 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             ..model
         }),
 
+        AppMessage::SampleSidebarAddToMostRecentlyUsedSetClicked => {
+            let mru_uuid = model
+                .viewvalues
+                .samples_set_most_recently_used
+                .ok_or(anyhow!("No sample set recently added to"))?;
+
+            add_selected_sample_to_sampleset_by_uuid(model, &mru_uuid)
+        }
+
         AppMessage::SourceEnabled(uuid) => Ok(model
             .enable_source(&uuid)?
             .map_ref(AppModel::populate_samples_listmodel)),
@@ -563,37 +630,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::InputDialogSubmitted(context, text) => match context {
             InputDialogContext::AddToSampleset => {
-                let mut result = match model.samplesets.iter().find(|(_, set)| set.name() == text) {
-                    Some(_) => model,
-                    None => {
-                        model.add_sampleset(SampleSet::BaseSampleSet(BaseSampleSet::new(&text)))
-                    }
-                };
-
-                let sample = result
-                    .viewvalues
-                    .samples_selected_sample
-                    .as_ref()
-                    .ok_or(anyhow!("No selected sample"))?;
-
-                let source = result
-                    .sources
-                    .get(
-                        sample
-                            .source_uuid()
-                            .ok_or(anyhow!("Selected sample has no source"))?,
-                    )
-                    .ok_or(anyhow!("Could not obtain source for selected sample"))?;
-
-                result
-                    .samplesets
-                    .iter_mut()
-                    .find(|(_, set)| set.name() == text)
-                    .unwrap()
-                    .1
-                    .add(source, sample)?;
-
-                Ok(result)
+                let (model, set_uuid) = get_or_create_sampleset(model, &text)?;
+                add_selected_sample_to_sampleset_by_uuid(model, &set_uuid)
             }
         },
 
@@ -666,6 +704,17 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     {
         view.samples_sidebar_add_to_prev_button
             .set_sensitive(new.viewflags.samples_sidebar_add_to_prev_enabled);
+    }
+
+    if old.viewvalues.samples_set_most_recently_used
+        != new.viewvalues.samples_set_most_recently_used
+    {
+        if let Some(ref mru) = new.viewvalues.samples_set_most_recently_used {
+            if let Some((_, set)) = new.samplesets.iter().find(|(uuid, _set)| *uuid == mru) {
+                view.samples_sidebar_add_to_prev_button
+                    .set_label(&format!("Add to '{}'", set.name()));
+            }
+        }
     }
 
     if old.viewflags.samplesets_add_fields_valid != new.viewflags.samplesets_add_fields_valid {

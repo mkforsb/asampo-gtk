@@ -51,7 +51,7 @@ pub struct ViewValues {
     pub settings_latency_approx_label: String,
     pub samples_listview_model: ListStore,
     pub samples_selected_sample: Option<Sample>,
-    pub samples_most_recent_added_set: Option<Uuid>,
+    pub samples_set_most_recently_used: Option<Uuid>,
     pub samplesets_add_name_entry: String,
 }
 
@@ -65,7 +65,7 @@ impl Default for ViewValues {
             settings_latency_approx_label: String::default(),
             samples_listview_model: ListStore::new::<SampleListEntry>(),
             samples_selected_sample: None,
-            samples_most_recent_added_set: None,
+            samples_set_most_recently_used: None,
             samplesets_add_name_entry: String::default(),
         }
     }
