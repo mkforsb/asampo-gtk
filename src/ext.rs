@@ -42,21 +42,21 @@ where
     }
 }
 
-macro_rules! peek_model {
-    ($model:expr, $field:ident) => {
-        $model.peek_model(|model| {
-            let res = model.$field;
-            (model, res)
-        })
-    };
-
-    ($model:expr, $field:ident.$subfield:ident) => {
-        $model.peek_model(|model| {
-            let res = model.$field.$subfield;
-            (model, res)
-        })
-    };
-}
+// macro_rules! peek_model {
+//     ($model:expr, $field:ident) => {
+//         $model.peek_model(|model| {
+//             let res = model.$field;
+//             (model, res)
+//         })
+//     };
+//
+//     ($model:expr, $field:ident.$subfield:ident) => {
+//         $model.peek_model(|model| {
+//             let res = model.$field.$subfield;
+//             (model, res)
+//         })
+//     };
+// }
 
 pub trait ClonedHashMapExt<K, V>
 where

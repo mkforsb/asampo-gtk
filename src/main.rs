@@ -35,7 +35,7 @@ use libasampo::{
 };
 
 use config::OptionMapExt;
-use ext::{PeekModel, WithModel};
+use ext::WithModel;
 use model::{AppModel, AppModelPtr, ViewFlags, ViewValues};
 
 #[cfg(not(test))]
@@ -78,6 +78,11 @@ enum InputDialogContext {
     AddToSampleset,
 }
 
+#[derive(Debug, Clone)]
+enum SelectFolderDialogContext {
+    BrowseForFilesystemSource,
+}
+
 #[derive(Debug)]
 enum AppMessage {
     TimerTick,
@@ -106,17 +111,13 @@ enum AppMessage {
     InputDialogOpened,
     InputDialogSubmitted(InputDialogContext, String),
     InputDialogCanceled(InputDialogContext),
+    SelectFolderDialogOpened(SelectFolderDialogContext),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
     match message {
         AppMessage::TimerTick => (),
         _ => log::log!(log::Level::Debug, "{message:?}"),
-    }
-
-    match message {
-        AppMessage::TimerTick if !peek_model!(model_ptr, viewflags.timer_enabled) => return,
-        _ => (),
     }
 
     let old_model = model_ptr.take().unwrap();
@@ -318,7 +319,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::AddFilesystemSourcePathBrowseClicked => Ok(AppModel {
             viewflags: ViewFlags {
-                timer_enabled: false,
                 sources_add_fs_browse: true,
                 ..model.viewflags
             },
@@ -326,11 +326,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }),
 
         AppMessage::AddFilesystemSourcePathBrowseSubmitted(text) => Ok(AppModel {
-            viewflags: ViewFlags {
-                timer_enabled: true,
-                sources_add_fs_browse: false,
-                ..model.viewflags
-            },
             viewvalues: ViewValues {
                 sources_add_fs_name_entry: if model.viewvalues.sources_add_fs_name_entry.is_empty()
                 {
@@ -355,14 +350,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::AddFilesystemSourcePathBrowseError(error) => {
             log::log!(log::Level::Debug, "Error browsing for folder: {error:?}");
 
-            Ok(AppModel {
-                viewflags: ViewFlags {
-                    timer_enabled: true,
-                    sources_add_fs_browse: false,
-                    ..model.viewflags
-                },
-                ..model
-            })
+            Ok(model)
         }
 
         AppMessage::AddFilesystemSourceExtensionsChanged(text) => {
@@ -458,7 +446,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SampleSidebarAddToSetClicked => Ok(AppModel {
             viewflags: ViewFlags {
-                timer_enabled: false,
                 samples_sidebar_add_to_set_show_dialog: true,
                 ..model.viewflags
             },
@@ -609,6 +596,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 Ok(result)
             }
         },
+
+        AppMessage::SelectFolderDialogOpened(context) => match context {
+            SelectFolderDialogContext::BrowseForFilesystemSource => Ok(AppModel {
+                viewflags: ViewFlags {
+                    sources_add_fs_browse: false,
+                    ..model.viewflags
+                },
+                ..model
+            }),
+        },
     }
 }
 
@@ -633,6 +630,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         dialogs::choose_folder(
             model_ptr.clone(),
             view,
+            SelectFolderDialogContext::BrowseForFilesystemSource,
             AppMessage::AddFilesystemSourcePathBrowseSubmitted,
             AppMessage::AddFilesystemSourcePathBrowseError,
         );

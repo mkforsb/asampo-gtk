@@ -7,11 +7,15 @@ use gtk::{
     prelude::*,
 };
 
-use crate::{model::AppModelPtr, update, util, view::AsampoView, AppMessage, InputDialogContext};
+use crate::{
+    model::AppModelPtr, update, util, view::AsampoView, AppMessage, InputDialogContext,
+    SelectFolderDialogContext,
+};
 
 pub fn choose_folder(
     model_ptr: AppModelPtr,
     view: &AsampoView,
+    context: SelectFolderDialogContext,
     ok: fn(String) -> AppMessage,
     err: fn(gtk::glib::Error) -> AppMessage,
 ) {
@@ -31,6 +35,12 @@ pub fn choose_folder(
                 Err(e) => update(model_ptr.clone(), &view, err(e)),
             }
         }),
+    );
+
+    update(
+        model_ptr.clone(),
+        view,
+        AppMessage::SelectFolderDialogOpened(context),
     );
 }
 
