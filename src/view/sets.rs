@@ -3,14 +3,30 @@
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
 use gtk::{glib::clone, prelude::*, EventControllerKey, GestureClick};
-use libasampo::{samples::SampleOps, samplesets::SampleSetOps};
+use libasampo::{
+    samples::SampleOps,
+    samplesets::{SampleSetLabelling, SampleSetOps},
+};
 
 use crate::{
+    ext::OptionMapExt,
     model::{AppModel, AppModelPtr},
     update,
+    util::{set_dropdown_choice, strs_dropdown_get_selected},
     view::AsampoView,
     AppMessage,
 };
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum LabellingKind {
+    None,
+    Drumkit,
+}
+
+pub const LABELLING_OPTIONS: [(&str, LabellingKind); 2] = [
+    ("None", LabellingKind::None),
+    ("Drumkit", LabellingKind::Drumkit),
+];
 
 pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
     view.samplesets_add_name_entry.connect_changed(
@@ -24,6 +40,26 @@ pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
             update(model_ptr.clone(), &view, AppMessage::AddSampleSetClicked);
         }),
     );
+
+    let labelling_model = gtk::StringList::new(&LABELLING_OPTIONS.keys());
+
+    view.samplesets_detail_labelling_kind_entry
+        .set_model(Some(&labelling_model));
+
+    view.samplesets_detail_labelling_kind_entry
+        .connect_selected_item_notify(
+            clone!(@strong model_ptr, @strong view => move |e: &gtk::DropDown| {
+                let kind = LABELLING_OPTIONS
+                    .value_for(&strs_dropdown_get_selected(e))
+                    .expect("Key should be valid");
+
+                update(
+                    model_ptr.clone(),
+                    &view,
+                    AppMessage::SampleSetLabellingKindChanged(kind.clone())
+                );
+            }),
+        );
 }
 
 pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
@@ -91,6 +127,14 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
         Some(set) => {
             view.samplesets_detail_name_label.set_text(set.name());
 
+            set_dropdown_choice(
+                &view.samplesets_detail_labelling_kind_entry,
+                &LABELLING_OPTIONS,
+                &match set.labelling() {
+                    Some(SampleSetLabelling::DrumkitLabelling(_)) => LabellingKind::Drumkit,
+                    None => LabellingKind::None,
+                },
+            );
 
             for (row_index, sample) in set.list().iter().enumerate() {
                 view.samplesets_detail_sample_list

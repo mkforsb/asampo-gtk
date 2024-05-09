@@ -31,7 +31,7 @@ use uuid::Uuid;
 use libasampo::{
     prelude::*,
     samples::Sample,
-    samplesets::{BaseSampleSet, SampleSet},
+    samplesets::{BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling},
     sources::{file_system_source::FilesystemSource, Source},
 };
 
@@ -48,7 +48,7 @@ use view::{
     dialogs,
     menus::build_actions,
     samples::{setup_samples_page, SampleListEntry},
-    sets::setup_sets_page,
+    sets::{setup_sets_page, LabellingKind},
     settings::setup_settings_page,
     sources::{setup_sources_page, update_sources_list},
     AsampoView,
@@ -118,6 +118,7 @@ enum AppMessage {
     InputDialogCanceled(InputDialogContext),
     SelectFolderDialogOpened(SelectFolderDialogContext),
     SampleSetSelected(Uuid),
+    SampleSetLabellingKindChanged(LabellingKind),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -683,6 +684,31 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             )?;
 
             Ok(model)
+        }
+
+        AppMessage::SampleSetLabellingKindChanged(kind) => {
+            let set_uuid = model
+                .viewvalues
+                .samplesets_selected_set
+                .ok_or(anyhow!("No sample set selected"))?;
+
+            let mut result = model.clone();
+
+            let set = result
+                .samplesets
+                .get_mut(&set_uuid)
+                .ok_or(anyhow!("Sample set not found (by uuid)"))?;
+
+            match set {
+                SampleSet::BaseSampleSet(ref mut set) => match kind {
+                    LabellingKind::None => set.set_labelling(None),
+                    LabellingKind::Drumkit => set.set_labelling(Some(
+                        SampleSetLabelling::DrumkitLabelling(DrumkitLabelling::new()),
+                    )),
+                },
+            };
+
+            Ok(result)
         }
     }
 }
