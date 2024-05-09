@@ -155,8 +155,8 @@ fn get_or_create_sampleset(model: AppModel, name: &str) -> Result<(AppModel, Uui
     {
         Some(uuid) => Ok((model, uuid)),
         None => {
-            let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new(&name));
-            let new_uuid = new_set.uuid().clone();
+            let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new(name));
+            let new_uuid = *new_set.uuid();
 
             Ok((model.add_sampleset(new_set), new_uuid))
         }

@@ -30,6 +30,7 @@ pub struct ViewFlags {
     pub samplesets_add_fields_valid: bool,
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for ViewFlags {
     fn default() -> Self {
         ViewFlags {
