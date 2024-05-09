@@ -769,6 +769,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
 
     if old.samplesets != new.samplesets {
         update_samplesets_list(model_ptr.clone(), new.clone(), view);
+        update_samplesets_detail(model_ptr.clone(), new.clone(), view);
 
         if new.viewvalues.samples_selected_sample.is_some() {
             update_samples_sidebar(model_ptr, new, view);
