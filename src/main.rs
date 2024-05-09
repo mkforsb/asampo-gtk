@@ -552,12 +552,12 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::InputDialogOpened => Ok(AppModel {
-                viewflags: ViewFlags {
-                    samples_sidebar_add_to_set_show_dialog: false,
-                    ..model.viewflags
-                },
-                ..model
-            }),
+            viewflags: ViewFlags {
+                samples_sidebar_add_to_set_show_dialog: false,
+                ..model.viewflags
+            },
+            ..model
+        }),
 
         AppMessage::InputDialogCanceled(_context) => Ok(model),
 
