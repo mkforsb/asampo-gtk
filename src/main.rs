@@ -103,6 +103,7 @@ enum AppMessage {
     DialogError(gtk::glib::Error),
     AddSampleSetNameChanged(String),
     AddSampleSetClicked,
+    InputDialogOpened,
     InputDialogSubmitted(InputDialogContext, String),
     InputDialogCanceled(InputDialogContext),
 }
@@ -563,15 +564,15 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             })
         }
 
-        AppMessage::InputDialogCanceled(context) => match context {
-            InputDialogContext::AddToSampleset => Ok(AppModel {
+        AppMessage::InputDialogOpened => Ok(AppModel {
                 viewflags: ViewFlags {
                     samples_sidebar_add_to_set_show_dialog: false,
                     ..model.viewflags
                 },
                 ..model
             }),
-        },
+
+        AppMessage::InputDialogCanceled(_context) => Ok(model),
 
         AppMessage::InputDialogSubmitted(context, text) => match context {
             InputDialogContext::AddToSampleset => {
@@ -605,13 +606,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     .1
                     .add(source, sample)?;
 
-                Ok(AppModel {
-                    viewflags: ViewFlags {
-                        samples_sidebar_add_to_set_show_dialog: false,
-                        ..result.viewflags
-                    },
-                    ..result
-                })
+                Ok(result)
             }
         },
     }

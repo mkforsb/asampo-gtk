@@ -170,6 +170,7 @@ pub fn input(
     dialogwin.connect_show(
         clone!(@strong model_ptr, @strong view => move |_: &gtk::Window| {
             view.set_sensitive(false);
+            update(model_ptr.clone(), &view, AppMessage::InputDialogOpened);
         }),
     );
 
