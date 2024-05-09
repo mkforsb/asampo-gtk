@@ -33,6 +33,15 @@ impl Default for AppConfig {
     }
 }
 
+impl AppConfig {
+    pub fn fmt_latency_approx(&self) -> String {
+        let samples = self.buffer_size_samples as f32;
+        let rate = self.output_samplerate_hz as f32;
+
+        format!("~{:.1} ms", (samples / rate) * 1000.0)
+    }
+}
+
 pub const OUTPUT_SAMPLE_RATE_OPTIONS: [(&str, u32); 4] = [
     ("44.1 kHz", 44100),
     ("48 kHz", 48000),
@@ -57,12 +66,3 @@ pub const SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS: [(&str, SamplePlaybackBehavior); 2] 
         SamplePlaybackBehavior::PlayUntilEnd,
     ),
 ];
-
-impl AppConfig {
-    pub fn fmt_latency_approx(&self) -> String {
-        let samples = self.buffer_size_samples as f32;
-        let rate = self.output_samplerate_hz as f32;
-
-        format!("~{:.1} ms", (samples / rate) * 1000.0)
-    }
-}
