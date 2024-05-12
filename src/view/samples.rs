@@ -82,7 +82,13 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
             .and_downcast::<gtk::Label>()
             .expect("Label");
 
-        label.set_label(SampleListEntryState::from_obj(&entry).value.borrow().uri());
+        label.set_label(
+            SampleListEntryState::from_obj(&entry)
+                .value
+                .borrow()
+                .uri()
+                .as_str(),
+        );
     });
 
     let selectmodel = gtk::SingleSelection::new(None::<gtk::gio::ListStore>);

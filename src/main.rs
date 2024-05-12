@@ -152,7 +152,10 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
     }
 }
 
-fn get_or_create_sampleset(model: AppModel, name: &str) -> Result<(AppModel, Uuid), anyhow::Error> {
+fn get_or_create_sampleset(
+    model: AppModel,
+    name: String,
+) -> Result<(AppModel, Uuid), anyhow::Error> {
     match model
         .samplesets
         .iter()
@@ -194,7 +197,7 @@ fn add_selected_sample_to_sampleset_by_uuid(
         .samplesets
         .get_mut(uuid)
         .ok_or(anyhow!("Sample set not found (by uuid)"))?
-        .add(source, sample)?;
+        .add(source, sample.clone())?;
 
     Ok(AppModel {
         viewflags: ViewFlags {
@@ -606,7 +609,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             assert!(!model.viewvalues.samplesets_add_name_entry.is_empty());
 
             let set = SampleSet::BaseSampleSet(BaseSampleSet::new(
-                &model.viewvalues.samplesets_add_name_entry,
+                model.viewvalues.samplesets_add_name_entry.clone(),
             ));
 
             let result = model.add_sampleset(set);
@@ -636,7 +639,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::InputDialogSubmitted(context, text) => match context {
             InputDialogContext::AddToSampleset => {
-                let (model, set_uuid) = get_or_create_sampleset(model, &text)?;
+                let (model, set_uuid) = get_or_create_sampleset(model, text)?;
                 add_selected_sample_to_sampleset_by_uuid(model, &set_uuid)
             }
         },
@@ -914,9 +917,9 @@ mod tests {
                 .iter()
                 .map(|s| {
                     Sample::BaseSample(BaseSample::new(
-                        &SampleURI(s.to_string()),
-                        s,
-                        &libasampo::samples::SampleMetadata {
+                        SampleURI::new(s.to_string()),
+                        s.to_string(),
+                        libasampo::samples::SampleMetadata {
                             rate: 48000,
                             channels: 2,
                             src_fmt_display: "PCM".to_string(),

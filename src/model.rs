@@ -238,7 +238,7 @@ impl AppModel {
             samples.retain(|x| {
                 fragments
                     .iter()
-                    .all(|frag| x.uri().to_lowercase().contains(frag))
+                    .all(|frag| x.uri().as_str().to_lowercase().contains(frag))
             });
 
             self.viewvalues.samples_listview_model.extend_from_slice(
@@ -284,7 +284,7 @@ mod tests {
     #[test]
     fn test_add_remove_sampleset() {
         let model = AppModel::new(None, None, None, None);
-        let set = BaseSampleSet::new("Favorites");
+        let set = BaseSampleSet::new("Favorites".to_string());
 
         let model = model.add_sampleset(SampleSet::BaseSampleSet(set.clone()));
 
