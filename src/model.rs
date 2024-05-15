@@ -18,7 +18,7 @@ use uuid::Uuid;
 use crate::{
     config::AppConfig,
     ext::{ClonedHashMapExt, ClonedVecExt},
-    view::samples::SampleListEntry,
+    view::{dialogs, samples::SampleListEntry},
 };
 
 #[derive(Debug, Clone)]
@@ -29,6 +29,9 @@ pub struct ViewFlags {
     pub samples_sidebar_add_to_prev_enabled: bool,
     pub samplesets_add_fields_valid: bool,
     pub samplesets_export_enabled: bool,
+    pub samplesets_export_show_dialog: bool,
+    pub samplesets_export_begin_browse: bool,
+    pub samplesets_export_fields_valid: bool,
 }
 
 #[allow(clippy::derivable_impls)]
@@ -41,8 +44,17 @@ impl Default for ViewFlags {
             samples_sidebar_add_to_prev_enabled: false,
             samplesets_add_fields_valid: false,
             samplesets_export_enabled: false,
+            samplesets_export_show_dialog: false,
+            samplesets_export_begin_browse: false,
+            samplesets_export_fields_valid: false,
         }
     }
+}
+
+#[derive(Debug, Clone)]
+pub enum ExportKind {
+    PlainCopy,
+    Conversion,
 }
 
 #[derive(Debug, Clone)]
@@ -57,6 +69,9 @@ pub struct ViewValues {
     pub samples_set_most_recently_used: Option<Uuid>,
     pub samplesets_add_name_entry: String,
     pub samplesets_selected_set: Option<Uuid>,
+    pub samplesets_export_dialog_view: Option<dialogs::ExportDialogView>,
+    pub samplesets_export_target_dir_entry: String,
+    pub samplesets_export_kind: Option<ExportKind>,
 }
 
 impl Default for ViewValues {
@@ -72,6 +87,9 @@ impl Default for ViewValues {
             samples_set_most_recently_used: None,
             samplesets_add_name_entry: String::default(),
             samplesets_selected_set: None,
+            samplesets_export_dialog_view: None,
+            samplesets_export_target_dir_entry: String::default(),
+            samplesets_export_kind: None,
         }
     }
 }

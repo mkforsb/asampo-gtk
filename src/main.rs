@@ -32,6 +32,7 @@ use libasampo::{
     prelude::*,
     samples::Sample,
     samplesets::{
+        export::{Conversion, ExportJob},
         BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
     sources::{file_system_source::FilesystemSource, Source},
@@ -84,6 +85,7 @@ enum InputDialogContext {
 #[derive(Debug, Clone)]
 enum SelectFolderDialogContext {
     BrowseForFilesystemSource,
+    BrowseForExportTargetDirectory,
 }
 
 #[derive(Debug)]
@@ -120,6 +122,15 @@ enum AppMessage {
     SampleSetSelected(Uuid),
     SampleSetLabellingKindChanged(LabellingKind),
     SampleSetDetailsExportClicked,
+    ExportDialogOpened(dialogs::ExportDialogView),
+    ExportDialogClosed,
+    ExportTargetDirectoryChanged(String),
+    ExportTargetDirectoryBrowseClicked,
+    ExportTargetDirectoryBrowseSubmitted(String),
+    ExportTargetDirectoryBrowseError(gtk::glib::Error),
+    PerformExportClicked,
+    PlainCopyExportSelected,
+    ConversionExportSelected,
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -569,10 +580,19 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             }
         },
 
+        // TODO: replace with function pointer, just like "ok" and "cancel" for input dialog?
         AppMessage::SelectFolderDialogOpened(context) => match context {
             SelectFolderDialogContext::BrowseForFilesystemSource => Ok(AppModel {
                 viewflags: ViewFlags {
                     sources_add_fs_begin_browse: false,
+                    ..model.viewflags
+                },
+                ..model
+            }),
+
+            SelectFolderDialogContext::BrowseForExportTargetDirectory => Ok(AppModel {
+                viewflags: ViewFlags {
+                    samplesets_export_begin_browse: false,
                     ..model.viewflags
                 },
                 ..model
@@ -643,7 +663,113 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(result)
         }
 
-        AppMessage::SampleSetDetailsExportClicked => Ok(model),
+        AppMessage::SampleSetDetailsExportClicked => Ok(AppModel {
+            viewflags: ViewFlags {
+                samplesets_export_show_dialog: true,
+                ..model.viewflags
+            },
+            ..model
+        }),
+
+        AppMessage::ExportDialogOpened(dialogview) => Ok(AppModel {
+            viewflags: ViewFlags {
+                samplesets_export_show_dialog: false,
+                ..model.viewflags
+            },
+            viewvalues: ViewValues {
+                samplesets_export_dialog_view: Some(dialogview),
+                ..model.viewvalues
+            },
+            ..model
+        }),
+
+        AppMessage::ExportDialogClosed => Ok(AppModel {
+            viewvalues: ViewValues {
+                samplesets_export_dialog_view: None,
+                ..model.viewvalues
+            },
+            ..model
+        }),
+
+        AppMessage::ExportTargetDirectoryChanged(text) => Ok(AppModel {
+            viewflags: ViewFlags {
+                samplesets_export_fields_valid: !text.is_empty(),
+                ..model.viewflags
+            },
+            viewvalues: ViewValues {
+                samplesets_export_target_dir_entry: text,
+                ..model.viewvalues
+            },
+            ..model
+        }),
+
+        AppMessage::ExportTargetDirectoryBrowseClicked => Ok(AppModel {
+            viewflags: ViewFlags {
+                samplesets_export_begin_browse: true,
+                ..model.viewflags
+            },
+            ..model
+        }),
+
+        AppMessage::ExportTargetDirectoryBrowseSubmitted(text) => Ok(AppModel {
+            viewvalues: ViewValues {
+                samplesets_export_target_dir_entry: text,
+                ..model.viewvalues
+            },
+            ..model
+        }),
+
+        AppMessage::ExportTargetDirectoryBrowseError(_e) => Ok(model),
+
+        AppMessage::PerformExportClicked => {
+            use libasampo::samplesets::export::{RateConversionQuality, WavSampleFormat, WavSpec};
+
+            ExportJob::new(
+                model.viewvalues.samplesets_export_target_dir_entry.clone(),
+                match model.viewvalues.samplesets_export_kind {
+                    None | Some(model::ExportKind::PlainCopy) => None,
+                    Some(model::ExportKind::Conversion) => Some(Conversion::Wav(
+                        WavSpec {
+                            channels: 2,
+                            sample_rate: 44100,
+                            bits_per_sample: 16,
+                            sample_format: WavSampleFormat::Int,
+                        },
+                        Some(RateConversionQuality::High),
+                    )),
+                },
+            )
+            .perform(
+                model
+                    .samplesets
+                    .get(
+                        &model
+                            .viewvalues
+                            .samplesets_selected_set
+                            .ok_or(anyhow!("No sample set selected"))?,
+                    )
+                    .ok_or(anyhow!("Broken state"))?,
+                &model.sources,
+            )?;
+
+            Ok(model)
+        }
+
+        AppMessage::PlainCopyExportSelected => Ok(AppModel {
+            viewvalues: ViewValues {
+                samplesets_export_kind: Some(model::ExportKind::PlainCopy),
+                ..model.viewvalues
+            },
+            ..model
+        }),
+
+        AppMessage::ConversionExportSelected => Ok(AppModel {
+            viewvalues: ViewValues {
+                samplesets_export_kind: Some(model::ExportKind::Conversion),
+                ..model.viewvalues
+            },
+            ..model
+        }),
     }
 }
 
@@ -656,6 +782,14 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
                 $view.$entry.set_text(&$new.viewvalues.$entry);
             }
         };
+
+        ($old:ident, $new:ident, expr $viewexpr: expr, $entry:ident) => {
+            if $old.viewvalues.$entry != $new.viewvalues.$entry
+                && ($viewexpr).text() != $new.viewvalues.$entry
+            {
+                ($viewexpr).set_text(&$new.viewvalues.$entry);
+            }
+        };
     }
 
     maybe_update_text!(old, new, view, settings_latency_approx_label);
@@ -663,6 +797,23 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     maybe_update_text!(old, new, view, sources_add_fs_path_entry);
     maybe_update_text!(old, new, view, sources_add_fs_extensions_entry);
     maybe_update_text!(old, new, view, samplesets_add_name_entry);
+
+    if let Some(dialogview) = &new.viewvalues.samplesets_export_dialog_view {
+        maybe_update_text!(
+            old,
+            new,
+            expr dialogview.target_dir_entry,
+            samplesets_export_target_dir_entry
+        );
+
+        if old.viewflags.samplesets_export_fields_valid
+            != new.viewflags.samplesets_export_fields_valid
+        {
+            dialogview
+                .export_button
+                .set_sensitive(new.viewflags.samplesets_export_fields_valid);
+        }
+    }
 
     if new.viewflags.sources_add_fs_begin_browse {
         dialogs::choose_folder(
@@ -683,6 +834,20 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             "Name of set:",
             "Favorites",
             "Add",
+        );
+    }
+
+    if new.viewflags.samplesets_export_show_dialog {
+        dialogs::sampleset_export(model_ptr.clone(), view, new.clone());
+    }
+
+    if new.viewflags.samplesets_export_begin_browse {
+        dialogs::choose_folder(
+            model_ptr.clone(),
+            view,
+            SelectFolderDialogContext::BrowseForExportTargetDirectory,
+            AppMessage::ExportTargetDirectoryBrowseSubmitted,
+            AppMessage::ExportTargetDirectoryBrowseError,
         );
     }
 
