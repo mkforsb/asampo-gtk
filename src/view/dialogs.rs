@@ -68,18 +68,17 @@ pub fn input(
           <object class="GtkWindow">
             <child type="titlebar">
               <object class="GtkHeaderBar">
+                <style>
+                  <class name="less-tall" />
+                </style>
                 <property name="decoration-layout">:close</property>
                 <property name="title-widget">
-                  <object class="GtkBox">
-                    <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
-                    <child>
-                      <object class="GtkLabel" id="title">
-                        <property name="label"></property>
-                        <style>
-                          <class name="title" />
-                        </style>
-                      </object>
-                    </child>
+                  <object class="GtkLabel" id="title">
+                    <property name="label"></property>
+                    <property name="single-line-mode">true</property>
+                    <style>
+                      <class name="title" />
+                    </style>
                   </object>
                 </property>
               </object>
