@@ -344,6 +344,20 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
         .dynamic_cast_ref::<gtk::CheckButton>()
         .unwrap();
 
+    match model.viewvalues.samplesets_export_kind {
+        Some(crate::model::ExportKind::PlainCopy) => {
+            plain_copy_radio.set_active(true);
+            convert_radio.set_active(false);
+        }
+
+        Some(crate::model::ExportKind::Conversion) => {
+            plain_copy_radio.set_active(false);
+            convert_radio.set_active(true);
+        }
+
+        None => (),
+    }
+
     target_dir_entry.connect_changed(clone!(@strong model_ptr, @strong view => move |e: &gtk::Entry| {
         update(model_ptr.clone(), &view, AppMessage::ExportTargetDirectoryChanged(e.text().to_string()));
     }));
