@@ -28,6 +28,7 @@ pub struct ViewFlags {
     pub samples_sidebar_add_to_set_show_dialog: bool,
     pub samples_sidebar_add_to_prev_enabled: bool,
     pub samplesets_add_fields_valid: bool,
+    pub samplesets_export_enabled: bool,
 }
 
 #[allow(clippy::derivable_impls)]
@@ -39,6 +40,7 @@ impl Default for ViewFlags {
             samples_sidebar_add_to_set_show_dialog: false,
             samples_sidebar_add_to_prev_enabled: false,
             samplesets_add_fields_valid: false,
+            samplesets_export_enabled: false,
         }
     }
 }

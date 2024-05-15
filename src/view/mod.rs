@@ -136,6 +136,9 @@ pub struct AsampoViewState {
     pub samplesets_detail_labelling_kind_entry: gtk::TemplateChild<gtk::DropDown>,
 
     #[template_child]
+    pub samplesets_detail_export_button: gtk::TemplateChild<gtk::Button>,
+
+    #[template_child]
     pub samplesets_detail_sample_list: gtk::TemplateChild<gtk::ListBox>,
 }
 

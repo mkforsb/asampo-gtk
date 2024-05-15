@@ -60,6 +60,12 @@ pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
                 );
             }),
         );
+
+    view.samplesets_detail_export_button.connect_clicked(
+        clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
+            update(model_ptr.clone(), &view, AppMessage::SampleSetDetailsExportClicked);
+        }),
+    );
 }
 
 pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {

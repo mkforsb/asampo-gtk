@@ -119,6 +119,7 @@ enum AppMessage {
     SelectFolderDialogOpened(SelectFolderDialogContext),
     SampleSetSelected(Uuid),
     SampleSetLabellingKindChanged(LabellingKind),
+    SampleSetDetailsExportClicked,
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -655,12 +656,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         },
 
         AppMessage::SampleSetSelected(uuid) => {
-            let _ = model
+            let set = model
                 .samplesets
                 .get(&uuid)
                 .ok_or(anyhow!("Sample set not found (by uuid)"))?;
 
             Ok(AppModel {
+                viewflags: ViewFlags {
+                    samplesets_export_enabled: set.len() > 0,
+                    ..model.viewflags
+                },
                 viewvalues: ViewValues {
                     samplesets_selected_set: Some(uuid),
                     ..model.viewvalues
@@ -713,6 +718,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(result)
         }
+
+        AppMessage::SampleSetDetailsExportClicked => Ok(model),
     }
 }
 
@@ -800,8 +807,13 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         update_samplesets_detail(model_ptr.clone(), new.clone(), view);
 
         if new.viewvalues.samples_selected_sample.is_some() {
-            update_samples_sidebar(model_ptr, new, view);
+            update_samples_sidebar(model_ptr, new.clone(), view);
         }
+    }
+
+    if old.viewflags.samplesets_export_enabled != new.viewflags.samplesets_export_enabled {
+        view.samplesets_detail_export_button
+            .set_sensitive(new.viewflags.samplesets_export_enabled);
     }
 }
 

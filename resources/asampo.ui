@@ -869,6 +869,12 @@
                               <object class="GtkDropDown" id="samplesets_detail_labelling_kind_entry">
                               </object>
                             </child>
+                            <child>
+                              <object class="GtkButton" id="samplesets_detail_export_button">
+                                <property name="label">Export</property>
+                                <property name="sensitive">false</property>
+                              </object>
+                            </child>
                           </object>
                         </child>
                         <child>
