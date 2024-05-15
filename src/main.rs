@@ -19,8 +19,7 @@ use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc, thread, time::Duration}
 
 use anyhow::anyhow;
 use uuid::Uuid;
-use config::AppConfig;
-use configfile::ConfigFile;
+
 use gtk::{
     gdk::Display,
     gio::ApplicationFlags,
@@ -32,33 +31,33 @@ use gtk::{
 use libasampo::{
     prelude::*,
     samples::Sample,
-    samplesets::{BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling},
+    samplesets::{
+        BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
+    },
     sources::{file_system_source::FilesystemSource, Source},
 };
 
-use ext::{OptionMapExt, WithModel};
-use model::{AppModel, AppModelPtr, ViewFlags, ViewValues};
+use crate::{
+    config::AppConfig,
+    configfile::ConfigFile,
+    ext::{OptionMapExt, WithModel},
+    model::{AppModel, AppModelPtr, ViewFlags, ViewValues},
+    view::{
+        dialogs,
+        menus::build_actions,
+        samples::{setup_samples_page, update_samples_sidebar, SampleListEntry},
+        sets::{setup_sets_page, update_samplesets_detail, update_samplesets_list, LabellingKind},
+        settings::setup_settings_page,
+        sources::{setup_sources_page, update_sources_list},
+        AsampoView,
+    },
+};
 
 #[cfg(not(test))]
-use savefile::Savefile;
+use crate::savefile::Savefile;
 
 #[cfg(test)]
-use testutils::savefile_for_test::Savefile;
-
-use view::{
-    dialogs,
-    menus::build_actions,
-    samples::{setup_samples_page, SampleListEntry},
-    sets::{setup_sets_page, LabellingKind},
-    settings::setup_settings_page,
-    sources::{setup_sources_page, update_sources_list},
-    AsampoView,
-};
-
-use crate::view::{
-    samples::update_samples_sidebar,
-    sets::{update_samplesets_detail, update_samplesets_list},
-};
+use crate::testutils::savefile_for_test::Savefile;
 
 #[derive(Debug)]
 enum ErrorWithEffect {
