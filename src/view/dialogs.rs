@@ -62,7 +62,7 @@ pub fn input(
     input_descr: &str,
     placeholder: &str,
     ok: &str,
-) -> gtk::Window {
+) {
     let objects = gtk::Builder::from_string(indoc::indoc! {r#"
         <interface>
           <object class="GtkWindow">
@@ -192,7 +192,6 @@ pub fn input(
     );
 
     dialogwin.set_modal(true);
+    dialogwin.set_transient_for(Some(view));
     dialogwin.present();
-
-    dialogwin.clone()
 }
