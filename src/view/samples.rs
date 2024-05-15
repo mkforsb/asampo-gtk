@@ -161,7 +161,7 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
 }
 
 pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
-    match &model.viewvalues.samples_selected_sample {
+    match &model.samplelist_selected_sample {
         Some(sample) => {
             view.samples_sidebar_name_label.set_text(sample.name());
 

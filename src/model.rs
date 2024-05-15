@@ -65,10 +65,7 @@ pub struct ViewValues {
     pub samples_list_filter: String,
     pub settings_latency_approx_label: String,
     pub samples_listview_model: ListStore,
-    pub samples_selected_sample: Option<Sample>,
-    pub samples_set_most_recently_used: Option<Uuid>,
     pub samplesets_add_name_entry: String,
-    pub samplesets_selected_set: Option<Uuid>,
     pub samplesets_export_dialog_view: Option<dialogs::ExportDialogView>,
     pub samplesets_export_target_dir_entry: String,
     pub samplesets_export_kind: Option<ExportKind>,
@@ -83,10 +80,7 @@ impl Default for ViewValues {
             samples_list_filter: String::default(),
             settings_latency_approx_label: String::default(),
             samples_listview_model: ListStore::new::<SampleListEntry>(),
-            samples_selected_sample: None,
-            samples_set_most_recently_used: None,
             samplesets_add_name_entry: String::default(),
-            samplesets_selected_set: None,
             samplesets_export_dialog_view: None,
             samplesets_export_target_dir_entry: String::default(),
             samplesets_export_kind: None,
@@ -106,8 +100,11 @@ pub struct AppModel {
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
     pub samples: Rc<RefCell<Vec<Sample>>>,
+    pub samplelist_selected_sample: Option<Sample>,
     pub samplesets: HashMap<Uuid, SampleSet>,
     pub samplesets_order: Vec<Uuid>,
+    pub samplesets_selected_set: Option<Uuid>,
+    pub samplesets_most_recently_used_uuid: Option<Uuid>,
 }
 
 pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
@@ -139,8 +136,11 @@ impl AppModel {
             sources: HashMap::new(),
             sources_order: Vec::new(),
             samples: Rc::new(RefCell::new(Vec::new())),
+            samplelist_selected_sample: None,
             samplesets: HashMap::new(),
             samplesets_order: Vec::new(),
+            samplesets_selected_set: None,
+            samplesets_most_recently_used_uuid: None,
         }
     }
 

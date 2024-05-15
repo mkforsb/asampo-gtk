@@ -126,7 +126,6 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
     view.samplesets_detail_sample_list.remove_all();
 
     match model
-        .viewvalues
         .samplesets_selected_set
         .and_then(|uuid| model.samplesets.get(&uuid))
     {

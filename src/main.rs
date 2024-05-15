@@ -427,10 +427,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     )?;
 
                     Ok(AppModel {
-                        viewvalues: ViewValues {
-                            samples_selected_sample: Some(sample.borrow().clone()),
-                            ..model.viewvalues
-                        },
+                        samplelist_selected_sample: Some(sample.borrow().clone()),
                         ..model
                     })
                 }
@@ -457,8 +454,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SampleSidebarAddToMostRecentlyUsedSetClicked => {
             let mru_uuid = model
-                .viewvalues
-                .samples_set_most_recently_used
+                .samplesets_most_recently_used_uuid
                 .ok_or(anyhow!("No sample set recently added to"))?;
 
             model_util::add_selected_sample_to_sampleset_by_uuid(model, &mru_uuid)
@@ -610,10 +606,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     samplesets_export_enabled: set.len() > 0,
                     ..model.viewflags
                 },
-                viewvalues: ViewValues {
-                    samplesets_selected_set: Some(uuid),
-                    ..model.viewvalues
-                },
+                samplesets_selected_set: Some(uuid),
                 ..model
             })
         }
@@ -640,7 +633,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SampleSetLabellingKindChanged(kind) => {
             let set_uuid = model
-                .viewvalues
                 .samplesets_selected_set
                 .ok_or(anyhow!("No sample set selected"))?;
 
@@ -744,7 +736,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     .samplesets
                     .get(
                         &model
-                            .viewvalues
                             .samplesets_selected_set
                             .ok_or(anyhow!("No sample set selected"))?,
                     )
@@ -860,7 +851,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         update_sources_list(model_ptr.clone(), new.clone(), view);
     }
 
-    if old.viewvalues.samples_selected_sample != new.viewvalues.samples_selected_sample {
+    if old.samplelist_selected_sample != new.samplelist_selected_sample {
         update_samples_sidebar(model_ptr.clone(), new.clone(), view);
     }
 
@@ -871,10 +862,8 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             .set_sensitive(new.viewflags.samples_sidebar_add_to_prev_enabled);
     }
 
-    if old.viewvalues.samples_set_most_recently_used
-        != new.viewvalues.samples_set_most_recently_used
-    {
-        if let Some(ref mru) = new.viewvalues.samples_set_most_recently_used {
+    if old.samplesets_most_recently_used_uuid != new.samplesets_most_recently_used_uuid {
+        if let Some(ref mru) = new.samplesets_most_recently_used_uuid {
             if let Some((_, set)) = new.samplesets.iter().find(|(uuid, _set)| *uuid == mru) {
                 view.samples_sidebar_add_to_prev_button
                     .set_label(&format!("Add to '{}'", set.name()));
@@ -887,7 +876,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             .set_sensitive(new.viewflags.samplesets_add_fields_valid);
     }
 
-    if old.viewvalues.samplesets_selected_set != new.viewvalues.samplesets_selected_set {
+    if old.samplesets_selected_set != new.samplesets_selected_set {
         update_samplesets_detail(model_ptr.clone(), new.clone(), view);
     }
 
@@ -895,7 +884,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         update_samplesets_list(model_ptr.clone(), new.clone(), view);
         update_samplesets_detail(model_ptr.clone(), new.clone(), view);
 
-        if new.viewvalues.samples_selected_sample.is_some() {
+        if new.samplelist_selected_sample.is_some() {
             update_samples_sidebar(model_ptr, new.clone(), view);
         }
     }

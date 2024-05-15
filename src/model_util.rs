@@ -10,7 +10,7 @@ use libasampo::{
 };
 use uuid::Uuid;
 
-use crate::model::{AppModel, ViewFlags, ViewValues};
+use crate::model::{AppModel, ViewFlags};
 
 pub fn get_or_create_sampleset(
     model: AppModel,
@@ -37,8 +37,7 @@ pub fn add_selected_sample_to_sampleset_by_uuid(
     uuid: &Uuid,
 ) -> Result<AppModel, anyhow::Error> {
     let sample = model
-        .viewvalues
-        .samples_selected_sample
+        .samplelist_selected_sample
         .as_ref()
         .ok_or(anyhow!("No selected sample"))?;
 
@@ -64,10 +63,7 @@ pub fn add_selected_sample_to_sampleset_by_uuid(
             samples_sidebar_add_to_prev_enabled: true,
             ..model.viewflags
         },
-        viewvalues: ViewValues {
-            samples_set_most_recently_used: Some(*uuid),
-            ..model.viewvalues
-        },
+        samplesets_most_recently_used_uuid: Some(*uuid),
         ..model
     })
 }
