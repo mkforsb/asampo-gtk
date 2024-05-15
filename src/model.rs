@@ -205,9 +205,9 @@ impl AppModel {
         })
     }
 
-    // pub fn map<F: FnOnce(Self) -> Self>(self, f: F) -> Self {
-    //     f(self)
-    // }
+    pub fn map<F: FnOnce(Self) -> Self>(self, f: F) -> Self {
+        f(self)
+    }
 
     pub fn map_ref<F: FnOnce(&Self)>(self, f: F) -> Self {
         f(&self);

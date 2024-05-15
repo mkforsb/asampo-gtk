@@ -9,6 +9,7 @@ mod configfile;
 mod ext;
 
 mod model;
+mod model_util;
 mod savefile;
 mod testutils;
 mod util;
@@ -17,6 +18,7 @@ mod view;
 use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc, thread, time::Duration};
 
 use anyhow::anyhow;
+use uuid::Uuid;
 use config::AppConfig;
 use configfile::ConfigFile;
 use gtk::{
@@ -26,7 +28,6 @@ use gtk::{
     prelude::*,
     Application, DialogError,
 };
-use uuid::Uuid;
 
 use libasampo::{
     prelude::*,
@@ -153,80 +154,7 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
     }
 }
 
-fn get_or_create_sampleset(
-    model: AppModel,
-    name: String,
-) -> Result<(AppModel, Uuid), anyhow::Error> {
-    match model
-        .samplesets
-        .iter()
-        .find(|(_, set)| set.name() == name)
-        .map(|(uuid, _)| *uuid)
-    {
-        Some(uuid) => Ok((model, uuid)),
-        None => {
-            let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new(name));
-            let new_uuid = *new_set.uuid();
-
-            Ok((model.add_sampleset(new_set), new_uuid))
-        }
-    }
-}
-
-fn add_selected_sample_to_sampleset_by_uuid(
-    model: AppModel,
-    uuid: &Uuid,
-) -> Result<AppModel, anyhow::Error> {
-    let sample = model
-        .viewvalues
-        .samples_selected_sample
-        .as_ref()
-        .ok_or(anyhow!("No selected sample"))?;
-
-    let source = model
-        .sources
-        .get(
-            sample
-                .source_uuid()
-                .ok_or(anyhow!("Selected sample has no source"))?,
-        )
-        .ok_or(anyhow!("Could not obtain source for selected sample"))?;
-
-    let mut model = model.clone();
-
-    model
-        .samplesets
-        .get_mut(uuid)
-        .ok_or(anyhow!("Sample set not found (by uuid)"))?
-        .add(source, sample.clone())?;
-
-    Ok(AppModel {
-        viewflags: ViewFlags {
-            samples_sidebar_add_to_prev_enabled: true,
-            ..model.viewflags
-        },
-        viewvalues: ViewValues {
-            samples_set_most_recently_used: Some(*uuid),
-            ..model.viewvalues
-        },
-        ..model
-    })
-}
-
 fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow::Error> {
-    fn check_sources_add_fs_valid(model: AppModel) -> AppModel {
-        #[allow(clippy::needless_update)]
-        AppModel {
-            viewflags: ViewFlags {
-                sources_add_fs_fields_valid: !model.viewvalues.sources_add_fs_name_entry.is_empty()
-                    && !model.viewvalues.sources_add_fs_path_entry.is_empty()
-                    && !model.viewvalues.sources_add_fs_extensions_entry.is_empty(),
-                ..model.viewflags
-            },
-            ..model
-        }
-    }
-
     match message {
         AppMessage::TimerTick => {
             if let Some(0) = model.config_save_timeout {
@@ -365,25 +293,23 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             ..model
         }),
 
-        AppMessage::AddFilesystemSourceNameChanged(text) => {
-            Ok(check_sources_add_fs_valid(AppModel {
-                viewvalues: ViewValues {
-                    sources_add_fs_name_entry: text,
-                    ..model.viewvalues
-                },
-                ..model
-            }))
+        AppMessage::AddFilesystemSourceNameChanged(text) => Ok(AppModel {
+            viewvalues: ViewValues {
+                sources_add_fs_name_entry: text,
+                ..model.viewvalues
+            },
+            ..model
         }
+        .map(model_util::check_sources_add_fs_valid)),
 
-        AppMessage::AddFilesystemSourcePathChanged(text) => {
-            Ok(check_sources_add_fs_valid(AppModel {
-                viewvalues: ViewValues {
-                    sources_add_fs_path_entry: text,
-                    ..model.viewvalues
-                },
-                ..model
-            }))
+        AppMessage::AddFilesystemSourcePathChanged(text) => Ok(AppModel {
+            viewvalues: ViewValues {
+                sources_add_fs_path_entry: text,
+                ..model.viewvalues
+            },
+            ..model
         }
+        .map(model_util::check_sources_add_fs_valid)),
 
         AppMessage::AddFilesystemSourcePathBrowseClicked => Ok(AppModel {
             viewflags: ViewFlags {
@@ -421,15 +347,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model)
         }
 
-        AppMessage::AddFilesystemSourceExtensionsChanged(text) => {
-            Ok(check_sources_add_fs_valid(AppModel {
-                viewvalues: ViewValues {
-                    sources_add_fs_extensions_entry: text,
-                    ..model.viewvalues
-                },
-                ..model
-            }))
+        AppMessage::AddFilesystemSourceExtensionsChanged(text) => Ok(AppModel {
+            viewvalues: ViewValues {
+                sources_add_fs_extensions_entry: text,
+                ..model.viewvalues
+            },
+            ..model
         }
+        .map(model_util::check_sources_add_fs_valid)),
 
         // TODO: more validation, e.g is the path readable
         AppMessage::AddFilesystemSourceClicked => {
@@ -526,7 +451,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 .samples_set_most_recently_used
                 .ok_or(anyhow!("No sample set recently added to"))?;
 
-            add_selected_sample_to_sampleset_by_uuid(model, &mru_uuid)
+            model_util::add_selected_sample_to_sampleset_by_uuid(model, &mru_uuid)
         }
 
         AppMessage::SourceEnabled(uuid) => Ok(model
@@ -594,7 +519,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model)
         }
 
-        AppMessage::AddSampleSetNameChanged(text) => Ok(check_sources_add_fs_valid(AppModel {
+        AppMessage::AddSampleSetNameChanged(text) => Ok(model_util::check_sources_add_fs_valid(AppModel {
             viewflags: ViewFlags {
                 samplesets_add_fields_valid: !text.is_empty(),
                 ..model.viewflags
@@ -640,8 +565,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::InputDialogSubmitted(context, text) => match context {
             InputDialogContext::AddToSampleset => {
-                let (model, set_uuid) = get_or_create_sampleset(model, text)?;
-                add_selected_sample_to_sampleset_by_uuid(model, &set_uuid)
+                let (model, set_uuid) = model_util::get_or_create_sampleset(model, text)?;
+                model_util::add_selected_sample_to_sampleset_by_uuid(model, &set_uuid)
             }
         },
 
