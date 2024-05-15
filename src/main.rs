@@ -312,7 +312,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::AddFilesystemSourcePathBrowseClicked => Ok(AppModel {
             viewflags: ViewFlags {
-                sources_add_fs_browse: true,
+                sources_add_fs_begin_browse: true,
                 ..model.viewflags
             },
             ..model
@@ -572,7 +572,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::SelectFolderDialogOpened(context) => match context {
             SelectFolderDialogContext::BrowseForFilesystemSource => Ok(AppModel {
                 viewflags: ViewFlags {
-                    sources_add_fs_browse: false,
+                    sources_add_fs_begin_browse: false,
                     ..model.viewflags
                 },
                 ..model
@@ -664,7 +664,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     maybe_update_text!(old, new, view, sources_add_fs_extensions_entry);
     maybe_update_text!(old, new, view, samplesets_add_name_entry);
 
-    if new.viewflags.sources_add_fs_browse {
+    if new.viewflags.sources_add_fs_begin_browse {
         dialogs::choose_folder(
             model_ptr.clone(),
             view,
