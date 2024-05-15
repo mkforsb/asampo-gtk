@@ -6,7 +6,7 @@ use std::{
     cell::{Cell, RefCell},
     collections::HashMap,
     rc::Rc,
-    sync::mpsc::{self, Sender},
+    sync::mpsc::{self, Receiver, Sender},
     thread::JoinHandle,
 };
 
@@ -51,6 +51,12 @@ impl Default for ViewFlags {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ExportState {
+    Exporting,
+    Finished,
+}
+
 #[derive(Debug, Clone)]
 pub enum ExportKind {
     PlainCopy,
@@ -88,6 +94,12 @@ impl Default for ViewValues {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct ExportThreadComms {
+    pub rx: Rc<Receiver<crate::thread::export::OutputMessage>>,
+    pub tx: Sender<crate::thread::export::InputMessage>,
+}
+
 #[derive(Clone, Debug)]
 pub struct AppModel {
     pub config: Option<AppConfig>,
@@ -97,6 +109,7 @@ pub struct AppModel {
     pub viewvalues: ViewValues,
     pub audiothread_tx: Option<Sender<audiothread::Message>>,
     pub _audiothread_handle: Option<Rc<JoinHandle<()>>>,
+    pub export_thread_comms: Option<ExportThreadComms>,
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
     pub samples: Rc<RefCell<Vec<Sample>>>,
@@ -105,6 +118,8 @@ pub struct AppModel {
     pub samplesets_order: Vec<Uuid>,
     pub samplesets_selected_set: Option<Uuid>,
     pub samplesets_most_recently_used_uuid: Option<Uuid>,
+    pub samplesets_export_state: Option<ExportState>,
+    pub samplesets_export_progress: Option<u8>,
 }
 
 pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
@@ -133,6 +148,7 @@ impl AppModel {
             },
             audiothread_tx: tx,
             _audiothread_handle: handle,
+            export_thread_comms: None,
             sources: HashMap::new(),
             sources_order: Vec::new(),
             samples: Rc::new(RefCell::new(Vec::new())),
@@ -141,6 +157,8 @@ impl AppModel {
             samplesets_order: Vec::new(),
             samplesets_selected_set: None,
             samplesets_most_recently_used_uuid: None,
+            samplesets_export_state: None,
+            samplesets_export_progress: None,
         }
     }
 

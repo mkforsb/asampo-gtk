@@ -12,10 +12,11 @@ mod model;
 mod model_util;
 mod savefile;
 mod testutils;
+mod thread;
 mod util;
 mod view;
 
-use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc, thread, time::Duration};
+use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc, time::Duration};
 
 use anyhow::anyhow;
 use uuid::Uuid;
@@ -42,7 +43,7 @@ use crate::{
     config::AppConfig,
     configfile::ConfigFile,
     ext::{OptionMapExt, WithModel},
-    model::{AppModel, AppModelPtr, ViewFlags, ViewValues},
+    model::{AppModel, AppModelPtr, ExportThreadComms, ViewFlags, ViewValues},
     view::{
         dialogs,
         menus::build_actions,
@@ -131,11 +132,14 @@ enum AppMessage {
     PerformExportClicked,
     PlainCopyExportSelected,
     ConversionExportSelected,
+    ExportThreadMessage(crate::thread::export::OutputMessage),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
+    let mut is_timer_tick = false;
+
     match message {
-        AppMessage::TimerTick => (),
+        AppMessage::TimerTick => is_timer_tick = true,
         _ => log::log!(log::Level::Debug, "{message:?}"),
     }
 
@@ -144,7 +148,19 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
     match update_model(old_model.clone(), message) {
         Ok(new_model) => {
             model_ptr.set(Some(new_model.clone()));
-            update_view(model_ptr, old_model, new_model, view);
+            update_view(model_ptr.clone(), old_model, new_model.clone(), view);
+
+            if is_timer_tick {
+                if let Some(export_comms) = &new_model.export_thread_comms {
+                    match export_comms.rx.try_recv() {
+                        Ok(m) => update(model_ptr, view, AppMessage::ExportThreadMessage(m)),
+                        Err(e) => match e {
+                            mpsc::TryRecvError::Empty => (),
+                            mpsc::TryRecvError::Disconnected => (),
+                        },
+                    }
+                }
+            }
         }
 
         Err(e) => {
@@ -184,7 +200,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
                 if let Some(prev_tx) = model.audiothread_tx {
                     match prev_tx.send(audiothread::Message::Shutdown()) {
-                        Ok(_) => thread::sleep(Duration::from_millis(10)),
+                        Ok(_) => std::thread::sleep(Duration::from_millis(10)),
                         Err(e) => {
                             log::log!(log::Level::Error, "Error shutting down audiothread: {e:?}")
                         }
@@ -716,34 +732,67 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::PerformExportClicked => {
             use libasampo::samplesets::export::{RateConversionQuality, WavSampleFormat, WavSpec};
 
-            ExportJob::new(
-                model.viewvalues.samplesets_export_target_dir_entry.clone(),
-                match model.viewvalues.samplesets_export_kind {
-                    None | Some(model::ExportKind::PlainCopy) => None,
-                    Some(model::ExportKind::Conversion) => Some(Conversion::Wav(
-                        WavSpec {
-                            channels: 2,
-                            sample_rate: 44100,
-                            bits_per_sample: 16,
-                            sample_format: WavSampleFormat::Int,
-                        },
-                        Some(RateConversionQuality::High),
-                    )),
-                },
-            )
-            .perform(
-                model
-                    .samplesets
-                    .get(
-                        &model
-                            .samplesets_selected_set
-                            .ok_or(anyhow!("No sample set selected"))?,
-                    )
-                    .ok_or(anyhow!("Broken state"))?,
-                &model.sources,
-            )?;
+            let mut new_model = AppModel {
+                samplesets_export_state: Some(model::ExportState::Exporting),
+                ..model
+            };
 
-            Ok(model)
+            if new_model.export_thread_comms.is_none() {
+                let (tx_t_in, rx_t_in) =
+                    std::sync::mpsc::channel::<crate::thread::export::InputMessage>();
+
+                let (tx_t_out, rx_t_out) =
+                    std::sync::mpsc::channel::<crate::thread::export::OutputMessage>();
+
+                crate::thread::export::spawn(rx_t_in, tx_t_out);
+
+                new_model = AppModel {
+                    export_thread_comms: Some(ExportThreadComms {
+                        rx: Rc::new(rx_t_out),
+                        tx: tx_t_in,
+                    }),
+                    ..new_model
+                }
+            }
+
+            new_model
+                .export_thread_comms
+                .as_ref()
+                .unwrap()
+                .tx
+                .send(crate::thread::export::InputMessage::PerformExport(
+                    ExportJob::new(
+                        new_model
+                            .viewvalues
+                            .samplesets_export_target_dir_entry
+                            .clone(),
+                        match new_model.viewvalues.samplesets_export_kind {
+                            None | Some(model::ExportKind::PlainCopy) => None,
+                            Some(model::ExportKind::Conversion) => Some(Conversion::Wav(
+                                WavSpec {
+                                    channels: 2,
+                                    sample_rate: 44100,
+                                    bits_per_sample: 16,
+                                    sample_format: WavSampleFormat::Int,
+                                },
+                                Some(RateConversionQuality::High),
+                            )),
+                        },
+                    ),
+                    new_model.sources.clone(),
+                    new_model
+                        .samplesets
+                        .get(
+                            &new_model
+                                .samplesets_selected_set
+                                .ok_or(anyhow!("No sample set selected"))?,
+                        )
+                        .ok_or(anyhow!("Broken state, sample set not found"))?
+                        .clone(),
+                ))
+                .or(Err(anyhow!("Failed sending message to export thread")))?;
+
+            Ok(new_model)
         }
 
         AppMessage::PlainCopyExportSelected => Ok(AppModel {
@@ -761,6 +810,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             },
             ..model
         }),
+
+        AppMessage::ExportThreadMessage(message) => match message {
+            thread::export::OutputMessage::ExportError(_) => Ok(model),
+            thread::export::OutputMessage::ExportFinished => Ok(AppModel {
+                samplesets_export_state: Some(model::ExportState::Finished),
+                ..model
+            }),
+        },
     }
 }
 
@@ -892,6 +949,24 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     if old.viewflags.samplesets_export_enabled != new.viewflags.samplesets_export_enabled {
         view.samplesets_detail_export_button
             .set_sensitive(new.viewflags.samplesets_export_enabled);
+    }
+
+    if old.samplesets_export_state != new.samplesets_export_state {
+        match new.samplesets_export_state {
+            Some(model::ExportState::Exporting) => {
+                if let Some(dv) = new.viewvalues.samplesets_export_dialog_view {
+                    dv.window.set_sensitive(false)
+                }
+            }
+
+            Some(model::ExportState::Finished) => {
+                if let Some(dv) = new.viewvalues.samplesets_export_dialog_view {
+                    dv.window.close()
+                }
+            }
+
+            None => (),
+        }
     }
 }
 

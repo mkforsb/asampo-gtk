@@ -201,6 +201,7 @@ pub fn input(
 
 #[derive(Debug, Clone)]
 pub struct ExportDialogView {
+    pub window: gtk::Window,
     pub target_dir_entry: gtk::Entry,
     pub export_button: gtk::Button,
 }
@@ -370,9 +371,8 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
 
     export_button.connect_clicked(
         clone!(@strong model_ptr, @strong view, @strong dialogwin => move |_: &gtk::Button| {
-            // TODO: async + progress indicator
+            // TODO: progress indicator
             update(model_ptr.clone(), &view, AppMessage::PerformExportClicked);
-            dialogwin.close();
         }),
     );
 
@@ -416,6 +416,7 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
         model_ptr.clone(),
         view,
         AppMessage::ExportDialogOpened(ExportDialogView {
+            window: dialogwin.clone(),
             target_dir_entry: target_dir_entry.clone(),
             export_button: export_button.clone(),
         }),
