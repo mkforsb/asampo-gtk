@@ -518,7 +518,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model)
         }
 
-        AppMessage::AddSampleSetNameChanged(text) => Ok(model_util::check_sources_add_fs_valid(AppModel {
+        AppMessage::AddSampleSetNameChanged(text) => Ok(AppModel {
             viewflags: ViewFlags {
                 samplesets_add_fields_valid: !text.is_empty(),
                 ..model.viewflags
@@ -528,7 +528,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ..model.viewvalues
             },
             ..model
-        })),
+        }),
 
         AppMessage::AddSampleSetClicked => {
             assert!(!model.viewvalues.samplesets_add_name_entry.is_empty());
