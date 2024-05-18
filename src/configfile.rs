@@ -23,6 +23,13 @@ pub enum QualitySerde {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(remote = "crate::config::SamplePlaybackBehavior")]
+pub enum PlaybackBehaviorSerde {
+    PlaySingleSample,
+    PlayUntilEnd,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigFileV1 {
     audio_output: AudioOutput,
     output_samplerate_hz: u32,
@@ -32,6 +39,8 @@ pub struct ConfigFileV1 {
     sample_rate_conversion_quality: audiothread::Quality,
 
     config_save_path: String,
+
+    #[serde(with = "PlaybackBehaviorSerde")]
     sample_playback_behavior: SamplePlaybackBehavior,
 }
 

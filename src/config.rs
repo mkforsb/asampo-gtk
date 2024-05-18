@@ -2,11 +2,9 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-use serde::{Deserialize, Serialize};
-
 use crate::configfile::ConfigFile;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum SamplePlaybackBehavior {
     PlaySingleSample,
     PlayUntilEnd,
