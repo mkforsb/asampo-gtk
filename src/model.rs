@@ -23,6 +23,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct ViewFlags {
+    pub view_sensitive: bool,
     pub sources_add_fs_fields_valid: bool,
     pub sources_add_fs_begin_browse: bool,
     pub samples_sidebar_add_to_set_show_dialog: bool,
@@ -34,10 +35,10 @@ pub struct ViewFlags {
     pub samplesets_export_fields_valid: bool,
 }
 
-#[allow(clippy::derivable_impls)]
 impl Default for ViewFlags {
     fn default() -> Self {
         ViewFlags {
+            view_sensitive: true,
             sources_add_fs_fields_valid: false,
             sources_add_fs_begin_browse: false,
             samples_sidebar_add_to_set_show_dialog: false,

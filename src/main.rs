@@ -681,6 +681,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::ExportDialogOpened(dialogview) => Ok(AppModel {
             viewflags: ViewFlags {
+                view_sensitive: false,
                 samplesets_export_show_dialog: false,
                 ..model.viewflags
             },
@@ -692,6 +693,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }),
 
         AppMessage::ExportDialogClosed => Ok(AppModel {
+            viewflags: ViewFlags {
+                view_sensitive: true,
+                ..model.viewflags
+            },
             viewvalues: ViewValues {
                 samplesets_export_dialog_view: None,
                 ..model.viewvalues
@@ -838,6 +843,10 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
                 ($viewexpr).set_text(&$new.viewvalues.$entry);
             }
         };
+    }
+
+    if old.viewflags.view_sensitive != new.viewflags.view_sensitive {
+        view.set_sensitive(new.viewflags.view_sensitive);
     }
 
     maybe_update_text!(old, new, view, settings_latency_approx_label);

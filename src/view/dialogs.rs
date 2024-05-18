@@ -407,7 +407,6 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
     dialogwin.connect_close_request(
         clone!(@strong model_ptr, @strong view => move |_: &gtk::Window| {
             update(model_ptr.clone(), &view, AppMessage::ExportDialogClosed);
-            view.set_sensitive(true);
             Propagation::Proceed
         }),
     );
@@ -415,8 +414,6 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
     dialogwin.set_modal(true);
     dialogwin.set_transient_for(Some(view));
     dialogwin.present();
-
-    view.set_sensitive(false);
 
     update(
         model_ptr.clone(),
