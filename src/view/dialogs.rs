@@ -359,9 +359,15 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
         None => (),
     }
 
-    target_dir_entry.connect_changed(clone!(@strong model_ptr, @strong view => move |e: &gtk::Entry| {
-        update(model_ptr.clone(), &view, AppMessage::ExportTargetDirectoryChanged(e.text().to_string()));
-    }));
+    target_dir_entry.connect_changed(
+        clone!(@strong model_ptr, @strong view => move |e: &gtk::Entry| {
+            update(
+                model_ptr.clone(),
+                &view,
+                AppMessage::ExportTargetDirectoryChanged(e.text().to_string())
+            );
+        }),
+    );
 
     browse_button.connect_clicked(
         clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
