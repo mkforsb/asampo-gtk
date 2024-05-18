@@ -30,3 +30,20 @@ listview row {
     border-bottom: 1px solid #eee;
     margin-left: 6px;
 }
+
+overlay frame.progress-popup {
+    background: #fff;
+    margin-bottom: 8px;
+    margin-right: 8px;
+    box-shadow: 2px 2px 12px #aaa;
+}
+
+overlay frame.progress-popup progressbar {
+    color: #000;
+    font-size: 100%;
+    margin: 8px;
+}
+
+overlay frame.progress-popup progressbar text {
+    margin-bottom: 8px;
+}

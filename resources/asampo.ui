@@ -55,8 +55,22 @@
       </object>
     </child>
     <child>
-      <object class="GtkBox">
-        <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
+      <object class="GtkOverlay">
+        <child type="overlay">
+          <object class="GtkFrame" id="progress_popup_frame">
+            <property name="visible">false</property>
+            <property name="halign">GTK_ALIGN_END</property>
+            <property name="valign">GTK_ALIGN_END</property>
+            <style>
+              <class name="progress-popup" />
+            </style>
+            <child>
+              <object class="GtkProgressBar" id="progress_popup_progress_bar">
+                <property name="show-text">true</property>
+              </object>
+            </child>
+        </object>
+        </child>
         <child>
           <object class="GtkStack" id="stack">
             <child>

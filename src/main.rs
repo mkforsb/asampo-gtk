@@ -12,13 +12,13 @@ mod model;
 mod model_util;
 mod savefile;
 mod testutils;
-mod thread;
 mod util;
 mod view;
 
 use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc, time::Duration};
 
 use anyhow::anyhow;
+use model::ExportState;
 use uuid::Uuid;
 
 use gtk::{
@@ -33,7 +33,7 @@ use libasampo::{
     prelude::*,
     samples::Sample,
     samplesets::{
-        export::{Conversion, ExportJob},
+        export::{Conversion, ExportJob, ExportJobMessage},
         BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
     sources::{file_system_source::FilesystemSource, Source},
@@ -43,7 +43,7 @@ use crate::{
     config::AppConfig,
     configfile::ConfigFile,
     ext::{OptionMapExt, WithModel},
-    model::{AppModel, AppModelPtr, ExportThreadComms, ViewFlags, ViewValues},
+    model::{AppModel, AppModelPtr, ViewFlags, ViewValues},
     view::{
         dialogs,
         menus::build_actions,
@@ -132,14 +132,12 @@ enum AppMessage {
     PerformExportClicked,
     PlainCopyExportSelected,
     ConversionExportSelected,
-    ExportThreadMessage(crate::thread::export::OutputMessage),
+    ExportJobMessage(libasampo::samplesets::export::ExportJobMessage),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
-    let mut is_timer_tick = false;
-
     match message {
-        AppMessage::TimerTick => is_timer_tick = true,
+        AppMessage::TimerTick => (),
         _ => log::log!(log::Level::Debug, "{message:?}"),
     }
 
@@ -149,18 +147,6 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
         Ok(new_model) => {
             model_ptr.set(Some(new_model.clone()));
             update_view(model_ptr.clone(), old_model, new_model.clone(), view);
-
-            if is_timer_tick {
-                if let Some(export_comms) = &new_model.export_thread_comms {
-                    match export_comms.rx.try_recv() {
-                        Ok(m) => update(model_ptr, view, AppMessage::ExportThreadMessage(m)),
-                        Err(e) => match e {
-                            mpsc::TryRecvError::Empty => (),
-                            mpsc::TryRecvError::Disconnected => (),
-                        },
-                    }
-                }
-            }
         }
 
         Err(e) => {
@@ -737,67 +723,48 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::PerformExportClicked => {
             use libasampo::samplesets::export::{RateConversionQuality, WavSampleFormat, WavSpec};
 
-            let mut new_model = AppModel {
-                samplesets_export_state: Some(model::ExportState::Exporting),
-                ..model
-            };
+            let sampleset = model
+                .samplesets
+                .get(
+                    &model
+                        .samplesets_selected_set
+                        .ok_or(anyhow!("No sample set selected"))?,
+                )
+                .ok_or(anyhow!("Broken state, sample set not found"))?
+                .clone();
 
-            if new_model.export_thread_comms.is_none() {
-                let (tx_t_in, rx_t_in) =
-                    std::sync::mpsc::channel::<crate::thread::export::InputMessage>();
+            let num_samples = sampleset.len();
 
-                let (tx_t_out, rx_t_out) =
-                    std::sync::mpsc::channel::<crate::thread::export::OutputMessage>();
+            let (tx, rx) = std::sync::mpsc::channel::<ExportJobMessage>();
 
-                crate::thread::export::spawn(rx_t_in, tx_t_out);
-
-                new_model = AppModel {
-                    export_thread_comms: Some(ExportThreadComms {
-                        rx: Rc::new(rx_t_out),
-                        tx: tx_t_in,
-                    }),
-                    ..new_model
-                }
-            }
-
-            new_model
-                .export_thread_comms
-                .as_ref()
-                .unwrap()
-                .tx
-                .send(crate::thread::export::InputMessage::PerformExport(
-                    ExportJob::new(
-                        new_model
-                            .viewvalues
-                            .samplesets_export_target_dir_entry
-                            .clone(),
-                        match new_model.viewvalues.samplesets_export_kind {
-                            None | Some(model::ExportKind::PlainCopy) => None,
-                            Some(model::ExportKind::Conversion) => Some(Conversion::Wav(
-                                WavSpec {
-                                    channels: 2,
-                                    sample_rate: 44100,
-                                    bits_per_sample: 16,
-                                    sample_format: WavSampleFormat::Int,
-                                },
-                                Some(RateConversionQuality::High),
-                            )),
-                        },
-                    ),
-                    new_model.sources.clone(),
-                    new_model
-                        .samplesets
-                        .get(
-                            &new_model
-                                .samplesets_selected_set
-                                .ok_or(anyhow!("No sample set selected"))?,
-                        )
-                        .ok_or(anyhow!("Broken state, sample set not found"))?
+            std::thread::spawn(clone!(@strong model => move || {
+                let job = ExportJob::new(
+                    model
+                        .viewvalues
+                        .samplesets_export_target_dir_entry
                         .clone(),
-                ))
-                .or(Err(anyhow!("Failed sending message to export thread")))?;
+                    match model.viewvalues.samplesets_export_kind {
+                        None | Some(model::ExportKind::PlainCopy) => None,
+                        Some(model::ExportKind::Conversion) => Some(Conversion::Wav(
+                            WavSpec {
+                                channels: 2,
+                                sample_rate: 44100,
+                                bits_per_sample: 16,
+                                sample_format: WavSampleFormat::Int,
+                            },
+                            Some(RateConversionQuality::High),
+                        )),
+                    });
 
-            Ok(new_model)
+                job.perform(&sampleset, &model.sources, Some(tx));
+            }));
+
+            Ok(AppModel {
+                samplesets_export_state: Some(model::ExportState::Exporting),
+                samplesets_export_progress: Some((0, num_samples)),
+                export_job_rx: Some(Rc::new(rx)),
+                ..model
+            })
         }
 
         AppMessage::PlainCopyExportSelected => Ok(AppModel {
@@ -816,10 +783,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             ..model
         }),
 
-        AppMessage::ExportThreadMessage(message) => match message {
-            thread::export::OutputMessage::ExportError(_) => Ok(model),
-            thread::export::OutputMessage::ExportFinished => Ok(AppModel {
-                samplesets_export_state: Some(model::ExportState::Finished),
+        AppMessage::ExportJobMessage(message) => match message {
+            ExportJobMessage::ItemsCompleted(n) => Ok(AppModel {
+                samplesets_export_progress: model.samplesets_export_progress.map(|(_, m)| (n, m)),
+                ..model
+            }),
+            ExportJobMessage::Error(e) => Err(e.into()),
+            ExportJobMessage::Finished => Ok(AppModel {
+                samplesets_export_state: Some(ExportState::Finished),
+                samplesets_export_progress: None,
+                export_job_rx: None,
                 ..model
             }),
         },
@@ -964,17 +937,26 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         match new.samplesets_export_state {
             Some(model::ExportState::Exporting) => {
                 if let Some(dv) = new.viewvalues.samplesets_export_dialog_view {
-                    dv.window.set_sensitive(false)
+                    dv.window.close();
+                    view.progress_popup_frame.set_visible(true);
                 }
             }
 
             Some(model::ExportState::Finished) => {
-                if let Some(dv) = new.viewvalues.samplesets_export_dialog_view {
-                    dv.window.close()
-                }
+                view.progress_popup_frame.set_visible(false);
             }
 
             None => (),
+        }
+    }
+
+    if old.samplesets_export_progress != new.samplesets_export_progress {
+        if let Some((n, m)) = new.samplesets_export_progress {
+            view.progress_popup_progress_bar
+                .set_text(Some(format!("Exporting {n}/{m}").as_str()));
+
+            view.progress_popup_progress_bar
+                .set_fraction(n as f64 / m as f64);
         }
     }
 }
@@ -1056,10 +1038,44 @@ fn main() -> ExitCode {
 
         view.present();
 
+        // timer for AppMessage::TimerTick
         gtk::glib::timeout_add_seconds_local(
             1,
             clone!(@strong model_ptr, @strong view => move || {
                 update(model_ptr.clone(), &view, AppMessage::TimerTick);
+                gtk::glib::ControlFlow::Continue
+            }),
+        );
+
+        // timer for thread messaging
+        gtk::glib::timeout_add_local(
+            std::time::Duration::from_millis(50),
+            clone!(@strong model_ptr, @strong view => move || {
+                let model = model_ptr.take().unwrap();
+                let export_job_rx = model.export_job_rx.clone();
+                model_ptr.set(Some(model));
+
+                if let Some(rx) = export_job_rx {
+                    loop {
+                        match rx.try_recv() {
+                            Ok(m) => update(
+                                model_ptr.clone(),
+                                &view,
+                                AppMessage::ExportJobMessage(m)
+                            ),
+
+                            Err(e) => {
+                                match e {
+                                    mpsc::TryRecvError::Empty => (),
+                                    mpsc::TryRecvError::Disconnected => (),
+                                }
+
+                                break
+                            },
+                        }
+                    }
+                }
+
                 gtk::glib::ControlFlow::Continue
             }),
         );

@@ -22,6 +22,12 @@ pub struct AsampoViewState {
     pub main_menu_button: gtk::TemplateChild<gtk::MenuButton>,
 
     #[template_child]
+    pub progress_popup_frame: gtk::TemplateChild<gtk::Frame>,
+
+    #[template_child]
+    pub progress_popup_progress_bar: gtk::TemplateChild<gtk::ProgressBar>,
+
+    #[template_child]
     pub stack: gtk::TemplateChild<gtk::Stack>,
 
     #[template_child]

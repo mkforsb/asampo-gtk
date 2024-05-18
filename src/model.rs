@@ -12,7 +12,12 @@ use std::{
 
 use anyhow::anyhow;
 use gtk::{gio::ListStore, prelude::*};
-use libasampo::{prelude::*, samples::Sample, samplesets::SampleSet, sources::Source};
+use libasampo::{
+    prelude::*,
+    samples::Sample,
+    samplesets::{export::ExportJobMessage, SampleSet},
+    sources::Source,
+};
 use uuid::Uuid;
 
 use crate::{
@@ -95,12 +100,6 @@ impl Default for ViewValues {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ExportThreadComms {
-    pub rx: Rc<Receiver<crate::thread::export::OutputMessage>>,
-    pub tx: Sender<crate::thread::export::InputMessage>,
-}
-
 #[derive(Clone, Debug)]
 pub struct AppModel {
     pub config: Option<AppConfig>,
@@ -110,7 +109,6 @@ pub struct AppModel {
     pub viewvalues: ViewValues,
     pub audiothread_tx: Option<Sender<audiothread::Message>>,
     pub _audiothread_handle: Option<Rc<JoinHandle<()>>>,
-    pub export_thread_comms: Option<ExportThreadComms>,
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
     pub samples: Rc<RefCell<Vec<Sample>>>,
@@ -120,7 +118,8 @@ pub struct AppModel {
     pub samplesets_selected_set: Option<Uuid>,
     pub samplesets_most_recently_used_uuid: Option<Uuid>,
     pub samplesets_export_state: Option<ExportState>,
-    pub samplesets_export_progress: Option<u8>,
+    pub samplesets_export_progress: Option<(usize, usize)>,
+    pub export_job_rx: Option<Rc<Receiver<ExportJobMessage>>>,
 }
 
 pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
@@ -149,7 +148,6 @@ impl AppModel {
             },
             audiothread_tx: tx,
             _audiothread_handle: handle,
-            export_thread_comms: None,
             sources: HashMap::new(),
             sources_order: Vec::new(),
             samples: Rc::new(RefCell::new(Vec::new())),
@@ -160,6 +158,7 @@ impl AppModel {
             samplesets_most_recently_used_uuid: None,
             samplesets_export_state: None,
             samplesets_export_progress: None,
+            export_job_rx: None,
         }
     }
 
