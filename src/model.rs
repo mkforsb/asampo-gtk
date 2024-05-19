@@ -101,6 +101,12 @@ impl Default for ViewValues {
 }
 
 #[derive(Clone, Debug)]
+pub struct SourceLoadSampleReceiver {
+    pub rx: Rc<Receiver<Result<Sample, libasampo::errors::Error>>>,
+    pub count: usize,
+}
+
+#[derive(Clone, Debug)]
 pub struct AppModel {
     pub config: Option<AppConfig>,
     pub config_save_timeout: Option<u32>,
@@ -111,6 +117,7 @@ pub struct AppModel {
     pub _audiothread_handle: Option<Rc<JoinHandle<()>>>,
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
+    pub sources_loading: HashMap<Uuid, SourceLoadSampleReceiver>,
     pub samples: Rc<RefCell<Vec<Sample>>>,
     pub samplelist_selected_sample: Option<Sample>,
     pub samplesets: HashMap<Uuid, SampleSet>,
@@ -150,6 +157,7 @@ impl AppModel {
             _audiothread_handle: handle,
             sources: HashMap::new(),
             sources_order: Vec::new(),
+            sources_loading: HashMap::new(),
             samples: Rc::new(RefCell::new(Vec::new())),
             samplelist_selected_sample: None,
             samplesets: HashMap::new(),
@@ -176,32 +184,7 @@ impl AppModel {
         }
     }
 
-    pub fn load_enabled_sources(&self) -> Result<(), anyhow::Error> {
-        for uuid in self.sources_order.iter() {
-            if self
-                .sources
-                .get(uuid)
-                .ok_or(anyhow::anyhow!(
-                    "Failed to load source: reference to nonexistant uuid"
-                ))?
-                .is_enabled()
-            {
-                self.samples
-                    .borrow_mut()
-                    .extend(self.sources.get(uuid).unwrap().list()?);
-            }
-        }
-        Ok(())
-    }
-
     pub fn enable_source(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
-        self.samples.borrow_mut().extend(
-            self.sources
-                .get(uuid)
-                .ok_or_else(|| anyhow!("Failed to enable source: uuid not found!"))?
-                .list()?,
-        );
-
         Ok(AppModel {
             sources: self.sources.cloned_update_with(
                 |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {

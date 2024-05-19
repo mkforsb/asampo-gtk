@@ -18,7 +18,8 @@ mod view;
 use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc, time::Duration};
 
 use anyhow::anyhow;
-use model::ExportState;
+use ext::ClonedHashMapExt;
+use model::{ExportState, SourceLoadSampleReceiver};
 use uuid::Uuid;
 
 use gtk::{
@@ -111,6 +112,8 @@ enum AppMessage {
     SourceEnabled(Uuid),
     SourceDisabled(Uuid),
     SourceDeleteClicked(Uuid),
+    SourceLoadingMessage(Uuid, Vec<Result<Sample, libasampo::errors::Error>>),
+    SourceLoadingDisconnected(Uuid),
     LoadFromSavefile(String),
     SaveToSavefile(String),
     DialogError(gtk::glib::Error),
@@ -139,6 +142,7 @@ enum AppMessage {
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
     match message {
         AppMessage::TimerTick => (),
+        AppMessage::SourceLoadingMessage(..) => (),
         _ => log::log!(log::Level::Debug, "{message:?}"),
     }
 
@@ -170,6 +174,10 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
 fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow::Error> {
     match message {
         AppMessage::TimerTick => {
+            if !model.sources_loading.is_empty() {
+                model.populate_samples_listmodel();
+            }
+
             if let Some(0) = model.config_save_timeout {
                 let config = model
                     .config
@@ -383,7 +391,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             ));
 
             let uuid = *new_source.uuid();
-            let model = model.add_source(new_source).enable_source(&uuid).unwrap();
+            let model = model
+                .add_source(new_source.clone())
+                .enable_source(&uuid)
+                .unwrap();
+
+            let (tx, rx) = std::sync::mpsc::channel::<Result<Sample, libasampo::errors::Error>>();
+
+            std::thread::spawn(clone!(@strong new_source => move || {
+                new_source.list_async(tx);
+            }));
 
             Ok(AppModel {
                 viewflags: ViewFlags {
@@ -398,9 +415,53 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     ..model.viewvalues
                 },
 
+                sources_loading: model.sources_loading.clone_and_insert(
+                    uuid,
+                    SourceLoadSampleReceiver {
+                        rx: Rc::new(rx),
+                        count: 0,
+                    },
+                ),
                 ..model
             }
             .map_ref(AppModel::populate_samples_listmodel))
+        }
+
+        AppMessage::SourceLoadingMessage(uuid, messages) => {
+            let mut samples = model.samples.borrow_mut();
+            let len_before = samples.len();
+
+            for message in messages {
+                match message {
+                    Ok(sample) => {
+                        samples.push(sample);
+                    }
+
+                    Err(e) => log::log!(log::Level::Error, "Error loading source: {e}"),
+                }
+            }
+
+            let count = samples.len() - len_before;
+            drop(samples);
+
+            Ok(AppModel {
+                sources_loading: model.sources_loading.cloned_update_with(|mut m| {
+                    m.get_mut(&uuid)
+                        .ok_or(anyhow!("Error loading source: Broken state"))?
+                        .count += count;
+                    Ok(m)
+                })?,
+                ..model
+            })
+        }
+
+        AppMessage::SourceLoadingDisconnected(uuid) => {
+            model.populate_samples_listmodel();
+
+            Ok(AppModel {
+                sources_loading: model.sources_loading.clone_and_remove(&uuid)?,
+                ..model
+            })
         }
 
         AppMessage::SampleListSampleSelected(index) => {
@@ -462,9 +523,31 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             model_util::add_selected_sample_to_sampleset_by_uuid(model, &mru_uuid)
         }
 
-        AppMessage::SourceEnabled(uuid) => Ok(model
+        AppMessage::SourceEnabled(uuid) => {
+            let source = model
+                .sources
+                .get(&uuid)
+                .ok_or(anyhow!("Source not found"))?;
+
+            let (tx, rx) = std::sync::mpsc::channel::<Result<Sample, libasampo::errors::Error>>();
+
+            std::thread::spawn(clone!(@strong source => move || {
+                source.list_async(tx);
+            }));
+
+            Ok(AppModel {
+                sources_loading: model.sources_loading.clone_and_insert(
+                    uuid,
+                    SourceLoadSampleReceiver {
+                        rx: Rc::new(rx),
+                        count: 0,
+                    },
+                ),
+                ..model
+            }
             .enable_source(&uuid)?
-            .map_ref(AppModel::populate_samples_listmodel)),
+            .map_ref(AppModel::populate_samples_listmodel))
+        }
 
         AppMessage::SourceDisabled(uuid) => Ok(model
             .disable_source(&uuid)?
@@ -488,10 +571,35 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     };
 
                     model.samples.borrow_mut().clear();
-                    model.load_enabled_sources()?;
                     model.populate_samples_listmodel();
 
-                    Ok(model)
+                    Ok(AppModel {
+                        sources_loading: model
+                            .sources
+                            .iter()
+                            .filter_map(|(uuid, source)| match source.is_enabled() {
+                                true => {
+                                    let (tx, rx) = std::sync::mpsc::channel::<
+                                        Result<Sample, libasampo::errors::Error>,
+                                    >();
+                                    std::thread::spawn(clone!(@strong source => move || {
+                                        source.list_async(tx);
+                                    }));
+
+                                    Some((
+                                        *uuid,
+                                        SourceLoadSampleReceiver {
+                                            rx: Rc::new(rx),
+                                            count: 0,
+                                        },
+                                    ))
+                                }
+
+                                false => None,
+                            })
+                            .collect(),
+                        ..model
+                    })
                 }
                 Err(e) => Err(anyhow::Error::new(ErrorWithEffect::AlertDialog {
                     text: "Error loading savefile".to_string(),
@@ -1062,6 +1170,7 @@ fn main() -> ExitCode {
             clone!(@strong model_ptr, @strong view => move || {
                 let model = model_ptr.take().unwrap();
                 let export_job_rx = model.export_job_rx.clone();
+                let sources_loading = model.sources_loading.clone();
                 model_ptr.set(Some(model));
 
                 if let Some(rx) = export_job_rx {
@@ -1090,6 +1199,36 @@ fn main() -> ExitCode {
                     }
                 }
 
+                for uuid in sources_loading.keys() {
+                    let recv = sources_loading.get(uuid).unwrap();
+
+                    match recv.rx.try_recv() {
+                        Ok(message) => {
+                            let mut messages = vec![message];
+                            messages.extend(recv.rx.try_iter());
+
+                            update(
+                                model_ptr.clone(),
+                                &view,
+                                AppMessage::SourceLoadingMessage(*uuid, messages)
+                            );
+                        }
+
+                        Err(e) => {
+                            match e {
+                                mpsc::TryRecvError::Empty => (),
+                                mpsc::TryRecvError::Disconnected => {
+                                    update(
+                                        model_ptr.clone(),
+                                        &view,
+                                        AppMessage::SourceLoadingDisconnected(*uuid)
+                                    );
+                                },
+                            }
+                        }
+                    };
+                }
+
                 gtk::glib::ControlFlow::Continue
             }),
         );
@@ -1100,69 +1239,8 @@ fn main() -> ExitCode {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashMap;
-
-    use libasampo::{
-        samples::{BaseSample, Sample, SampleURI},
-        sources::FakeSource,
-    };
-
     use super::*;
     use crate::testutils::savefile_for_test;
-
-    fn make_fake_source(name: &str, uri: &str, samples: &[&str]) -> (Uuid, FakeSource) {
-        let uuid = Uuid::new_v4();
-
-        let source = FakeSource {
-            name: Some(name.to_string()),
-            uri: uri.to_string(),
-            uuid,
-            list: samples
-                .iter()
-                .map(|s| {
-                    Sample::BaseSample(BaseSample::new(
-                        SampleURI::new(s.to_string()),
-                        s.to_string(),
-                        libasampo::samples::SampleMetadata {
-                            rate: 48000,
-                            channels: 2,
-                            src_fmt_display: "PCM".to_string(),
-                            size_bytes: Some(0),
-                            length_millis: Some(0),
-                        },
-                        Some(uuid),
-                    ))
-                })
-                .collect(),
-            list_error: None,
-            stream: HashMap::new(),
-            stream_error: None,
-            enabled: true,
-        };
-
-        (uuid, source)
-    }
-
-    #[test]
-    fn test_bug_loading_savefile_samples_not_assigned() {
-        savefile_for_test::LOAD.set(Some(|_| -> Result<AppModel, anyhow::Error> {
-            let (_, source) = make_fake_source("", "", &["first.wav"]);
-
-            Ok(AppModel::new(Some(AppConfig::default()), None, None, None)
-                .add_source(Source::FakeSource(source)))
-        }));
-
-        let model = AppModel::new(Some(AppConfig::default()), None, None, None);
-        let model = update_model(model, AppMessage::LoadFromSavefile("".to_string())).unwrap();
-
-        let (uuid, source) = make_fake_source("", "", &["second.wav"]);
-        let model = model
-            .add_source(Source::FakeSource(source))
-            .enable_source(&uuid)
-            .unwrap();
-
-        assert_eq!(model.samples.borrow().len(), 2);
-    }
 
     #[test]
     fn test_using_real_savefile_in_test() {
