@@ -386,7 +386,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             let model = model.add_source(new_source).enable_source(&uuid).unwrap();
 
             Ok(AppModel {
-                #[allow(clippy::needless_update)]
                 viewflags: ViewFlags {
                     sources_add_fs_fields_valid: false,
                     ..model.viewflags
