@@ -15,7 +15,13 @@ mod testutils;
 mod util;
 mod view;
 
-use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc, time::Duration};
+use std::{
+    cell::Cell,
+    io::BufReader,
+    rc::Rc,
+    sync::mpsc,
+    time::{Duration, Instant},
+};
 
 use anyhow::anyhow;
 use ext::ClonedHashMapExt;
@@ -179,7 +185,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 model.populate_samples_listmodel();
             }
 
-            if let Some(0) = model.config_save_timeout {
+            if model
+                .config_save_timeout
+                .is_some_and(|t| t <= Instant::now())
+            {
                 let config = model
                     .config
                     .as_ref()
@@ -221,10 +230,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     ..model
                 })
             } else {
-                Ok(AppModel {
-                    config_save_timeout: model.config_save_timeout.map(|n| n - 1),
-                    ..model
-                })
+                Ok(model)
             }
         }
 
@@ -247,7 +253,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(AppModel {
                 config: Some(new_config),
-                config_save_timeout: Some(3),
+                config_save_timeout: Some(Instant::now() + Duration::from_secs(3)),
                 viewvalues: ViewValues {
                     settings_latency_approx_label,
                     ..model.viewvalues
@@ -266,7 +272,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(AppModel {
                 config: Some(new_config),
-                config_save_timeout: Some(3),
+                config_save_timeout: Some(Instant::now() + Duration::from_secs(3)),
                 viewvalues: ViewValues {
                     settings_latency_approx_label,
                     ..model.viewvalues
@@ -291,7 +297,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 },
                 ..model.config.expect("There should be an active config")
             }),
-            config_save_timeout: Some(3),
+            config_save_timeout: Some(Instant::now() + Duration::from_secs(3)),
             ..model
         }),
 
@@ -311,7 +317,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 },
                 ..model.config.expect("There should be an active config")
             }),
-            config_save_timeout: Some(3),
+            config_save_timeout: Some(Instant::now() + Duration::from_secs(3)),
             ..model
         }),
 
