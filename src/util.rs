@@ -115,7 +115,7 @@ pub fn gtk_find_widget_by_builder_id(
         }
     }
 
-    return None;
+    None
 }
 
 pub fn strs_dropdown_get_selected(e: &gtk::DropDown) -> String {
