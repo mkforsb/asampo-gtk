@@ -98,12 +98,19 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
         model
     });
 
-    view.samples_listview
-        .settings()
-        .set_property("gtk-double-click-time", 0);
-
     view.samples_listview.set_model(Some(&selectmodel));
     view.samples_listview.set_factory(Some(&factory));
+
+    view.samples_listview
+        .connect_activate(clone!(@strong model_ptr, @strong view => move |_, _| {
+            update(
+                model_ptr.clone(),
+                &view,
+                AppMessage::SampleListSampleSelected(
+                    view.samples_listview.model().unwrap().selection().minimum()
+                )
+            );
+        }));
 
     let clicked = GestureClick::new();
 
@@ -124,7 +131,11 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
     let keyed = EventControllerKey::new();
 
     keyed.connect_key_released(
-        clone!(@strong model_ptr, @strong view => move |_, _, _, _| {
+        clone!(@strong model_ptr, @strong view => move |_, key: gtk::gdk::Key, _, _| {
+            if key == gtk::gdk::Key::Return {
+                return;
+            }
+
             update(
                 model_ptr.clone(),
                 &view,
