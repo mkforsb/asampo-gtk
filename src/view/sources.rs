@@ -5,7 +5,12 @@
 use gtk::{glib::clone, prelude::*, GestureClick};
 use libasampo::prelude::*;
 
-use crate::{update, view::AsampoView, AppMessage, AppModel, AppModelPtr};
+use crate::{
+    update,
+    util::{gtk_find_child_by_builder_id, gtk_find_widget_by_builder_id},
+    view::AsampoView,
+    AppMessage, AppModel, AppModelPtr,
+};
 
 pub fn setup_sources_page(model_ptr: AppModelPtr, view: &AsampoView) {
     view.sources_add_fs_name_entry.connect_changed(
@@ -55,14 +60,14 @@ pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &Asamp
     view.sources_list.remove_all();
 
     for uuid in model.sources_order.iter() {
-        let objects = gtk::Builder::from_string(indoc::indoc! {r#"
+        let objects = gtk::Builder::from_string(&indoc::formatdoc! {r#"
             <interface>
-                <object class="GtkListBoxRow">
+                <object class="GtkListBoxRow" id="{uuid}-row">
                     <child>
                         <object class="GtkBox">
                             <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
                             <child>
-                                <object class="GtkCheckButton">
+                                <object class="GtkCheckButton" id="{uuid}-enable-checkbutton">
                                     <property name="margin-top">10</property>
                                     <property name="margin-start">10</property>
                                     <property name="margin-bottom">10</property>
@@ -70,7 +75,7 @@ pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &Asamp
                                 </object>
                             </child>
                             <child>
-                                <object class="GtkLabel">
+                                <object class="GtkLabel" id="{uuid}-name-label">
                                     <property name="label"></property>
                                     <property name="halign">GTK_ALIGN_FILL</property>
                                     <property name="hexpand">true</property>
@@ -81,7 +86,7 @@ pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &Asamp
                                 </object>
                             </child>
                             <child>
-                                <object class="GtkButton">
+                                <object class="GtkButton" id="{uuid}-delete-button">
                                     <property name="label">Delete</property>
                                     <property name="margin_end">16</property>
                                 </object>
@@ -93,21 +98,31 @@ pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &Asamp
         "#})
         .objects();
 
-        let row = objects[0].dynamic_cast_ref::<gtk::ListBoxRow>().unwrap();
+        let root =
+            gtk_find_widget_by_builder_id(objects.as_slice(), &format!("{uuid}-row")).unwrap();
 
-        let hbox_raw = row.child().unwrap();
-        let hbox = hbox_raw.dynamic_cast_ref::<gtk::Box>().unwrap();
+        let row = gtk_find_child_by_builder_id(&root, &format!("{uuid}-row")).unwrap();
+        let row = row.dynamic_cast_ref::<gtk::ListBoxRow>().unwrap();
 
-        let checkbutton_raw = hbox.first_child().unwrap();
-        let checkbutton = checkbutton_raw
+        let enable_checkbutton =
+            gtk_find_child_by_builder_id(&root, &format!("{uuid}-enable-checkbutton")).unwrap();
+        let enable_checkbutton = enable_checkbutton
             .dynamic_cast_ref::<gtk::CheckButton>()
             .unwrap();
 
+        let name_label =
+            gtk_find_child_by_builder_id(&root, &format!("{uuid}-name-label")).unwrap();
+        let name_label = name_label.dynamic_cast_ref::<gtk::Label>().unwrap();
+
+        let delete_button =
+            gtk_find_child_by_builder_id(&root, &format!("{uuid}-delete-button")).unwrap();
+        let delete_button = delete_button.dynamic_cast_ref::<gtk::Button>().unwrap();
+
         if model.sources.get(uuid).unwrap().is_enabled() {
-            checkbutton.activate();
+            enable_checkbutton.activate();
         }
 
-        checkbutton.connect_toggled(
+        enable_checkbutton.connect_toggled(
             clone!(@strong model_ptr, @strong uuid, @strong view => move |e: &gtk::CheckButton| {
                 if e.is_active() {
                     update(model_ptr.clone(), &view, AppMessage::SourceEnabled(uuid))
@@ -117,35 +132,13 @@ pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &Asamp
             }),
         );
 
-        row.child()
-            .unwrap()
-            .dynamic_cast_ref::<gtk::Box>()
-            .unwrap()
-            .first_child()
-            .unwrap()
-            .next_sibling()
-            .unwrap()
-            .dynamic_cast_ref::<gtk::Label>()
-            .unwrap()
-            .set_label(model.sources.get(uuid).unwrap().name().unwrap_or("Unnamed"));
+        name_label.set_label(model.sources.get(uuid).unwrap().name().unwrap_or("Unnamed"));
 
-        row.child()
-            .unwrap()
-            .dynamic_cast_ref::<gtk::Box>()
-            .unwrap()
-            .first_child()
-            .unwrap()
-            .next_sibling()
-            .unwrap()
-            .next_sibling()
-            .unwrap()
-            .dynamic_cast_ref::<gtk::Button>()
-            .unwrap()
-            .connect_clicked(
-                clone!(@strong model_ptr, @strong view, @strong uuid => move |_: &gtk::Button| {
-                    update(model_ptr.clone(), &view, AppMessage::SourceDeleteClicked(uuid));
-                }),
-            );
+        delete_button.connect_clicked(
+            clone!(@strong model_ptr, @strong view, @strong uuid => move |_: &gtk::Button| {
+                update(model_ptr.clone(), &view, AppMessage::SourceDeleteClicked(uuid));
+            }),
+        );
 
         let clicked = GestureClick::new();
 
