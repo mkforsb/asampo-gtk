@@ -133,6 +133,7 @@ enum AppMessage {
     PlainCopyExportSelected,
     ConversionExportSelected,
     ExportJobMessage(libasampo::samplesets::export::ExportJobMessage),
+    ExportJobDisconnected,
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -796,6 +797,15 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ..model
             }),
         },
+
+        AppMessage::ExportJobDisconnected => {
+            log::log!(log::Level::Debug, "Export job disconnected");
+
+            Ok(AppModel {
+                export_job_rx: None,
+                ..model
+            })
+        }
     }
 }
 
@@ -1047,7 +1057,7 @@ fn main() -> ExitCode {
             }),
         );
 
-        // timer for thread messaging
+        // timer for async/thread messaging
         gtk::glib::timeout_add_local(
             std::time::Duration::from_millis(50),
             clone!(@strong model_ptr, @strong view => move || {
@@ -1067,7 +1077,12 @@ fn main() -> ExitCode {
                             Err(e) => {
                                 match e {
                                     mpsc::TryRecvError::Empty => (),
-                                    mpsc::TryRecvError::Disconnected => (),
+                                    mpsc::TryRecvError::Disconnected =>
+                                        update(
+                                            model_ptr.clone(),
+                                            &view,
+                                            AppMessage::ExportJobDisconnected
+                                        ),
                                 }
 
                                 break
