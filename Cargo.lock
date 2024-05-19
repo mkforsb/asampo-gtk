@@ -94,7 +94,7 @@ dependencies = [
 [[package]]
 name = "audiothread"
 version = "0.0.1"
-source = "git+https://github.com/mkforsb/libasampo#404ea62cd9acfb521efc4340ab146012cf0e3b41"
+source = "git+https://github.com/mkforsb/libasampo#50e69bb942be8fa4833849947b062c781cb0fe3e"
 dependencies = [
  "libpulse-binding",
  "log",
@@ -162,9 +162,9 @@ dependencies = [
 
 [[package]]
 name = "cc"
-version = "1.0.97"
+version = "1.0.98"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "099a5357d84c4c61eb35fc8eafa9a79a902c2f76911e5747ced4e032edd8d9b4"
+checksum = "41c270e7540d725e65ac7f1b212ac8ce349719624d7bcff99f8e2e488e8cf03f"
 
 [[package]]
 name = "cfg-expr"
@@ -761,7 +761,7 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 [[package]]
 name = "libasampo"
 version = "0.0.0"
-source = "git+https://github.com/mkforsb/libasampo#404ea62cd9acfb521efc4340ab146012cf0e3b41"
+source = "git+https://github.com/mkforsb/libasampo#50e69bb942be8fa4833849947b062c781cb0fe3e"
 dependencies = [
  "glob",
  "hound",
