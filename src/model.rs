@@ -288,7 +288,7 @@ impl AppModel {
 
         log::log!(
             log::Level::Debug,
-            "showing {} samples",
+            "Showing {} samples",
             self.viewvalues.samples_listview_model.n_items()
         );
     }
