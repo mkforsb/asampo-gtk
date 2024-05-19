@@ -19,7 +19,7 @@ use std::{cell::Cell, io::BufReader, rc::Rc, sync::mpsc, time::Duration};
 
 use anyhow::anyhow;
 use ext::ClonedHashMapExt;
-use model::{ExportState, SourceLoadSampleReceiver};
+use model::ExportState;
 use uuid::Uuid;
 
 use gtk::{
@@ -45,6 +45,7 @@ use crate::{
     configfile::ConfigFile,
     ext::{OptionMapExt, WithModel},
     model::{AppModel, AppModelPtr, ViewFlags, ViewValues},
+    util::gtk_find_child_by_builder_id,
     view::{
         dialogs,
         menus::build_actions,
@@ -415,13 +416,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     ..model.viewvalues
                 },
 
-                sources_loading: model.sources_loading.clone_and_insert(
-                    uuid,
-                    SourceLoadSampleReceiver {
-                        rx: Rc::new(rx),
-                        count: 0,
-                    },
-                ),
+                sources_loading: model.sources_loading.clone_and_insert(uuid, Rc::new(rx)),
                 ..model
             }
             .map_ref(AppModel::populate_samples_listmodel))
@@ -441,16 +436,20 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 }
             }
 
-            let count = samples.len() - len_before;
+            let added = samples.len() - len_before;
             drop(samples);
 
             Ok(AppModel {
-                sources_loading: model.sources_loading.cloned_update_with(|mut m| {
-                    m.get_mut(&uuid)
-                        .ok_or(anyhow!("Error loading source: Broken state"))?
-                        .count += count;
-                    Ok(m)
-                })?,
+                viewvalues: ViewValues {
+                    sources_sample_count: model
+                        .viewvalues
+                        .sources_sample_count
+                        .cloned_update_with(|mut m| {
+                            *(m.get_mut(&uuid).unwrap()) += added;
+                            Ok(m)
+                        })?,
+                    ..model.viewvalues
+                },
                 ..model
             })
         }
@@ -536,13 +535,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             }));
 
             Ok(AppModel {
-                sources_loading: model.sources_loading.clone_and_insert(
-                    uuid,
-                    SourceLoadSampleReceiver {
-                        rx: Rc::new(rx),
-                        count: 0,
-                    },
-                ),
+                sources_loading: model.sources_loading.clone_and_insert(uuid, Rc::new(rx)),
                 ..model
             }
             .enable_source(&uuid)?
@@ -563,6 +556,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             match Savefile::load(&filename) {
                 Ok(loaded_app_model) => {
                     let model = AppModel {
+                        viewvalues: ViewValues {
+                            sources_sample_count: loaded_app_model
+                                .sources
+                                .keys()
+                                .map(|k| (*k, 0))
+                                .collect(),
+                            ..model.viewvalues
+                        },
                         sources: loaded_app_model.sources,
                         sources_order: loaded_app_model.sources_order,
                         samplesets: loaded_app_model.samplesets,
@@ -586,13 +587,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                                         source.list_async(tx);
                                     }));
 
-                                    Some((
-                                        *uuid,
-                                        SourceLoadSampleReceiver {
-                                            rx: Rc::new(rx),
-                                            count: 0,
-                                        },
-                                    ))
+                                    Some((*uuid, Rc::new(rx)))
                                 }
 
                                 false => None,
@@ -1007,6 +1002,22 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         update_sources_list(model_ptr.clone(), new.clone(), view);
     }
 
+    if old.viewvalues.sources_sample_count != new.viewvalues.sources_sample_count {
+        for uuid in new.viewvalues.sources_sample_count.keys() {
+            if let Some(count_label) = gtk_find_child_by_builder_id(
+                &view.sources_list.get(),
+                &format!("{uuid}-count-label"),
+            ) {
+                if let Some(count_label) = count_label.dynamic_cast_ref::<gtk::Label>() {
+                    count_label.set_text(&format!(
+                        "({} samples)",
+                        new.viewvalues.sources_sample_count.get(uuid).unwrap()
+                    ));
+                }
+            }
+        }
+    }
+
     if old.samplelist_selected_sample != new.samplelist_selected_sample {
         update_samples_sidebar(model_ptr.clone(), new.clone(), view);
     }
@@ -1202,10 +1213,10 @@ fn main() -> ExitCode {
                 for uuid in sources_loading.keys() {
                     let recv = sources_loading.get(uuid).unwrap();
 
-                    match recv.rx.try_recv() {
+                    match recv.try_recv() {
                         Ok(message) => {
                             let mut messages = vec![message];
-                            messages.extend(recv.rx.try_iter());
+                            messages.extend(recv.try_iter());
 
                             update(
                                 model_ptr.clone(),

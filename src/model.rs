@@ -74,6 +74,7 @@ pub struct ViewValues {
     pub sources_add_fs_name_entry: String,
     pub sources_add_fs_path_entry: String,
     pub sources_add_fs_extensions_entry: String,
+    pub sources_sample_count: HashMap<Uuid, usize>,
     pub samples_list_filter: String,
     pub settings_latency_approx_label: String,
     pub samples_listview_model: ListStore,
@@ -89,6 +90,7 @@ impl Default for ViewValues {
             sources_add_fs_name_entry: String::default(),
             sources_add_fs_path_entry: String::default(),
             sources_add_fs_extensions_entry: String::default(),
+            sources_sample_count: HashMap::new(),
             samples_list_filter: String::default(),
             settings_latency_approx_label: String::default(),
             samples_listview_model: ListStore::new::<SampleListEntry>(),
@@ -98,12 +100,6 @@ impl Default for ViewValues {
             samplesets_export_kind: None,
         }
     }
-}
-
-#[derive(Clone, Debug)]
-pub struct SourceLoadSampleReceiver {
-    pub rx: Rc<Receiver<Result<Sample, libasampo::errors::Error>>>,
-    pub count: usize,
 }
 
 #[derive(Clone, Debug)]
@@ -117,7 +113,7 @@ pub struct AppModel {
     pub _audiothread_handle: Option<Rc<JoinHandle<()>>>,
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
-    pub sources_loading: HashMap<Uuid, SourceLoadSampleReceiver>,
+    pub sources_loading: HashMap<Uuid, Rc<Receiver<Result<Sample, libasampo::errors::Error>>>>,
     pub samples: Rc<RefCell<Vec<Sample>>>,
     pub samplelist_selected_sample: Option<Sample>,
     pub samplesets: HashMap<Uuid, SampleSet>,
@@ -171,21 +167,31 @@ impl AppModel {
     }
 
     pub fn add_source(self, source: Source) -> Self {
-        let mut new_sources_order = self.sources_order.clone();
-        new_sources_order.push(*source.uuid());
-
-        let mut new_sources = self.sources.clone();
-        new_sources.insert(*source.uuid(), source);
-
         AppModel {
-            sources_order: new_sources_order,
-            sources: new_sources,
+            viewvalues: ViewValues {
+                sources_sample_count: self
+                    .viewvalues
+                    .sources_sample_count
+                    .clone_and_insert(*source.uuid(), 0),
+                ..self.viewvalues
+            },
+            sources_order: self.sources_order.clone_and_push(*source.uuid()),
+            sources: self.sources.clone_and_insert(*source.uuid(), source),
             ..self
         }
     }
 
     pub fn enable_source(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
         Ok(AppModel {
+            viewvalues: ViewValues {
+                sources_sample_count: self.viewvalues.sources_sample_count.cloned_update_with(
+                    |mut m| {
+                        *(m.get_mut(uuid).unwrap()) = 0;
+                        Ok(m)
+                    },
+                )?,
+                ..self.viewvalues
+            },
             sources: self.sources.cloned_update_with(
                 |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
                     s.get_mut(uuid)
@@ -217,10 +223,19 @@ impl AppModel {
     }
 
     pub fn remove_source(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
+        let model = self.disable_source(uuid)?;
+
         Ok(AppModel {
-            sources_order: self.sources_order.clone_and_remove(uuid)?,
-            sources: self.sources.clone_and_remove(uuid)?,
-            ..self.disable_source(uuid)?
+            viewvalues: ViewValues {
+                sources_sample_count: model
+                    .viewvalues
+                    .sources_sample_count
+                    .clone_and_remove(uuid)?,
+                ..model.viewvalues
+            },
+            sources_order: model.sources_order.clone_and_remove(uuid)?,
+            sources: model.sources.clone_and_remove(uuid)?,
+            ..model
         })
     }
 
