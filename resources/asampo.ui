@@ -813,7 +813,7 @@
                             <child>
                               <object class="GtkButton" id="samples_sidebar_add_to_prev_button">
                                 <property name="label">Add to 'Favorites'</property>
-                                <property name="sensitive">false</property>
+                                <property name="visible">false</property>
                               </object>
                             </child>
                           </object>

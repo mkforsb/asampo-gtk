@@ -1032,7 +1032,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         != new.viewflags.samples_sidebar_add_to_prev_enabled
     {
         view.samples_sidebar_add_to_prev_button
-            .set_sensitive(new.viewflags.samples_sidebar_add_to_prev_enabled);
+            .set_visible(new.viewflags.samples_sidebar_add_to_prev_enabled);
     }
 
     if old.samplesets_most_recently_used_uuid != new.samplesets_most_recently_used_uuid {
