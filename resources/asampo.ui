@@ -58,12 +58,12 @@
       <object class="GtkOverlay">
         <child type="overlay">
           <object class="GtkFrame" id="progress_popup_frame">
-            <property name="visible">false</property>
-            <property name="halign">GTK_ALIGN_END</property>
-            <property name="valign">GTK_ALIGN_END</property>
             <style>
               <class name="progress-popup" />
             </style>
+            <property name="visible">false</property>
+            <property name="halign">GTK_ALIGN_END</property>
+            <property name="valign">GTK_ALIGN_END</property>
             <child>
               <object class="GtkProgressBar" id="progress_popup_progress_bar">
                 <property name="show-text">true</property>
@@ -91,15 +91,19 @@
                             <property name="halign">GTK_ALIGN_CENTER</property>
                             <child>
                               <object class="GtkLabel">
+                                <style>
+                                  <class name="settings-group-title" />
+                                </style>
                                 <property name="label">Audio</property>
-                                <property name="css-classes">settings-group-title</property>
                               </object>
                             </child>
                           </object>
                         </child>
                         <child>
                           <object class="GtkFrame">
-                            <property name="css-classes">settings-group</property>
+                            <style>
+                              <class name="settings-group" />
+                            </style>
                             <property name="width-request">500</property>
                             <property name="hexpand">false</property>
                             <property name="halign">GTK_ALIGN_CENTER</property>
@@ -219,15 +223,19 @@
                             <property name="halign">GTK_ALIGN_CENTER</property>
                             <child>
                               <object class="GtkLabel">
+                                <style>
+                                  <class name="settings-group-title" />
+                                </style>
                                 <property name="label">Behavior</property>
-                                <property name="css-classes">settings-group-title</property>
                               </object>
                             </child>
                           </object>
                         </child>
                         <child>
                           <object class="GtkFrame">
-                            <property name="css-classes">settings-group</property>
+                            <style>
+                              <class name="settings-group" />
+                            </style>
                             <property name="width-request">500</property>
                             <property name="hexpand">false</property>
                             <property name="halign">GTK_ALIGN_CENTER</property>
@@ -264,15 +272,19 @@
                             <property name="halign">GTK_ALIGN_CENTER</property>
                             <child>
                               <object class="GtkLabel">
+                                <style>
+                                  <class name="settings-group-title" />
+                                </style>
                                 <property name="label">Paths</property>
-                                <property name="css-classes">settings-group-title</property>
                               </object>
                             </child>
                           </object>
                         </child>
                         <child>
                           <object class="GtkFrame">
-                            <property name="css-classes">settings-group</property>
+                            <style>
+                              <class name="settings-group" />
+                            </style>
                             <property name="width-request">500</property>
                             <property name="hexpand">false</property>
                             <property name="halign">GTK_ALIGN_CENTER</property>
@@ -780,13 +792,17 @@
                         </child>
                         <child>
                           <object class="GtkLabel">
+                            <style>
+                              <class name="settings-group-title" />
+                            </style>
                             <property name="label">Sets</property>
-                            <property name="css-classes">settings-group-title</property>
                           </object>
                         </child>
                         <child>
                           <object class="GtkFrame">
-                            <property name="css-classes">settings-group</property>
+                            <style>
+                              <class name="settings-group" />
+                            </style>
                             <property name="hexpand">true</property>
                             <property name="halign">GTK_ALIGN_FILL</property>
                             <child>
