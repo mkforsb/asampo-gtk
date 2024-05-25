@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <interface>
   <menu id="main-menu">
     <section>
@@ -69,7 +69,7 @@
                 <property name="show-text">true</property>
               </object>
             </child>
-        </object>
+          </object>
         </child>
         <child>
           <object class="GtkStack" id="stack">
@@ -143,7 +143,6 @@
                                 </child>
                                 <child>
                                   <object class="GtkDropDown" id="settings_output_sample_rate_entry">
-
                                     <layout>
                                       <property name="row">1</property>
                                       <property name="column">1</property>
@@ -201,7 +200,6 @@
                                 </child>
                                 <child>
                                   <object class="GtkDropDown" id="settings_sample_rate_conversion_quality_entry">
-
                                     <layout>
                                       <property name="row">3</property>
                                       <property name="column">1</property>
@@ -247,7 +245,6 @@
                                 </child>
                                 <child>
                                   <object class="GtkDropDown" id="settings_sample_playback_behavior_entry">
-
                                     <layout>
                                       <property name="row">0</property>
                                       <property name="column">1</property>
@@ -684,7 +681,7 @@
                         </child>
                         <child>
                           <object class="GtkLabel" id="samples_sidebar_name_label">
-                            <property name="label"></property>
+                            <property name="label" />
                           </object>
                         </child>
                         <child>
@@ -876,7 +873,7 @@
                             <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
                             <child>
                               <object class="GtkLabel" id="samplesets_detail_name_label">
-                                <property name="label"></property>
+                                <property name="label" />
                               </object>
                             </child>
                             <child>
