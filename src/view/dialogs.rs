@@ -377,7 +377,6 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
 
     export_button.connect_clicked(
         clone!(@strong model_ptr, @strong view, @strong dialogwin => move |_: &gtk::Button| {
-            // TODO: progress indicator
             update(model_ptr.clone(), &view, AppMessage::PerformExportClicked);
         }),
     );
