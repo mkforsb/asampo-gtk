@@ -1096,41 +1096,12 @@ fn main() -> ExitCode {
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
-    let cmdline_savefile: Rc<Cell<Option<String>>> = Rc::new(Cell::new(None));
-    let cmdline_page: Rc<Cell<Option<u8>>> = Rc::new(Cell::new(None));
+    app.connect_command_line(clone!(@strong app =>  move |_, _| {
+        app.activate();
+        0
+    }));
 
-    app.connect_command_line(
-        clone!(@strong app, @strong cmdline_savefile, @strong cmdline_page => move
-            |app: &gtk::Application, args: &gtk::gio::ApplicationCommandLine| {
-                if args.arguments().len() > 1 {
-                    cmdline_savefile.set(Some(args
-                        .arguments()
-                        .get(1)
-                        .unwrap()
-                        .clone()
-                        .into_string()
-                        .unwrap()
-                    ));
-
-                    cmdline_page.set(Some(args
-                        .arguments()
-                        .get(2)
-                        .unwrap()
-                        .clone()
-                        .into_string()
-                        .unwrap()
-                        .parse()
-                        .unwrap()
-                    ));
-                }
-
-                app.activate();
-                0
-            }
-        ),
-    );
-
-    app.connect_activate(clone!(@strong cmdline_savefile => move |app| {
+    app.connect_activate(|app| {
         // init css
         let css_provider = gtk::CssProvider::new();
         css_provider.load_from_resource("/style.css");
@@ -1190,14 +1161,6 @@ fn main() -> ExitCode {
         build_actions(app, model_ptr.clone(), &view);
 
         view.present();
-
-        if let Some(path_to_file) = cmdline_savefile.take() {
-            update(model_ptr.clone(), &view, AppMessage::LoadFromSavefile(path_to_file));
-        }
-
-        if let Some(n) = cmdline_page.take() {
-            view.stack.pages().select_item(n.into(), true);
-        }
 
         // timer for AppMessage::TimerTick
         gtk::glib::timeout_add_seconds_local(
@@ -1276,7 +1239,7 @@ fn main() -> ExitCode {
                 gtk::glib::ControlFlow::Continue
             }),
         );
-    }));
+    });
 
     app.run()
 }
