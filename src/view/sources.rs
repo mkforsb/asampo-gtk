@@ -5,12 +5,7 @@
 use gtk::{glib::clone, prelude::*, GestureClick};
 use libasampo::prelude::*;
 
-use crate::{
-    update,
-    util::{gtk_find_child_by_builder_id, gtk_find_widget_by_builder_id},
-    view::AsampoView,
-    AppMessage, AppModel, AppModelPtr,
-};
+use crate::{update, view::AsampoView, AppMessage, AppModel, AppModelPtr};
 
 pub fn setup_sources_page(model_ptr: AppModelPtr, view: &AsampoView) {
     view.sources_add_fs_name_entry.connect_changed(
@@ -104,28 +99,23 @@ pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &Asamp
                     </child>
                 </object>
             </interface>
-        "#})
-        .objects();
+        "#});
 
-        let root =
-            gtk_find_widget_by_builder_id(objects.as_slice(), &format!("{uuid}-row")).unwrap();
-
-        let row = gtk_find_child_by_builder_id(&root, &format!("{uuid}-row")).unwrap();
-        let row = row.dynamic_cast_ref::<gtk::ListBoxRow>().unwrap();
-
-        let enable_checkbutton =
-            gtk_find_child_by_builder_id(&root, &format!("{uuid}-enable-checkbutton")).unwrap();
-        let enable_checkbutton = enable_checkbutton
-            .dynamic_cast_ref::<gtk::CheckButton>()
+        let row = objects
+            .object::<gtk::ListBoxRow>(&format!("{uuid}-row"))
             .unwrap();
 
-        let name_label =
-            gtk_find_child_by_builder_id(&root, &format!("{uuid}-name-label")).unwrap();
-        let name_label = name_label.dynamic_cast_ref::<gtk::Label>().unwrap();
+        let enable_checkbutton = objects
+            .object::<gtk::CheckButton>(&format!("{uuid}-enable-checkbutton"))
+            .unwrap();
 
-        let delete_button =
-            gtk_find_child_by_builder_id(&root, &format!("{uuid}-delete-button")).unwrap();
-        let delete_button = delete_button.dynamic_cast_ref::<gtk::Button>().unwrap();
+        let name_label = objects
+            .object::<gtk::Label>(&format!("{uuid}-name-label"))
+            .unwrap();
+
+        let delete_button = objects
+            .object::<gtk::Button>(&format!("{uuid}-delete-button"))
+            .unwrap();
 
         if model.sources.get(uuid).unwrap().is_enabled() {
             enable_checkbutton.activate();
@@ -157,6 +147,6 @@ pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &Asamp
 
         row.add_controller(clicked);
 
-        view.sources_list.append(row);
+        view.sources_list.append(&row);
     }
 }

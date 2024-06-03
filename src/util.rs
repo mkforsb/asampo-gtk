@@ -97,27 +97,6 @@ pub fn gtk_find_child_by_builder_id(root: &impl IsA<gtk::Widget>, id: &str) -> O
     None
 }
 
-pub fn gtk_find_widget_by_builder_id(
-    objects: &[gtk::glib::Object],
-    id: &str,
-) -> Option<gtk::Widget> {
-    for object in objects.iter() {
-        match (
-            object.dynamic_cast_ref::<gtk::Buildable>(),
-            object.dynamic_cast_ref::<gtk::Widget>(),
-        ) {
-            (Some(buildable), Some(widget))
-                if buildable.buildable_id().is_some_and(|b_id| b_id == id) =>
-            {
-                return Some(widget.clone());
-            }
-            _ => (),
-        }
-    }
-
-    None
-}
-
 pub fn strs_dropdown_get_selected(e: &gtk::DropDown) -> String {
     e.model()
         .expect("Dropdown should have a model")

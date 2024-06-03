@@ -9,8 +9,7 @@ use gtk::{
 
 use crate::{
     model::{AppModel, AppModelPtr},
-    update,
-    util::{self, gtk_find_child_by_builder_id},
+    update, util,
     view::AsampoView,
     AppMessage, InputDialogContext, SelectFolderDialogContext,
 };
@@ -123,36 +122,31 @@ pub fn input(
             </child>
           </object>
         </interface>
-    "#})
-    .objects();
+    "#});
 
     let dialogwin = objects
-        .iter()
-        .find(|element| element.dynamic_cast_ref::<gtk::Window>().is_some());
-
-    let dialogwin = dialogwin
-        .unwrap()
-        .dynamic_cast_ref::<gtk::Window>()
+        .object::<gtk::Window>("input-dialog-window")
         .unwrap();
 
-    let title_label_raw = util::gtk_find_child_by_builder_id(dialogwin, "title").unwrap();
-    let title_label = title_label_raw.dynamic_cast_ref::<gtk::Label>().unwrap();
-    title_label.set_text(title);
+    objects
+        .object::<gtk::Label>("title")
+        .unwrap()
+        .set_text(title);
 
-    let descr_label_raw = util::gtk_find_child_by_builder_id(dialogwin, "input-descr").unwrap();
-    let descr_label = descr_label_raw.dynamic_cast_ref::<gtk::Label>().unwrap();
-    descr_label.set_text(input_descr);
+    objects
+        .object::<gtk::Label>("input-descr")
+        .unwrap()
+        .set_text(input_descr);
 
-    let input_raw = util::gtk_find_child_by_builder_id(dialogwin, "input").unwrap();
-    let input = input_raw.dynamic_cast_ref::<gtk::Entry>().unwrap();
-    input.set_placeholder_text(Some(placeholder));
+    objects
+        .object::<gtk::Entry>("input")
+        .unwrap()
+        .set_placeholder_text(Some(placeholder));
 
-    let okbutton_raw = util::gtk_find_child_by_builder_id(dialogwin, "ok-button").unwrap();
-    let okbutton = okbutton_raw.dynamic_cast_ref::<gtk::Button>().unwrap();
+    let okbutton = objects.object::<gtk::Button>("ok-button").unwrap();
     okbutton.set_label(ok);
 
-    let cancelbutton_raw = util::gtk_find_child_by_builder_id(dialogwin, "cancel-button").unwrap();
-    let cancelbutton = cancelbutton_raw.dynamic_cast_ref::<gtk::Button>().unwrap();
+    let cancelbutton = objects.object::<gtk::Button>("cancel-button").unwrap();
 
     okbutton.connect_clicked(
         clone!(@strong model_ptr, @strong view, @strong dialogwin, @strong context => move |_: &gtk::Button| {
@@ -209,7 +203,7 @@ pub struct ExportDialogView {
 pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppModel) {
     let objects = gtk::Builder::from_string(indoc::indoc! {r#"
         <interface>
-          <object class="GtkWindow">
+          <object class="GtkWindow" id="export-dialog-window">
             <child type="titlebar">
               <object class="GtkHeaderBar">
                 <style>
@@ -306,44 +300,27 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
             </child>
           </object>
         </interface>
-    "#})
-    .objects();
+    "#});
 
     let dialogwin = objects
-        .iter()
-        .find(|element| element.dynamic_cast_ref::<gtk::Window>().is_some());
-
-    let dialogwin = dialogwin
-        .unwrap()
-        .dynamic_cast_ref::<gtk::Window>()
+        .object::<gtk::Window>("export-dialog-window")
         .unwrap();
 
-    let target_dir_entry = gtk_find_child_by_builder_id(dialogwin, "target_dir_entry").unwrap();
-    let target_dir_entry = target_dir_entry.dynamic_cast_ref::<gtk::Entry>().unwrap();
+    let target_dir_entry = objects.object::<gtk::Entry>("target_dir_entry").unwrap();
+    let browse_button = objects.object::<gtk::Button>("browse_button").unwrap();
+    let export_button = objects.object::<gtk::Button>("export_button").unwrap();
+    let cancel_button = objects.object::<gtk::Button>("cancel_button").unwrap();
+
+    let plain_copy_radio = objects
+        .object::<gtk::CheckButton>("plain_copy_radio_button")
+        .unwrap();
+
+    let convert_radio = objects
+        .object::<gtk::CheckButton>("convert_radio_button")
+        .unwrap();
 
     target_dir_entry.set_text(&model.viewvalues.sets_export_target_dir_entry);
-
-    let browse_button = gtk_find_child_by_builder_id(dialogwin, "browse_button").unwrap();
-    let browse_button = browse_button.dynamic_cast_ref::<gtk::Button>().unwrap();
-
-    let export_button = gtk_find_child_by_builder_id(dialogwin, "export_button").unwrap();
-    let export_button = export_button.dynamic_cast_ref::<gtk::Button>().unwrap();
-
     export_button.set_sensitive(target_dir_entry.text_length() > 0);
-
-    let cancel_button = gtk_find_child_by_builder_id(dialogwin, "cancel_button").unwrap();
-    let cancel_button = cancel_button.dynamic_cast_ref::<gtk::Button>().unwrap();
-
-    let plain_copy_radio =
-        gtk_find_child_by_builder_id(dialogwin, "plain_copy_radio_button").unwrap();
-    let plain_copy_radio = plain_copy_radio
-        .dynamic_cast_ref::<gtk::CheckButton>()
-        .unwrap();
-
-    let convert_radio = gtk_find_child_by_builder_id(dialogwin, "convert_radio_button").unwrap();
-    let convert_radio = convert_radio
-        .dynamic_cast_ref::<gtk::CheckButton>()
-        .unwrap();
 
     match model.viewvalues.sets_export_kind {
         Some(crate::model::ExportKind::PlainCopy) => {
