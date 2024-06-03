@@ -67,7 +67,7 @@ pub fn input(
 ) {
     let objects = gtk::Builder::from_string(indoc::indoc! {r#"
         <interface>
-          <object class="GtkWindow">
+          <object class="GtkWindow" id="input-dialog-window">
             <child type="titlebar">
               <object class="GtkHeaderBar">
                 <style>
@@ -152,9 +152,7 @@ pub fn input(
         clone!(@strong model_ptr, @strong view, @strong dialogwin, @strong context => move |_: &gtk::Button| {
             update(model_ptr.clone(), &view, AppMessage::InputDialogSubmitted(
                 context.clone(),
-                util::gtk_find_child_by_builder_id(&dialogwin, "input")
-                    .unwrap()
-                    .dynamic_cast_ref::<gtk::Entry>()
+                util::gtk_find_child_by_builder_id::<gtk::Entry>(&dialogwin, "input")
                     .unwrap()
                     .text()
                     .to_string()

@@ -1008,16 +1008,14 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
 
     if old.viewvalues.sources_sample_count != new.viewvalues.sources_sample_count {
         for uuid in new.viewvalues.sources_sample_count.keys() {
-            if let Some(count_label) = gtk_find_child_by_builder_id(
+            if let Some(count_label) = gtk_find_child_by_builder_id::<gtk::Label>(
                 &view.sources_list.get(),
                 &format!("{uuid}-count-label"),
             ) {
-                if let Some(count_label) = count_label.dynamic_cast_ref::<gtk::Label>() {
-                    count_label.set_text(&format!(
-                        "({} samples)",
-                        new.viewvalues.sources_sample_count.get(uuid).unwrap()
-                    ));
-                }
+                count_label.set_text(&format!(
+                    "({} samples)",
+                    new.viewvalues.sources_sample_count.get(uuid).unwrap()
+                ));
             }
         }
     }

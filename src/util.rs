@@ -66,7 +66,10 @@ pub fn readable_length(millis: Option<u64>) -> String {
     }
 }
 
-pub fn gtk_find_child_by_builder_id(root: &impl IsA<gtk::Widget>, id: &str) -> Option<gtk::Widget> {
+pub fn gtk_find_child_by_builder_id<T>(root: &impl IsA<gtk::Widget>, id: &str) -> Option<T>
+where
+    T: gtk::prelude::ObjectType,
+{
     let buildable_id = root
         .dynamic_cast_ref::<gtk::Buildable>()
         .unwrap()
@@ -74,7 +77,7 @@ pub fn gtk_find_child_by_builder_id(root: &impl IsA<gtk::Widget>, id: &str) -> O
 
     if let Some(id_str) = buildable_id {
         if id_str == id {
-            return Some(root.clone().into());
+            return root.clone().dynamic_cast::<T>().ok();
         }
     }
 
