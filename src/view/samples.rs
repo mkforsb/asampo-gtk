@@ -200,8 +200,8 @@ pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &A
 
             view.samples_sidebar_sets_list.remove_all();
 
-            for uuid in &model.samplesets_order {
-                let set = model.samplesets.get(uuid).unwrap();
+            for uuid in &model.sets_order {
+                let set = model.sets.get(uuid).unwrap();
 
                 if set.contains(sample) {
                     view.samples_sidebar_sets_list

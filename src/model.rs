@@ -33,11 +33,11 @@ pub struct ViewFlags {
     pub sources_add_fs_begin_browse: bool,
     pub samples_sidebar_add_to_set_show_dialog: bool,
     pub samples_sidebar_add_to_prev_enabled: bool,
-    pub samplesets_add_fields_valid: bool,
-    pub samplesets_export_enabled: bool,
-    pub samplesets_export_show_dialog: bool,
-    pub samplesets_export_begin_browse: bool,
-    pub samplesets_export_fields_valid: bool,
+    pub sets_add_fields_valid: bool,
+    pub sets_export_enabled: bool,
+    pub sets_export_show_dialog: bool,
+    pub sets_export_begin_browse: bool,
+    pub sets_export_fields_valid: bool,
 }
 
 impl Default for ViewFlags {
@@ -48,11 +48,11 @@ impl Default for ViewFlags {
             sources_add_fs_begin_browse: false,
             samples_sidebar_add_to_set_show_dialog: false,
             samples_sidebar_add_to_prev_enabled: false,
-            samplesets_add_fields_valid: false,
-            samplesets_export_enabled: false,
-            samplesets_export_show_dialog: false,
-            samplesets_export_begin_browse: false,
-            samplesets_export_fields_valid: false,
+            sets_add_fields_valid: false,
+            sets_export_enabled: false,
+            sets_export_show_dialog: false,
+            sets_export_begin_browse: false,
+            sets_export_fields_valid: false,
         }
     }
 }
@@ -78,10 +78,10 @@ pub struct ViewValues {
     pub samples_list_filter: String,
     pub settings_latency_approx_label: String,
     pub samples_listview_model: ListStore,
-    pub samplesets_add_name_entry: String,
-    pub samplesets_export_dialog_view: Option<dialogs::ExportDialogView>,
-    pub samplesets_export_target_dir_entry: String,
-    pub samplesets_export_kind: Option<ExportKind>,
+    pub sets_add_name_entry: String,
+    pub sets_export_dialog_view: Option<dialogs::ExportDialogView>,
+    pub sets_export_target_dir_entry: String,
+    pub sets_export_kind: Option<ExportKind>,
 }
 
 impl Default for ViewValues {
@@ -94,10 +94,10 @@ impl Default for ViewValues {
             samples_list_filter: String::default(),
             settings_latency_approx_label: String::default(),
             samples_listview_model: ListStore::new::<SampleListEntry>(),
-            samplesets_add_name_entry: String::default(),
-            samplesets_export_dialog_view: None,
-            samplesets_export_target_dir_entry: String::default(),
-            samplesets_export_kind: None,
+            sets_add_name_entry: String::default(),
+            sets_export_dialog_view: None,
+            sets_export_target_dir_entry: String::default(),
+            sets_export_kind: None,
         }
     }
 }
@@ -116,12 +116,12 @@ pub struct AppModel {
     pub sources_loading: HashMap<Uuid, Rc<Receiver<Result<Sample, libasampo::errors::Error>>>>,
     pub samples: Rc<RefCell<Vec<Sample>>>,
     pub samplelist_selected_sample: Option<Sample>,
-    pub samplesets: HashMap<Uuid, SampleSet>,
-    pub samplesets_order: Vec<Uuid>,
-    pub samplesets_selected_set: Option<Uuid>,
-    pub samplesets_most_recently_used_uuid: Option<Uuid>,
-    pub samplesets_export_state: Option<ExportState>,
-    pub samplesets_export_progress: Option<(usize, usize)>,
+    pub sets: HashMap<Uuid, SampleSet>,
+    pub sets_order: Vec<Uuid>,
+    pub sets_selected_set: Option<Uuid>,
+    pub sets_most_recently_used_uuid: Option<Uuid>,
+    pub sets_export_state: Option<ExportState>,
+    pub sets_export_progress: Option<(usize, usize)>,
     pub export_job_rx: Option<Rc<Receiver<ExportJobMessage>>>,
 }
 
@@ -156,12 +156,12 @@ impl AppModel {
             sources_loading: HashMap::new(),
             samples: Rc::new(RefCell::new(Vec::new())),
             samplelist_selected_sample: None,
-            samplesets: HashMap::new(),
-            samplesets_order: Vec::new(),
-            samplesets_selected_set: None,
-            samplesets_most_recently_used_uuid: None,
-            samplesets_export_state: None,
-            samplesets_export_progress: None,
+            sets: HashMap::new(),
+            sets_order: Vec::new(),
+            sets_selected_set: None,
+            sets_most_recently_used_uuid: None,
+            sets_export_state: None,
+            sets_export_progress: None,
             export_job_rx: None,
         }
     }
@@ -295,8 +295,8 @@ impl AppModel {
 
     pub fn add_sampleset(self, set: SampleSet) -> Self {
         AppModel {
-            samplesets_order: self.samplesets_order.clone_and_push(*set.uuid()),
-            samplesets: self.samplesets.clone_and_insert(*set.uuid(), set),
+            sets_order: self.sets_order.clone_and_push(*set.uuid()),
+            sets: self.sets.clone_and_insert(*set.uuid(), set),
             ..self
         }
     }
@@ -304,8 +304,8 @@ impl AppModel {
     #[cfg(test)]
     pub fn remove_sampleset(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
         Ok(AppModel {
-            samplesets_order: self.samplesets_order.clone_and_remove(uuid)?,
-            samplesets: self.samplesets.clone_and_remove(uuid)?,
+            sets_order: self.sets_order.clone_and_remove(uuid)?,
+            sets: self.sets.clone_and_remove(uuid)?,
             ..self
         })
     }
@@ -324,14 +324,11 @@ mod tests {
 
         let model = model.add_sampleset(SampleSet::BaseSampleSet(set.clone()));
 
-        assert!(model.samplesets.contains_key(set.uuid()));
-        assert_eq!(
-            model.samplesets.get(set.uuid()).unwrap().name(),
-            "Favorites"
-        );
+        assert!(model.sets.contains_key(set.uuid()));
+        assert_eq!(model.sets.get(set.uuid()).unwrap().name(), "Favorites");
 
         let model = model.remove_sampleset(set.uuid()).unwrap();
 
-        assert!(!model.samplesets.contains_key(set.uuid()));
+        assert!(!model.sets.contains_key(set.uuid()));
     }
 }

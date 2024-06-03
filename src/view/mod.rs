@@ -127,25 +127,25 @@ pub struct AsampoViewState {
     pub samples_sidebar_add_to_prev_button: gtk::TemplateChild<gtk::Button>,
 
     #[template_child(id = "samplesets-add-name-entry")]
-    pub samplesets_add_name_entry: gtk::TemplateChild<gtk::Entry>,
+    pub sets_add_name_entry: gtk::TemplateChild<gtk::Entry>,
 
     #[template_child(id = "samplesets-add-add-button")]
-    pub samplesets_add_add_button: gtk::TemplateChild<gtk::Button>,
+    pub sets_add_add_button: gtk::TemplateChild<gtk::Button>,
 
     #[template_child(id = "samplesets-list")]
-    pub samplesets_list: gtk::TemplateChild<gtk::ListBox>,
+    pub sets_list: gtk::TemplateChild<gtk::ListBox>,
 
     #[template_child(id = "samplesets-detail-name-label")]
-    pub samplesets_detail_name_label: gtk::TemplateChild<gtk::Label>,
+    pub sets_detail_name_label: gtk::TemplateChild<gtk::Label>,
 
     #[template_child(id = "samplesets-detail-labelling-kind-entry")]
-    pub samplesets_detail_labelling_kind_entry: gtk::TemplateChild<gtk::DropDown>,
+    pub sets_detail_labelling_kind_entry: gtk::TemplateChild<gtk::DropDown>,
 
     #[template_child(id = "samplesets-detail-export-button")]
-    pub samplesets_detail_export_button: gtk::TemplateChild<gtk::Button>,
+    pub sets_detail_export_button: gtk::TemplateChild<gtk::Button>,
 
     #[template_child(id = "samplesets-detail-sample-list")]
-    pub samplesets_detail_sample_list: gtk::TemplateChild<gtk::ListBox>,
+    pub sets_detail_sample_list: gtk::TemplateChild<gtk::ListBox>,
 }
 
 impl WidgetImpl for AsampoViewState {}

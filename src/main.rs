@@ -522,7 +522,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SampleSidebarAddToMostRecentlyUsedSetClicked => {
             let mru_uuid = model
-                .samplesets_most_recently_used_uuid
+                .sets_most_recently_used_uuid
                 .ok_or(anyhow!("No sample set recently added to"))?;
 
             model_util::add_selected_sample_to_sampleset_by_uuid(model, &mru_uuid)
@@ -572,8 +572,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                         },
                         sources: loaded_app_model.sources,
                         sources_order: loaded_app_model.sources_order,
-                        samplesets: loaded_app_model.samplesets,
-                        samplesets_order: loaded_app_model.samplesets_order,
+                        sets: loaded_app_model.sets,
+                        sets_order: loaded_app_model.sets_order,
                         ..model
                     };
 
@@ -638,32 +638,32 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::AddSampleSetNameChanged(text) => Ok(AppModel {
             viewflags: ViewFlags {
-                samplesets_add_fields_valid: !text.is_empty(),
+                sets_add_fields_valid: !text.is_empty(),
                 ..model.viewflags
             },
             viewvalues: ViewValues {
-                samplesets_add_name_entry: text,
+                sets_add_name_entry: text,
                 ..model.viewvalues
             },
             ..model
         }),
 
         AppMessage::AddSampleSetClicked => {
-            assert!(!model.viewvalues.samplesets_add_name_entry.is_empty());
+            assert!(!model.viewvalues.sets_add_name_entry.is_empty());
 
             let set = SampleSet::BaseSampleSet(BaseSampleSet::new(
-                model.viewvalues.samplesets_add_name_entry.clone(),
+                model.viewvalues.sets_add_name_entry.clone(),
             ));
 
             let result = model.add_sampleset(set);
 
             Ok(AppModel {
                 viewflags: ViewFlags {
-                    samplesets_add_fields_valid: false,
+                    sets_add_fields_valid: false,
                     ..result.viewflags
                 },
                 viewvalues: ViewValues {
-                    samplesets_add_name_entry: "".to_string(),
+                    sets_add_name_entry: "".to_string(),
                     ..result.viewvalues
                 },
                 ..result
@@ -699,7 +699,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             SelectFolderDialogContext::BrowseForExportTargetDirectory => Ok(AppModel {
                 viewflags: ViewFlags {
-                    samplesets_export_begin_browse: false,
+                    sets_export_begin_browse: false,
                     ..model.viewflags
                 },
                 ..model
@@ -708,16 +708,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SampleSetSelected(uuid) => {
             let set = model
-                .samplesets
+                .sets
                 .get(&uuid)
                 .ok_or(anyhow!("Sample set not found (by uuid)"))?;
 
             Ok(AppModel {
                 viewflags: ViewFlags {
-                    samplesets_export_enabled: set.len() > 0,
+                    sets_export_enabled: set.len() > 0,
                     ..model.viewflags
                 },
-                samplesets_selected_set: Some(uuid),
+                sets_selected_set: Some(uuid),
                 ..model
             })
         }
@@ -744,13 +744,13 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SampleSetLabellingKindChanged(kind) => {
             let set_uuid = model
-                .samplesets_selected_set
+                .sets_selected_set
                 .ok_or(anyhow!("No sample set selected"))?;
 
             let mut result = model.clone();
 
             let set = result
-                .samplesets
+                .sets
                 .get_mut(&set_uuid)
                 .ok_or(anyhow!("Sample set not found (by uuid)"))?;
 
@@ -768,7 +768,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SampleSetDetailsExportClicked => Ok(AppModel {
             viewflags: ViewFlags {
-                samplesets_export_show_dialog: true,
+                sets_export_show_dialog: true,
                 ..model.viewflags
             },
             ..model
@@ -777,11 +777,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::ExportDialogOpened(dialogview) => Ok(AppModel {
             viewflags: ViewFlags {
                 view_sensitive: false,
-                samplesets_export_show_dialog: false,
+                sets_export_show_dialog: false,
                 ..model.viewflags
             },
             viewvalues: ViewValues {
-                samplesets_export_dialog_view: Some(dialogview),
+                sets_export_dialog_view: Some(dialogview),
                 ..model.viewvalues
             },
             ..model
@@ -793,7 +793,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ..model.viewflags
             },
             viewvalues: ViewValues {
-                samplesets_export_dialog_view: None,
+                sets_export_dialog_view: None,
                 ..model.viewvalues
             },
             ..model
@@ -801,11 +801,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::ExportTargetDirectoryChanged(text) => Ok(AppModel {
             viewflags: ViewFlags {
-                samplesets_export_fields_valid: !text.is_empty(),
+                sets_export_fields_valid: !text.is_empty(),
                 ..model.viewflags
             },
             viewvalues: ViewValues {
-                samplesets_export_target_dir_entry: text,
+                sets_export_target_dir_entry: text,
                 ..model.viewvalues
             },
             ..model
@@ -813,7 +813,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::ExportTargetDirectoryBrowseClicked => Ok(AppModel {
             viewflags: ViewFlags {
-                samplesets_export_begin_browse: true,
+                sets_export_begin_browse: true,
                 ..model.viewflags
             },
             ..model
@@ -821,7 +821,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::ExportTargetDirectoryBrowseSubmitted(text) => Ok(AppModel {
             viewvalues: ViewValues {
-                samplesets_export_target_dir_entry: text,
+                sets_export_target_dir_entry: text,
                 ..model.viewvalues
             },
             ..model
@@ -833,10 +833,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             use libasampo::samplesets::export::{RateConversionQuality, WavSampleFormat, WavSpec};
 
             let sampleset = model
-                .samplesets
+                .sets
                 .get(
                     &model
-                        .samplesets_selected_set
+                        .sets_selected_set
                         .ok_or(anyhow!("No sample set selected"))?,
                 )
                 .ok_or(anyhow!("Broken state, sample set not found"))?
@@ -850,9 +850,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 let job = ExportJob::new(
                     model
                         .viewvalues
-                        .samplesets_export_target_dir_entry
+                        .sets_export_target_dir_entry
                         .clone(),
-                    match model.viewvalues.samplesets_export_kind {
+                    match model.viewvalues.sets_export_kind {
                         None | Some(model::ExportKind::PlainCopy) => None,
                         Some(model::ExportKind::Conversion) => Some(Conversion::Wav(
                             WavSpec {
@@ -869,8 +869,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             }));
 
             Ok(AppModel {
-                samplesets_export_state: Some(model::ExportState::Exporting),
-                samplesets_export_progress: Some((0, num_samples)),
+                sets_export_state: Some(model::ExportState::Exporting),
+                sets_export_progress: Some((0, num_samples)),
                 export_job_rx: Some(Rc::new(rx)),
                 ..model
             })
@@ -878,7 +878,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::PlainCopyExportSelected => Ok(AppModel {
             viewvalues: ViewValues {
-                samplesets_export_kind: Some(model::ExportKind::PlainCopy),
+                sets_export_kind: Some(model::ExportKind::PlainCopy),
                 ..model.viewvalues
             },
             ..model
@@ -886,7 +886,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::ConversionExportSelected => Ok(AppModel {
             viewvalues: ViewValues {
-                samplesets_export_kind: Some(model::ExportKind::Conversion),
+                sets_export_kind: Some(model::ExportKind::Conversion),
                 ..model.viewvalues
             },
             ..model
@@ -894,13 +894,13 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::ExportJobMessage(message) => match message {
             ExportJobMessage::ItemsCompleted(n) => Ok(AppModel {
-                samplesets_export_progress: model.samplesets_export_progress.map(|(_, m)| (n, m)),
+                sets_export_progress: model.sets_export_progress.map(|(_, m)| (n, m)),
                 ..model
             }),
             ExportJobMessage::Error(e) => Err(e.into()),
             ExportJobMessage::Finished => Ok(AppModel {
-                samplesets_export_state: Some(ExportState::Finished),
-                samplesets_export_progress: None,
+                sets_export_state: Some(ExportState::Finished),
+                sets_export_progress: None,
                 export_job_rx: None,
                 ..model
             }),
@@ -944,22 +944,20 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     maybe_update_text!(old, new, view, sources_add_fs_name_entry);
     maybe_update_text!(old, new, view, sources_add_fs_path_entry);
     maybe_update_text!(old, new, view, sources_add_fs_extensions_entry);
-    maybe_update_text!(old, new, view, samplesets_add_name_entry);
+    maybe_update_text!(old, new, view, sets_add_name_entry);
 
-    if let Some(dialogview) = &new.viewvalues.samplesets_export_dialog_view {
+    if let Some(dialogview) = &new.viewvalues.sets_export_dialog_view {
         maybe_update_text!(
             old,
             new,
             expr dialogview.target_dir_entry,
-            samplesets_export_target_dir_entry
+            sets_export_target_dir_entry
         );
 
-        if old.viewflags.samplesets_export_fields_valid
-            != new.viewflags.samplesets_export_fields_valid
-        {
+        if old.viewflags.sets_export_fields_valid != new.viewflags.sets_export_fields_valid {
             dialogview
                 .export_button
-                .set_sensitive(new.viewflags.samplesets_export_fields_valid);
+                .set_sensitive(new.viewflags.sets_export_fields_valid);
         }
     }
 
@@ -985,11 +983,11 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         );
     }
 
-    if new.viewflags.samplesets_export_show_dialog {
+    if new.viewflags.sets_export_show_dialog {
         dialogs::sampleset_export(model_ptr.clone(), view, new.clone());
     }
 
-    if new.viewflags.samplesets_export_begin_browse {
+    if new.viewflags.sets_export_begin_browse {
         dialogs::choose_folder(
             model_ptr.clone(),
             view,
@@ -1035,25 +1033,25 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             .set_visible(new.viewflags.samples_sidebar_add_to_prev_enabled);
     }
 
-    if old.samplesets_most_recently_used_uuid != new.samplesets_most_recently_used_uuid {
-        if let Some(ref mru) = new.samplesets_most_recently_used_uuid {
-            if let Some((_, set)) = new.samplesets.iter().find(|(uuid, _set)| *uuid == mru) {
+    if old.sets_most_recently_used_uuid != new.sets_most_recently_used_uuid {
+        if let Some(ref mru) = new.sets_most_recently_used_uuid {
+            if let Some((_, set)) = new.sets.iter().find(|(uuid, _set)| *uuid == mru) {
                 view.samples_sidebar_add_to_prev_button
                     .set_label(&format!("Add to '{}'", set.name()));
             }
         }
     }
 
-    if old.viewflags.samplesets_add_fields_valid != new.viewflags.samplesets_add_fields_valid {
-        view.samplesets_add_add_button
-            .set_sensitive(new.viewflags.samplesets_add_fields_valid);
+    if old.viewflags.sets_add_fields_valid != new.viewflags.sets_add_fields_valid {
+        view.sets_add_add_button
+            .set_sensitive(new.viewflags.sets_add_fields_valid);
     }
 
-    if old.samplesets_selected_set != new.samplesets_selected_set {
+    if old.sets_selected_set != new.sets_selected_set {
         update_samplesets_detail(model_ptr.clone(), new.clone(), view);
     }
 
-    if old.samplesets != new.samplesets {
+    if old.sets != new.sets {
         update_samplesets_list(model_ptr.clone(), new.clone(), view);
         update_samplesets_detail(model_ptr.clone(), new.clone(), view);
 
@@ -1062,15 +1060,15 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         }
     }
 
-    if old.viewflags.samplesets_export_enabled != new.viewflags.samplesets_export_enabled {
-        view.samplesets_detail_export_button
-            .set_sensitive(new.viewflags.samplesets_export_enabled);
+    if old.viewflags.sets_export_enabled != new.viewflags.sets_export_enabled {
+        view.sets_detail_export_button
+            .set_sensitive(new.viewflags.sets_export_enabled);
     }
 
-    if old.samplesets_export_state != new.samplesets_export_state {
-        match new.samplesets_export_state {
+    if old.sets_export_state != new.sets_export_state {
+        match new.sets_export_state {
             Some(model::ExportState::Exporting) => {
-                if let Some(dv) = new.viewvalues.samplesets_export_dialog_view {
+                if let Some(dv) = new.viewvalues.sets_export_dialog_view {
                     dv.window.close();
                     view.progress_popup_frame.set_visible(true);
                 }
@@ -1084,8 +1082,8 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         }
     }
 
-    if old.samplesets_export_progress != new.samplesets_export_progress {
-        if let Some((n, m)) = new.samplesets_export_progress {
+    if old.sets_export_progress != new.sets_export_progress {
+        if let Some((n, m)) = new.sets_export_progress {
             view.progress_popup_progress_bar
                 .set_text(Some(format!("Exporting {n}/{m}").as_str()));
 

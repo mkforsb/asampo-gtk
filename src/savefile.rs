@@ -33,8 +33,8 @@ impl SavefileV1 {
         for set in self.samplesets {
             let sampleset = set.try_into_domain()?;
 
-            model.samplesets_order.push(*sampleset.uuid());
-            model.samplesets.insert(*sampleset.uuid(), sampleset);
+            model.sets_order.push(*sampleset.uuid());
+            model.sets.insert(*sampleset.uuid(), sampleset);
         }
 
         Ok(model)
@@ -51,10 +51,10 @@ impl SavefileV1 {
                 .collect::<Result<Vec<la::serialize::Source>, la::errors::Error>>()?,
 
             samplesets: model
-                .samplesets_order
+                .sets_order
                 .iter()
                 .map(|uuid| {
-                    la::serialize::SampleSet::try_from_domain(model.samplesets.get(uuid).unwrap())
+                    la::serialize::SampleSet::try_from_domain(model.sets.get(uuid).unwrap())
                 })
                 .collect::<Result<Vec<la::serialize::SampleSet>, la::errors::Error>>()?,
         })

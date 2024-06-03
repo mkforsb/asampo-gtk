@@ -17,7 +17,7 @@ pub fn get_or_create_sampleset(
     name: String,
 ) -> Result<(AppModel, Uuid), anyhow::Error> {
     match model
-        .samplesets
+        .sets
         .iter()
         .find(|(_, set)| set.name() == name)
         .map(|(uuid, _)| *uuid)
@@ -53,7 +53,7 @@ pub fn add_selected_sample_to_sampleset_by_uuid(
     let mut model = model.clone();
 
     model
-        .samplesets
+        .sets
         .get_mut(uuid)
         .ok_or(anyhow!("Sample set not found (by uuid)"))?
         .add(source, sample.clone())?;
@@ -63,7 +63,7 @@ pub fn add_selected_sample_to_sampleset_by_uuid(
             samples_sidebar_add_to_prev_enabled: true,
             ..model.viewflags
         },
-        samplesets_most_recently_used_uuid: Some(*uuid),
+        sets_most_recently_used_uuid: Some(*uuid),
         ..model
     })
 }

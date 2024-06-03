@@ -321,7 +321,7 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
     let target_dir_entry = gtk_find_child_by_builder_id(dialogwin, "target_dir_entry").unwrap();
     let target_dir_entry = target_dir_entry.dynamic_cast_ref::<gtk::Entry>().unwrap();
 
-    target_dir_entry.set_text(&model.viewvalues.samplesets_export_target_dir_entry);
+    target_dir_entry.set_text(&model.viewvalues.sets_export_target_dir_entry);
 
     let browse_button = gtk_find_child_by_builder_id(dialogwin, "browse_button").unwrap();
     let browse_button = browse_button.dynamic_cast_ref::<gtk::Button>().unwrap();
@@ -345,7 +345,7 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
         .dynamic_cast_ref::<gtk::CheckButton>()
         .unwrap();
 
-    match model.viewvalues.samplesets_export_kind {
+    match model.viewvalues.sets_export_kind {
         Some(crate::model::ExportKind::PlainCopy) => {
             plain_copy_radio.set_active(true);
             convert_radio.set_active(false);
