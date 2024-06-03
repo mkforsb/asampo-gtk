@@ -1020,7 +1020,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     }
 
     if old.viewflags.sets_export_enabled != new.viewflags.sets_export_enabled {
-        view.sets_detail_export_button
+        view.sets_details_export_button
             .set_sensitive(new.viewflags.sets_export_enabled);
     }
 

@@ -31,10 +31,10 @@ pub const LABELLING_OPTIONS: [(&str, LabellingKind); 2] = [
 pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
     let labelling_model = gtk::StringList::new(&LABELLING_OPTIONS.keys());
 
-    view.sets_detail_labelling_kind_entry
+    view.sets_details_labelling_kind_entry
         .set_model(Some(&labelling_model));
 
-    view.sets_detail_labelling_kind_entry
+    view.sets_details_labelling_kind_entry
         .connect_selected_item_notify(
             clone!(@strong model_ptr, @strong view => move |e: &gtk::DropDown| {
                 let kind = LABELLING_OPTIONS
@@ -49,7 +49,7 @@ pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
             }),
         );
 
-    view.sets_detail_export_button.connect_clicked(
+    view.sets_details_export_button.connect_clicked(
         clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
             update(model_ptr.clone(), &view, AppMessage::SampleSetDetailsExportClicked);
         }),
@@ -111,17 +111,17 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
 }
 
 pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
-    view.sets_detail_sample_list.remove_all();
+    view.sets_details_sample_list.remove_all();
 
     match model
         .sets_selected_set
         .and_then(|uuid| model.sets.get(&uuid))
     {
         Some(set) => {
-            view.sets_detail_name_label.set_text(set.name());
+            view.sets_details_name_label.set_text(set.name());
 
             set_dropdown_choice(
-                &view.sets_detail_labelling_kind_entry,
+                &view.sets_details_labelling_kind_entry,
                 &LABELLING_OPTIONS,
                 &match set.labelling() {
                     Some(SampleSetLabelling::DrumkitLabelling(_)) => LabellingKind::Drumkit,
@@ -130,11 +130,11 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
             );
 
             for (row_index, sample) in set.list().iter().enumerate() {
-                view.sets_detail_sample_list
+                view.sets_details_sample_list
                     .append(&gtk::Label::builder().label(sample.name()).build());
 
                 let row = view
-                    .sets_detail_sample_list
+                    .sets_details_sample_list
                     .row_at_index(row_index.try_into().unwrap())
                     .unwrap();
 
@@ -163,7 +163,7 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
             }
         }
         None => {
-            view.sets_detail_name_label.set_text("");
+            view.sets_details_name_label.set_text("");
         }
     }
 }

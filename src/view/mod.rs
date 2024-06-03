@@ -129,17 +129,17 @@ pub struct AsampoViewState {
     #[template_child(id = "sets-list")]
     pub sets_list: gtk::TemplateChild<gtk::ListBox>,
 
-    #[template_child(id = "sets-detail-name-label")]
-    pub sets_detail_name_label: gtk::TemplateChild<gtk::Label>,
+    #[template_child(id = "sets-details-name-label")]
+    pub sets_details_name_label: gtk::TemplateChild<gtk::Label>,
 
-    #[template_child(id = "sets-detail-labelling-kind-entry")]
-    pub sets_detail_labelling_kind_entry: gtk::TemplateChild<gtk::DropDown>,
+    #[template_child(id = "sets-details-labelling-kind-entry")]
+    pub sets_details_labelling_kind_entry: gtk::TemplateChild<gtk::DropDown>,
 
-    #[template_child(id = "sets-detail-export-button")]
-    pub sets_detail_export_button: gtk::TemplateChild<gtk::Button>,
+    #[template_child(id = "sets-details-export-button")]
+    pub sets_details_export_button: gtk::TemplateChild<gtk::Button>,
 
-    #[template_child(id = "sets-detail-sample-list")]
-    pub sets_detail_sample_list: gtk::TemplateChild<gtk::ListBox>,
+    #[template_child(id = "sets-details-sample-list")]
+    pub sets_details_sample_list: gtk::TemplateChild<gtk::ListBox>,
 }
 
 impl WidgetImpl for AsampoViewState {}
