@@ -29,15 +29,7 @@
         <property name="decoration-layout">:menu,minimize,maximize,close</property>
         <property name="title-widget">
           <object class="GtkBox">
-            <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
-            <!-- <child> -->
-            <!--   <object class="GtkLabel"> -->
-            <!--     <property name="label">Asampo</property> -->
-            <!--     <style> -->
-            <!--       <class name="title" /> -->
-            <!--     </style> -->
-            <!--   </object> -->
-            <!-- </child> -->
+            <property name="orientation">vertical</property>
             <child>
               <object class="GtkStackSwitcher">
                 <property name="stack">stack</property>
@@ -47,9 +39,10 @@
         </property>
         <child type="end">
           <object class="GtkMenuButton" id="main-menu-button">
-            <property name="icon-name">open-menu-symbolic</property>
+            <property name="name">main-menu-button</property>
             <property name="menu-model">main-menu</property>
-            <property name="valign">GTK_ALIGN_CENTER</property>
+            <property name="icon-name">open-menu-symbolic</property>
+            <property name="valign">center</property>
           </object>
         </child>
       </object>
@@ -57,18 +50,17 @@
     <child>
       <object class="GtkOverlay">
         <child type="overlay">
-          <object class="GtkFrame" id="progress-popup-frame">
-            <style>
-              <class name="progress-popup" />
-            </style>
+          <object class="GtkFrame" id="progress-popup">
+            <property name="name">progress-popup</property>
             <property name="visible">false</property>
-            <property name="halign">GTK_ALIGN_END</property>
-            <property name="valign">GTK_ALIGN_END</property>
             <child>
               <object class="GtkProgressBar" id="progress-popup-progress-bar">
+                <property name="name">progress-popup-progress-bar</property>
                 <property name="show-text">true</property>
               </object>
             </child>
+            <property name="halign">end</property>
+            <property name="valign">end</property>
           </object>
         </child>
         <child>
@@ -78,243 +70,291 @@
                 <property name="name">settings</property>
                 <property name="title">Settings</property>
                 <property name="child">
-                  <object class="GtkScrolledWindow">
+                  <object class="GtkOverlay">
+                    <property name="name">settings-page</property>
                     <child>
-                      <object class="GtkBox">
-                        <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
+                      <object class="GtkScrolledWindow">
                         <child>
                           <object class="GtkBox">
-                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                            <property name="margin-top">20</property>
-                            <property name="width-request">510</property>
-                            <property name="hexpand">false</property>
-                            <property name="halign">GTK_ALIGN_CENTER</property>
+                            <property name="orientation">vertical</property>
                             <child>
                               <object class="GtkLabel">
                                 <style>
                                   <class name="settings-group-title" />
                                 </style>
                                 <property name="label">Audio</property>
+                                <property name="halign">center</property>
+                                <property name="xalign">0.0</property>
+                                <property name="hexpand">false</property>
                               </object>
                             </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkFrame">
-                            <style>
-                              <class name="settings-group" />
-                            </style>
-                            <property name="width-request">500</property>
-                            <property name="hexpand">false</property>
-                            <property name="halign">GTK_ALIGN_CENTER</property>
                             <child>
-                              <object class="GtkGrid">
+                              <object class="GtkFrame">
+                                <style>
+                                  <class name="settings-group-frame" />
+                                </style>
                                 <child>
-                                  <object class="GtkLabel">
-                                    <property name="halign">GTK_ALIGN_START</property>
-                                    <property name="label">Audio output:</property>
-                                    <layout>
-                                      <property name="row">0</property>
-                                      <property name="column">0</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkDropDown">
-                                    <property name="sensitive">false</property>
-                                    <property name="model">
-                                      <object class="GtkStringList">
-                                        <items>
-                                          <item>PulseAudio</item>
-                                        </items>
-                                      </object>
-                                    </property>
-                                    <layout>
-                                      <property name="row">0</property>
-                                      <property name="column">1</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="halign">GTK_ALIGN_START</property>
-                                    <property name="label">Output sample rate:</property>
-                                    <layout>
-                                      <property name="row">1</property>
-                                      <property name="column">0</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkDropDown" id="settings-output-sample-rate-entry">
-                                    <layout>
-                                      <property name="row">1</property>
-                                      <property name="column">1</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="halign">GTK_ALIGN_START</property>
-                                    <property name="label">Buffer size (samples):</property>
-                                    <layout>
-                                      <property name="row">2</property>
-                                      <property name="column">0</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkAdjustment" id="-settings-bufsize-adjustment">
-                                    <property name="lower">64</property>
-                                    <property name="upper">8192</property>
-                                    <property name="value">1024</property>
-                                    <property name="step-increment">64</property>
-                                    <property name="page-increment">512</property>
-                                  </object>
                                   <object class="GtkBox">
-                                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                                    <layout>
-                                      <property name="row">2</property>
-                                      <property name="column">1</property>
-                                    </layout>
+                                    <property name="orientation">vertical</property>
                                     <child>
-                                      <object class="GtkSpinButton" id="settings-buffer-size-entry">
-                                        <property name="visible">True</property>
-                                        <property name="can-focus">True</property>
-                                        <property name="adjustment">-settings-bufsize-adjustment</property>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="settings-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="setting-label" />
+                                            </style>
+                                            <property name="label">Audio output:</property>
+                                            <property name="halign">start</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkDropDown">
+                                            <style>
+                                              <class name="setting-entry" />
+                                            </style>
+                                            <property name="sensitive">false</property>
+                                            <property name="model">
+                                              <object class="GtkStringList">
+                                                <items>
+                                                  <item>PulseAudio</item>
+                                                </items>
+                                              </object>
+                                            </property>
+                                            <property name="halign">start</property>
+                                          </object>
+                                        </child>
                                       </object>
                                     </child>
                                     <child>
-                                      <object class="GtkLabel" id="settings-latency-approx-label">
-                                        <property name="width-request">100</property>
-                                        <property name="label">~21 ms</property>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="settings-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="setting-label" />
+                                            </style>
+                                            <property name="label">Output sample rate:</property>
+                                            <property name="halign">start</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkDropDown" id="settings-output-sample-rate-entry">
+                                            <property name="name">settings-output-sample-rate-entry</property>
+                                            <style>
+                                              <class name="setting-entry" />
+                                            </style>
+                                            <property name="halign">start</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="settings-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="setting-label" />
+                                            </style>
+                                            <property name="label">Buffer size (samples):</property>
+                                            <property name="halign">start</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkAdjustment" id="-settings-bufsize-adjustment">
+                                            <property name="lower">64</property>
+                                            <property name="upper">8192</property>
+                                            <property name="value">1024</property>
+                                            <property name="step-increment">64</property>
+                                            <property name="page-increment">512</property>
+                                          </object>
+                                          <object class="GtkBox">
+                                            <style>
+                                              <class name="setting-entry" />
+                                            </style>
+                                            <property name="orientation">horizontal</property>
+                                            <child>
+                                              <object class="GtkSpinButton" id="settings-buffer-size-entry">
+                                                <property name="name">settings-buffer-size-entry</property>
+                                                <property name="visible">true</property>
+                                                <property name="can-focus">true</property>
+                                                <property name="adjustment">-settings-bufsize-adjustment</property>
+                                                <property name="hexpand">true</property>
+                                              </object>
+                                            </child>
+                                            <child>
+                                              <object class="GtkLabel" id="settings-latency-approx-label">
+                                                <property name="name">settings-latency-approx-label</property>
+                                                <property name="width-request">100</property>
+                                                <property name="label">~21 ms</property>
+                                                <property name="hexpand">true</property>
+                                              </object>
+                                            </child>
+                                            <property name="halign">start</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="settings-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="setting-label" />
+                                            </style>
+                                            <property name="label">Sample rate conversion quality:</property>
+                                            <property name="halign">start</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkDropDown" id="settings-sample-rate-conversion-quality-entry">
+                                            <property name="name">settings-sample-rate-conversion-quality-entry</property>
+                                            <style>
+                                              <class name="setting-entry" />
+                                            </style>
+                                            <property name="halign">start</property>
+                                          </object>
+                                        </child>
                                       </object>
                                     </child>
                                   </object>
                                 </child>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="halign">GTK_ALIGN_START</property>
-                                    <property name="label">Sample rate conversion quality:</property>
-                                    <layout>
-                                      <property name="row">3</property>
-                                      <property name="column">0</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkDropDown" id="settings-sample-rate-conversion-quality-entry">
-                                    <layout>
-                                      <property name="row">3</property>
-                                      <property name="column">1</property>
-                                    </layout>
-                                  </object>
-                                </child>
+                                <property name="halign">center</property>
+                                <property name="hexpand">false</property>
                               </object>
                             </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkBox">
-                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                            <property name="margin-top">20</property>
-                            <property name="width-request">510</property>
-                            <property name="hexpand">false</property>
-                            <property name="halign">GTK_ALIGN_CENTER</property>
                             <child>
                               <object class="GtkLabel">
                                 <style>
                                   <class name="settings-group-title" />
                                 </style>
                                 <property name="label">Behavior</property>
+                                <property name="halign">center</property>
+                                <property name="xalign">0.0</property>
+                                <property name="hexpand">false</property>
                               </object>
                             </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkFrame">
-                            <style>
-                              <class name="settings-group" />
-                            </style>
-                            <property name="width-request">500</property>
-                            <property name="hexpand">false</property>
-                            <property name="halign">GTK_ALIGN_CENTER</property>
                             <child>
-                              <object class="GtkGrid">
+                              <object class="GtkFrame">
+                                <style>
+                                  <class name="settings-group-frame" />
+                                </style>
                                 <child>
-                                  <object class="GtkLabel">
-                                    <property name="halign">GTK_ALIGN_START</property>
-                                    <property name="label">Sample playback:</property>
-                                    <layout>
-                                      <property name="row">0</property>
-                                      <property name="column">0</property>
-                                    </layout>
+                                  <object class="GtkBox">
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="settings-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="setting-label" />
+                                            </style>
+                                            <property name="label">Sample playback:</property>
+                                            <property name="halign">start</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkDropDown" id="settings-sample-playback-behavior-entry">
+                                            <property name="name">settings-sample-playback-behavior-entry</property>
+                                            <style>
+                                              <class name="setting-entry" />
+                                            </style>
+                                            <property name="halign">start</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
                                   </object>
                                 </child>
-                                <child>
-                                  <object class="GtkDropDown" id="settings-sample-playback-behavior-entry">
-                                    <layout>
-                                      <property name="row">0</property>
-                                      <property name="column">1</property>
-                                    </layout>
-                                  </object>
-                                </child>
+                                <property name="halign">center</property>
+                                <property name="hexpand">false</property>
                               </object>
                             </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkBox">
-                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                            <property name="margin-top">20</property>
-                            <property name="width-request">510</property>
-                            <property name="hexpand">false</property>
-                            <property name="halign">GTK_ALIGN_CENTER</property>
                             <child>
                               <object class="GtkLabel">
                                 <style>
                                   <class name="settings-group-title" />
                                 </style>
                                 <property name="label">Paths</property>
+                                <property name="halign">center</property>
+                                <property name="xalign">0.0</property>
+                                <property name="hexpand">false</property>
                               </object>
                             </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkFrame">
-                            <style>
-                              <class name="settings-group" />
-                            </style>
-                            <property name="width-request">500</property>
-                            <property name="hexpand">false</property>
-                            <property name="halign">GTK_ALIGN_CENTER</property>
                             <child>
-                              <object class="GtkGrid">
+                              <object class="GtkFrame">
+                                <style>
+                                  <class name="settings-group-frame" />
+                                </style>
                                 <child>
-                                  <object class="GtkLabel">
-                                    <property name="halign">GTK_ALIGN_START</property>
-                                    <property name="label">Configuration:</property>
-                                    <layout>
-                                      <property name="row">0</property>
-                                      <property name="column">0</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="settings-config-save-path-entry">
-                                    <property name="sensitive">false</property>
-                                    <property name="hexpand">true</property>
-                                    <property name="buffer">
-                                      <object class="GtkEntryBuffer">
-                                        <property name="text">/home/user/.config/asampo/asampo.conf</property>
+                                  <object class="GtkBox">
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="settings-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="setting-label" />
+                                            </style>
+                                            <property name="label">Configuration:</property>
+                                            <property name="halign">start</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkBox">
+                                            <style>
+                                              <class name="setting-entry" />
+                                            </style>
+                                            <property name="orientation">horizontal</property>
+                                            <child>
+                                              <object class="GtkEntry" id="settings-config-save-path-entry">
+                                                <property name="name">settings-config-save-path-entry</property>
+                                                <property name="sensitive">false</property>
+                                                <property name="buffer">
+                                                  <object class="GtkEntryBuffer">
+                                                    <property name="text">/home/user/.config/asampo/asampo.conf</property>
+                                                  </object>
+                                                </property>
+                                                <property name="hexpand">true</property>
+                                              </object>
+                                            </child>
+                                            <property name="halign">start</property>
+                                          </object>
+                                        </child>
                                       </object>
-                                    </property>
-                                    <layout>
-                                      <property name="row">0</property>
-                                      <property name="column">1</property>
-                                    </layout>
+                                    </child>
                                   </object>
                                 </child>
+                                <property name="halign">center</property>
+                                <property name="hexpand">false</property>
                               </object>
                             </child>
                           </object>
@@ -330,286 +370,298 @@
                 <property name="name">sources</property>
                 <property name="title">Sources</property>
                 <property name="child">
-                  <object class="GtkBox">
-                    <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
+                  <object class="GtkOverlay">
+                    <property name="name">sources-page</property>
                     <child>
-                      <object class="GtkFrame" id="sources-add-frame">
-                        <property name="label">Add Source</property>
-                        <property name="margin_top">10</property>
-                        <property name="margin_start">10</property>
-                        <property name="margin_end">10</property>
+                      <object class="GtkBox">
+                        <property name="orientation">vertical</property>
                         <child>
-                          <object class="GtkNotebook">
+                          <object class="GtkFrame" id="sources-add-frame">
+                            <property name="name">sources-add-frame</property>
+                            <property name="label">Add Source</property>
                             <child>
-                              <object class="GtkGrid">
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">Name:</property>
-                                    <property name="xalign">0.0</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">0</property>
-                                      <property name="column">0</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="sources-add-fs-name-entry">
-                                    <property name="placeholder_text">Drums</property>
-                                    <property name="width_request">250</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">0</property>
-                                      <property name="column">1</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">Path:</property>
-                                    <property name="xalign">0.0</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">1</property>
-                                      <property name="column">0</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="sources-add-fs-path-entry">
-                                    <property name="placeholder_text">/home/user/samples/drums</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">1</property>
-                                      <property name="column">1</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="sources-add-fs-path-browse-button">
-                                    <property name="label">Browse</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">1</property>
-                                      <property name="column">2</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">File extensions:</property>
-                                    <property name="xalign">0.0</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">2</property>
-                                      <property name="column">0</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="sources-add-fs-extensions-entry">
-                                    <property name="placeholder_text">wav,flac,ogg</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">2</property>
-                                      <property name="column">1</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="sources-add-fs-add-button">
-                                    <property name="sensitive">false</property>
-                                    <property name="halign">GTK_ALIGN_END</property>
-                                    <property name="hexpand">false</property>
-                                    <property name="label">Add</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <property name="margin_bottom">10</property>
-                                    <layout>
-                                      <property name="row">3</property>
-                                      <property name="column">1</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                              </object>
-                            </child>
-                            <child type="tab">
-                              <object class="GtkLabel">
-                                <property name="label">File system source</property>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkFrame" id="sources-edit-frame">
-                        <property name="visible">false</property>
-                        <property name="label">Edit Source</property>
-                        <property name="margin_top">10</property>
-                        <property name="margin_start">10</property>
-                        <property name="margin_end">10</property>
-                        <child>
-                          <object class="GtkNotebook">
-                            <child>
-                              <object class="GtkGrid">
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">Name:</property>
-                                    <property name="xalign">0.0</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">0</property>
-                                      <property name="column">0</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="sources-edit-fs-name-entry">
-                                    <property name="placeholder_text">Drums</property>
-                                    <property name="width_request">250</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">0</property>
-                                      <property name="column">1</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">Path:</property>
-                                    <property name="xalign">0.0</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">1</property>
-                                      <property name="column">0</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="sources-edit-fs-path-entry">
-                                    <property name="placeholder_text">/home/user/samples/drums</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">1</property>
-                                      <property name="column">1</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkButton" id="sources-edit-fs-path-browse-button">
-                                    <property name="label">Browse</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">1</property>
-                                      <property name="column">2</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">File extensions:</property>
-                                    <property name="xalign">0.0</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">2</property>
-                                      <property name="column">0</property>
-                                    </layout>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="sources-edit-fs-extensions-entry">
-                                    <property name="placeholder_text">wav,flac,ogg</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <layout>
-                                      <property name="row">2</property>
-                                      <property name="column">1</property>
-                                    </layout>
-                                  </object>
-                                </child>
+                              <object class="GtkNotebook">
                                 <child>
                                   <object class="GtkBox">
-                                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                                    <property name="halign">GTK_ALIGN_END</property>
+                                    <property name="orientation">vertical</property>
                                     <child>
-                                      <object class="GtkButton" id="sources-edit-fs-save-button">
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="properties-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="property-label" />
+                                            </style>
+                                            <property name="label">Name:</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkEntry" id="sources-add-fs-name-entry">
+                                            <property name="name">sources-add-fs-name-entry</property>
+                                            <style>
+                                              <class name="property-entry" />
+                                            </style>
+                                            <property name="placeholder_text">Drums</property>
+                                            <property name="hexpand">true</property>
+                                          </object>
+                                        </child>
                                         <property name="hexpand">false</property>
-                                        <property name="label">Save</property>
-                                        <property name="margin_top">10</property>
-                                        <property name="margin_start">10</property>
-                                        <property name="margin_bottom">10</property>
+                                        <property name="halign">start</property>
                                       </object>
                                     </child>
                                     <child>
-                                      <object class="GtkButton" id="sources-edit-fs-cancel-button">
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="properties-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="property-label" />
+                                            </style>
+                                            <property name="label">Path:</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkBox">
+                                            <style>
+                                              <class name="property-entry" />
+                                            </style>
+                                            <property name="orientation">horizontal</property>
+                                            <child>
+                                              <object class="GtkEntry" id="sources-add-fs-path-entry">
+                                                <property name="name">sources-add-fs-path-entry</property>
+                                                <property name="placeholder_text">/home/user/samples/drums</property>
+                                                <property name="hexpand">true</property>
+                                              </object>
+                                            </child>
+                                            <child>
+                                              <object class="GtkButton" id="sources-add-fs-path-browse-button">
+                                                <property name="name">sources-add-fs-path-browse-button</property>
+                                                <property name="label">Browse</property>
+                                                <property name="icon-name">folder-open-symbolic</property>
+                                              </object>
+                                            </child>
+                                            <property name="hexpand">true</property>
+                                          </object>
+                                        </child>
                                         <property name="hexpand">false</property>
-                                        <property name="sensitive">false</property>
-                                        <property name="label">Cancel</property>
-                                        <property name="margin_top">10</property>
-                                        <property name="margin_start">10</property>
-                                        <property name="margin_end">10</property>
-                                        <property name="margin_bottom">10</property>
+                                        <property name="halign">start</property>
                                       </object>
                                     </child>
-                                    <layout>
-                                      <property name="row">3</property>
-                                      <property name="column">1</property>
-                                    </layout>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="properties-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="property-label" />
+                                            </style>
+                                            <property name="label">File extensions:</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkEntry" id="sources-add-fs-extensions-entry">
+                                            <property name="name">sources-add-fs-extensions-entry</property>
+                                            <style>
+                                              <class name="property-entry" />
+                                            </style>
+                                            <property name="placeholder_text">wav,flac,ogg</property>
+                                            <property name="hexpand">true</property>
+                                          </object>
+                                        </child>
+                                        <property name="hexpand">false</property>
+                                        <property name="halign">start</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="button-box" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkButton" id="sources-add-fs-add-button">
+                                            <property name="name">sources-add-fs-add-button</property>
+                                            <property name="sensitive">false</property>
+                                            <property name="label">Add</property>
+                                            <property name="halign">end</property>
+                                            <property name="hexpand">true</property>
+                                          </object>
+                                        </child>
+                                        <property name="hexpand">false</property>
+                                        <property name="halign">start</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel">
+                                    <property name="label">File system source</property>
                                   </object>
                                 </child>
                               </object>
                             </child>
-                            <child type="tab">
-                              <object class="GtkLabel">
-                                <property name="label">File system source</property>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkFrame" id="sources-edit-frame">
+                            <property name="name">sources-edit-frame</property>
+                            <property name="label">edit Source</property>
+                            <property name="visible">false</property>
+                            <child>
+                              <object class="GtkNotebook">
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="orientation">vertical</property>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="properties-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="property-label" />
+                                            </style>
+                                            <property name="label">Name:</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkEntry" id="sources-edit-fs-name-entry">
+                                            <property name="name">sources-edit-fs-name-entry</property>
+                                            <style>
+                                              <class name="property-entry" />
+                                            </style>
+                                            <property name="placeholder_text">Drums</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="properties-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="property-label" />
+                                            </style>
+                                            <property name="label">Path:</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkBox">
+                                            <style>
+                                              <class name="property-entry" />
+                                            </style>
+                                            <property name="orientation">horizontal</property>
+                                            <child>
+                                              <object class="GtkEntry" id="sources-edit-fs-path-entry">
+                                                <property name="name">sources-edit-fs-path-entry</property>
+                                                <property name="placeholder_text">/home/user/samples/drums</property>
+                                              </object>
+                                            </child>
+                                            <child>
+                                              <object class="GtkButton" id="sources-edit-fs-path-browse-button">
+                                                <property name="name">sources-edit-fs-path-browse-button</property>
+                                                <property name="label">Browse</property>
+                                              </object>
+                                            </child>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="properties-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="property-label" />
+                                            </style>
+                                            <property name="label">File extensions:</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkEntry" id="sources-edit-fs-extensions-entry">
+                                            <property name="name">sources-edit-fs-extensions-entry</property>
+                                            <style>
+                                              <class name="property-entry" />
+                                            </style>
+                                            <property name="placeholder_text">wav,flac,ogg</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="button-box" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkButton" id="sources-edit-fs-save-button">
+                                            <property name="name">sources-edit-fs-edit-button</property>
+                                            <property name="sensitive">false</property>
+                                            <property name="label">Save</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkButton" id="sources-edit-fs-cancel-button">
+                                            <property name="name">sources-edit-fs-cancel-button</property>
+                                            <property name="sensitive">false</property>
+                                            <property name="label">Cancel</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child type="tab">
+                                  <object class="GtkLabel">
+                                    <property name="label">File system source</property>
+                                  </object>
+                                </child>
                               </object>
                             </child>
                           </object>
                         </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkFrame">
-                        <property name="margin_top">10</property>
-                        <property name="margin_start">10</property>
-                        <property name="margin_end">10</property>
-                        <property name="margin_bottom">10</property>
                         <child>
-                          <object class="GtkScrolledWindow">
+                          <object class="GtkFrame">
+                            <property name="name">sources-list-frame</property>
                             <child>
-                              <object class="GtkListBox" id="sources-list">
-                                <property name="vexpand">true</property>
-                                <property name="activate-on-single-click">true</property>
-                                <property name="show-separators">true</property>
+                              <object class="GtkScrolledWindow">
+                                <child>
+                                  <object class="GtkListBox" id="sources-list">
+                                    <property name="name">sources-list</property>
+                                    <property name="activate-on-single-click">true</property>
+                                    <property name="vexpand">true</property>
+                                    <property name="show-separators">true</property>
+                                  </object>
+                                </child>
                               </object>
                             </child>
+                            <property name="margin-top">10</property>
+                            <property name="margin-start">10</property>
+                            <property name="margin-end">10</property>
+                            <property name="margin-bottom">10</property>
                           </object>
                         </child>
                       </object>
@@ -623,214 +675,265 @@
                 <property name="name">samples</property>
                 <property name="title">Samples</property>
                 <property name="child">
-                  <object class="GtkPaned">
-                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                    <!-- TODO: find a better way to set initial pane handle position
-                               it seems to ignore any width-request set on the 2nd child -->
-                    <property name="position">895</property>
-                    <property name="wide-handle">true</property>
+                  <object class="GtkOverlay">
+                    <property name="name">samples-page</property>
                     <child>
-                      <object class="GtkBox">
-                        <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
-                        <child>
-                          <!-- filter -->
-                          <object class="GtkFrame">
-                            <property name="margin_top">10</property>
-                            <property name="margin_start">10</property>
-                            <property name="margin_end">10</property>
-                            <property name="margin_bottom">10</property>
-                            <child>
-                              <object class="GtkBox">
-                                <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                                <child>
-                                  <object class="GtkLabel">
-                                    <property name="label">Filter:</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_bottom">10</property>
-                                  </object>
-                                </child>
-                                <child>
-                                  <object class="GtkEntry" id="samples-list-filter-entry">
-                                    <property name="hexpand">true</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_end">10</property>
-                                    <property name="margin_bottom">10</property>
-                                  </object>
-                                </child>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <!-- sample list -->
-                          <object class="GtkFrame">
-                            <child>
-                              <object class="GtkScrolledWindow">
-                                <child>
-                                  <object class="GtkListView" id="samples-listview">
-                                    <property name="vexpand">true</property>
-                                    <property name="hexpand">true</property>
-                                    <!-- <property name="single_click_activate">true</property> -->
-                                  </object>
-                                </child>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <!-- sidebar -->
-                      <object class="GtkBox">
-                        <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
-                        <child>
-                          <object class="GtkDrawingArea" id="samples-sidebar-waveform">
-                            <property name="content-width">300</property>
-                            <property name="content-height">72</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkLabel" id="samples-sidebar-name-label">
-                            <property name="label" />
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkGrid">
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="label">Format:</property>
-                                <layout>
-                                  <property name="row">0</property>
-                                  <property name="column">0</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="samples-sidebar-format-label">
-                                <property name="label">-</property>
-                                <layout>
-                                  <property name="row">0</property>
-                                  <property name="column">1</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="label">Sample rate:</property>
-                                <layout>
-                                  <property name="row">1</property>
-                                  <property name="column">0</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="samples-sidebar-rate-label">
-                                <property name="label">-</property>
-                                <layout>
-                                  <property name="row">1</property>
-                                  <property name="column">1</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="label">Size:</property>
-                                <layout>
-                                  <property name="row">2</property>
-                                  <property name="column">0</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="samples-sidebar-size-label">
-                                <property name="label">-</property>
-                                <layout>
-                                  <property name="row">2</property>
-                                  <property name="column">1</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="label">Length:</property>
-                                <layout>
-                                  <property name="row">3</property>
-                                  <property name="column">0</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="samples-sidebar-length-label">
-                                <property name="label">-</property>
-                                <layout>
-                                  <property name="row">3</property>
-                                  <property name="column">1</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="label">Source:</property>
-                                <layout>
-                                  <property name="row">4</property>
-                                  <property name="column">0</property>
-                                </layout>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkLabel" id="samples-sidebar-source-label">
-                                <property name="label">-</property>
-                                <layout>
-                                  <property name="row">4</property>
-                                  <property name="column">1</property>
-                                </layout>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkLabel">
-                            <style>
-                              <class name="settings-group-title" />
-                            </style>
-                            <property name="label">Sets</property>
-                          </object>
-                        </child>
-                        <child>
-                          <object class="GtkFrame">
-                            <style>
-                              <class name="settings-group" />
-                            </style>
-                            <property name="hexpand">true</property>
-                            <property name="halign">GTK_ALIGN_FILL</property>
-                            <child>
-                              <object class="GtkFrame">
-                                <child>
-                                  <object class="GtkListBox" id="samples-sidebar-sets-list">
-                                  </object>
-                                </child>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
+                      <object class="GtkPaned">
+                        <property name="orientation">horizontal</property>
                         <child>
                           <object class="GtkBox">
-                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                            <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkButton" id="samples-sidebar-add-to-set-button">
-                                <property name="label">Add to ...</property>
+                              <!-- filter -->
+                              <object class="GtkFrame">
+                                <property name="name">samples-list-filter-frame</property>
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="orientation">horizontal</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="name">samples-list-filter-label</property>
+                                        <property name="label">Filter:</property>
+                                        <property name="margin-top">10</property>
+                                        <property name="margin-start">10</property>
+                                        <property name="margin-bottom">10</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkEntry" id="samples-list-filter-entry">
+                                        <property name="name">samples-list-filter-entry</property>
+                                        <property name="hexpand">true</property>
+                                        <property name="margin-top">10</property>
+                                        <property name="margin-start">10</property>
+                                        <property name="margin-end">10</property>
+                                        <property name="margin-bottom">10</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
                               </object>
                             </child>
                             <child>
-                              <object class="GtkButton" id="samples-sidebar-add-to-prev-button">
-                                <property name="label">Add to 'Favorites'</property>
-                                <property name="visible">false</property>
+                              <!-- sample list -->
+                              <object class="GtkFrame">
+                                <property name="name">samples-list-frame</property>
+                                <child>
+                                  <object class="GtkScrolledWindow">
+                                    <child>
+                                      <object class="GtkListView" id="samples-listview">
+                                        <property name="name">samples-listview</property>
+                                        <property name="vexpand">true</property>
+                                        <property name="hexpand">true</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
                               </object>
                             </child>
                           </object>
                         </child>
+                        <child>
+                          <!-- sidebar -->
+                          <object class="GtkBox">
+                            <property name="name">samples-sidebar</property>
+                            <property name="orientation">vertical</property>
+                            <child>
+                              <object class="GtkDrawingArea" id="samples-sidebar-waveform">
+                                <property name="name">samples-sidebar-waveform</property>
+                                <property name="content-width">300</property>
+                                <property name="content-height">72</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkLabel" id="samples-sidebar-name-label">
+                                <property name="name">samples-sidebar-name-label</property>
+                                <property name="label" />
+                                <property name="xalign">0.0</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="name">properties-box</property>
+                                <property name="orientation">vertical</property>
+                                <child>
+                                  <object class="GtkBox">
+                                    <style>
+                                      <class name="properties-row" />
+                                    </style>
+                                    <property name="orientation">horizontal</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <style>
+                                          <class name="property-label" />
+                                        </style>
+                                        <property name="label">Format:</property>
+                                        <property name="xalign">0.0</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="samples-sidebar-format-label">
+                                        <style>
+                                          <class name="property-value" />
+                                        </style>
+                                        <property name="name">samples-sidebar-format-label</property>
+                                        <property name="label">-</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkBox">
+                                    <style>
+                                      <class name="properties-row" />
+                                    </style>
+                                    <property name="orientation">horizontal</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <style>
+                                          <class name="property-label" />
+                                        </style>
+                                        <property name="label">Sample rate:</property>
+                                        <property name="xalign">0.0</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="samples-sidebar-rate-label">
+                                        <style>
+                                          <class name="property-value" />
+                                        </style>
+                                        <property name="name">samples-sidebar-rate-label</property>
+                                        <property name="label">-</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkBox">
+                                    <style>
+                                      <class name="properties-row" />
+                                    </style>
+                                    <property name="orientation">horizontal</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <style>
+                                          <class name="property-label" />
+                                        </style>
+                                        <property name="label">Size:</property>
+                                        <property name="xalign">0.0</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="samples-sidebar-size-label">
+                                        <style>
+                                          <class name="property-value" />
+                                        </style>
+                                        <property name="name">samples-sidebar-size-label</property>
+                                        <property name="label">-</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkBox">
+                                    <style>
+                                      <class name="properties-row" />
+                                    </style>
+                                    <property name="orientation">horizontal</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <style>
+                                          <class name="property-label" />
+                                        </style>
+                                        <property name="label">Length:</property>
+                                        <property name="xalign">0.0</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="samples-sidebar-length-label">
+                                        <style>
+                                          <class name="property-value" />
+                                        </style>
+                                        <property name="name">samples-sidebar-length-label</property>
+                                        <property name="label">-</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkBox">
+                                    <style>
+                                      <class name="properties-row" />
+                                    </style>
+                                    <property name="orientation">horizontal</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <style>
+                                          <class name="property-label" />
+                                        </style>
+                                        <property name="label">Source:</property>
+                                        <property name="xalign">0.0</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkLabel" id="samples-sidebar-source-label">
+                                        <style>
+                                          <class name="property-value" />
+                                        </style>
+                                        <property name="name">samples-sidebar-source-label</property>
+                                        <property name="label">-</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="name">samples-sidebar-sets-list-label</property>
+                                <property name="label">Sets</property>
+                                <property name="xalign">0.0</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkFrame">
+                                <property name="name">samples-sidebar-sets-list-frame</property>
+                                <child>
+                                  <object class="GtkFrame">
+                                    <child>
+                                      <object class="GtkFlowBox" id="samples-sidebar-sets-list">
+                                        <property name="name">samples-sidebar-sets-list</property>
+                                        <property name="selection-mode">none</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <property name="hexpand">true</property>
+                                <property name="halign">fill</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="name">samples-sidebar-sets-button-box</property>
+                                <property name="orientation">horizontal</property>
+                                <child>
+                                  <object class="GtkButton" id="samples-sidebar-add-to-set-button">
+                                    <property name="name">samples-sidebar-add-to-set-button</property>
+                                    <property name="label">Add to ...</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="samples-sidebar-add-to-prev-button">
+                                    <property name="name">samples-sidebar-add-to-prev-button</property>
+                                    <property name="label">Add to 'Favorites'</property>
+                                    <property name="visible">false</property>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <property name="position">895</property>
+                        <property name="wide-handle">true</property>
                       </object>
                     </child>
                   </object>
@@ -842,56 +945,102 @@
                 <property name="name">sets</property>
                 <property name="title">Sets</property>
                 <property name="child">
-                  <object class="GtkPaned">
-                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                    <property name="wide-handle">true</property>
-                    <property name="position">600</property>
+                  <object class="GtkOverlay">
+                    <property name="name">sets-page</property>
                     <child>
-                      <object class="GtkBox">
-                        <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
-                        <child>
-                          <object class="GtkScrolledWindow">
-                            <child>
-                              <object class="GtkListBox" id="sets-list">
-                                <property name="vexpand">true</property>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkBox">
-                        <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
+                      <object class="GtkPaned">
+                        <property name="orientation">horizontal</property>
                         <child>
                           <object class="GtkBox">
-                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
+                            <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkLabel" id="sets-details-name-label">
-                                <property name="label" />
+                              <object class="GtkFrame" id="sets-list-frame">
+                                <property name="name">sets-list-frame</property>
+                                <property name="label">Sets</property>
+                                <child>
+                                  <object class="GtkScrolledWindow">
+                                    <child>
+                                      <object class="GtkListBox" id="sets-list">
+                                        <property name="name">sets-list</property>
+                                        <property name="vexpand">true</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
                               </object>
                             </child>
                             <child>
-                              <object class="GtkDropDown" id="sets-details-labelling-kind-entry">
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="sets-details-export-button">
-                                <property name="label">Export</property>
-                                <property name="sensitive">false</property>
+                              <object class="GtkButton" id="sets-add-set-button">
+                                <property name="name">sets-add-set-button</property>
+                                <property name="hexpand">true</property>
+                                <property name="halign">fill</property>
+                                <property name="icon-name">list-add-symbolic</property>
                               </object>
                             </child>
                           </object>
                         </child>
                         <child>
-                          <object class="GtkScrolledWindow">
+                          <object class="GtkBox">
+                            <property name="orientation">vertical</property>
                             <child>
-                              <object class="GtkListBox" id="sets-details-sample-list">
-                                <property name="vexpand">true</property>
+                              <object class="GtkLabel" id="sets-details-name-label">
+                                <property name="name">sets-details-name-label</property>
+                                <property name="label" />
+                                <property name="xalign">0.0</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkFrame" id="sets-details-sample-list-frame">
+                                <property name="name">sets-details-sample-list-frame</property>
+                                <property name="label">Samples</property>
+                                <child>
+                                  <object class="GtkScrolledWindow">
+                                    <child>
+                                      <object class="GtkListBox" id="sets-details-sample-list">
+                                        <property name="name">sets-details-sample-list</property>
+                                        <property name="vexpand">true</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkBox">
+                                <property name="name">sets-details-below-list-box</property>
+                                <property name="orientation">horizontal</property>
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="name">sets-details-labelling-choice-box</property>
+                                    <property name="orientation">horizontal</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="name">sets-details-labelling-choice-label</property>
+                                        <property name="label">Labelling:</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkDropDown" id="sets-details-labelling-kind-entry">
+                                        <property name="name">sets-details-labelling-kind-entry</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkButton" id="sets-details-export-button">
+                                    <property name="name">sets-details-export-button</property>
+                                    <property name="label">Export</property>
+                                    <property name="sensitive">false</property>
+                                    <property name="hexpand">true</property>
+                                    <property name="halign">end</property>
+                                  </object>
+                                </child>
                               </object>
                             </child>
                           </object>
                         </child>
+                        <property name="wide-handle">true</property>
+                        <property name="position">300</property>
                       </object>
                     </child>
                   </object>
@@ -903,8 +1052,13 @@
                 <property name="name">sequences</property>
                 <property name="title">Sequences</property>
                 <property name="child">
-                  <object class="GtkLabel">
-                    <property name="label">This is the sequences page</property>
+                  <object class="GtkOverlay">
+                    <property name="name">sequences-page</property>
+                    <child>
+                      <object class="GtkLabel">
+                        <property name="label">This is the sequences page</property>
+                      </object>
+                    </child>
                   </object>
                 </property>
               </object>

@@ -12,7 +12,10 @@ use crate::{
     ext::OptionMapExt,
     model::{AppModel, AppModelPtr},
     update,
-    util::{set_dropdown_choice, strs_dropdown_get_selected},
+    util::{
+        idize_builder_template, resource_as_string, set_dropdown_choice,
+        strs_dropdown_get_selected, uuidize_builder_template,
+    },
     view::AsampoView,
     AppMessage,
 };
@@ -29,6 +32,11 @@ pub const LABELLING_OPTIONS: [(&str, LabellingKind); 2] = [
 ];
 
 pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
+    view.sets_add_set_button
+        .connect_clicked(clone!(@strong model_ptr, @strong view => move |_| {
+            update(model_ptr.clone(), &view, AppMessage::AddSampleSetClicked);
+        }));
+
     let labelling_model = gtk::StringList::new(&LABELLING_OPTIONS.keys());
 
     view.sets_details_labelling_kind_entry
@@ -59,28 +67,24 @@ pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
 pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
     view.sets_list.remove_all();
 
+    view.sets_list_frame
+        .set_label(Some(&format!("Sets ({})", model.sets.len())));
+
     for uuid in model.sets_order.iter() {
-        let objects = gtk::Builder::from_string(indoc::indoc! {r#"
-            <interface>
-              <object class="GtkListBoxRow">
-                <child>
-                  <object class="GtkLabel">
-                    <property name="halign">GTK_ALIGN_FILL</property>
-                    <property name="hexpand">true</property>
-                    <property name="xalign">0.0</property>
-                  </object>
-                </child>
-              </object>
-            </interface>
-        "#})
-        .objects();
+        let objects = gtk::Builder::from_string(&uuidize_builder_template(
+            &resource_as_string("/sets-list-row.ui").unwrap(),
+            *uuid,
+        ));
 
-        let row = objects[0].dynamic_cast_ref::<gtk::ListBoxRow>().unwrap();
+        let row = objects
+            .object::<gtk::ListBoxRow>(format!("{uuid}-row"))
+            .unwrap();
 
-        let label_raw = row.child().unwrap();
-        let label = label_raw.dynamic_cast_ref::<gtk::Label>().unwrap();
+        let name_label = objects
+            .object::<gtk::Label>(format!("{uuid}-name-label"))
+            .unwrap();
 
-        label.set_text(model.sets.get(uuid).unwrap().name());
+        name_label.set_text(model.sets.get(uuid).unwrap().name());
 
         let clicked = GestureClick::new();
 
@@ -106,7 +110,7 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
             }),
         );
 
-        view.sets_list.append(row);
+        view.sets_list.append(&row);
     }
 }
 
@@ -129,14 +133,23 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
                 },
             );
 
-            for (row_index, sample) in set.list().iter().enumerate() {
-                view.sets_details_sample_list
-                    .append(&gtk::Label::builder().label(sample.name()).build());
+            view.sets_details_sample_list_frame
+                .set_label(Some(&format!("Samples ({})", set.len())));
 
-                let row = view
-                    .sets_details_sample_list
-                    .row_at_index(row_index.try_into().unwrap())
+            for (row_index, sample) in set.list().iter().enumerate() {
+                let objects = gtk::Builder::from_string(&idize_builder_template(
+                    &resource_as_string("/sets-details-sample-list-row.ui").unwrap(),
+                    row_index,
+                ));
+
+                let row = objects
+                    .object::<gtk::ListBoxRow>(format!("{row_index}-row"))
                     .unwrap();
+
+                let name_label = objects
+                    .object::<gtk::Label>(format!("{row_index}-name-label"))
+                    .unwrap();
+                name_label.set_label(sample.name());
 
                 let clicked = GestureClick::new();
 
@@ -160,6 +173,8 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
                         );
                     }),
                 );
+
+                view.sets_details_sample_list.append(&row);
             }
         }
         None => {

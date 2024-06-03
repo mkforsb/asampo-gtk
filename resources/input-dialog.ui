@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface>
+  <object class="GtkWindow" id="input-dialog-window">
+    <child type="titlebar">
+      <object class="GtkHeaderBar">
+        <style>
+          <class name="less-tall" />
+        </style>
+        <property name="decoration-layout">:close</property>
+        <property name="title-widget">
+          <object class="GtkLabel" id="title">
+            <property name="label" />
+            <property name="single-line-mode">true</property>
+            <style>
+              <class name="title" />
+            </style>
+          </object>
+        </property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkOverlay">
+        <property name="name">input-dialog</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <child>
+                  <object class="GtkLabel" id="input-description">
+                    <property name="name">input-description</property>
+                    <property name="label" />
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="input">
+                    <property name="name">input</property>
+                    <property name="placeholder-text" />
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <style>
+                  <class name="button-box" />
+                </style>
+                <property name="orientation">horizontal</property>
+                <child>
+                  <object class="GtkButton" id="ok-button">
+                    <property name="name">ok-button</property>
+                    <property name="label" />
+                    <property name="hexpand">true</property>
+                    <property name="halign">end</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="cancel-button">
+                    <property name="name">cancel-button</property>
+                    <property name="label">Cancel</property>
+                    <property name="halign">end</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

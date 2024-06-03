@@ -65,64 +65,7 @@ pub fn input(
     placeholder: &str,
     ok: &str,
 ) {
-    let objects = gtk::Builder::from_string(indoc::indoc! {r#"
-        <interface>
-          <object class="GtkWindow" id="input-dialog-window">
-            <child type="titlebar">
-              <object class="GtkHeaderBar">
-                <style>
-                  <class name="less-tall" />
-                </style>
-                <property name="decoration-layout">:close</property>
-                <property name="title-widget">
-                  <object class="GtkLabel" id="title">
-                    <property name="label"></property>
-                    <property name="single-line-mode">true</property>
-                    <style>
-                      <class name="title" />
-                    </style>
-                  </object>
-                </property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkBox">
-                <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
-                <child>
-                  <object class="GtkBox">
-                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                    <child>
-                      <object class="GtkLabel" id="input-descr">
-                        <property name="label"></property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="input">
-                        <property name="placeholder-text"></property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkBox">
-                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                    <child>
-                      <object class="GtkButton" id="ok-button">
-                        <property name="label"></property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="cancel-button">
-                        <property name="label">Cancel</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-          </object>
-        </interface>
-    "#});
+    let objects = gtk::Builder::from_resource("/input-dialog.ui");
 
     let dialogwin = objects
         .object::<gtk::Window>("input-dialog-window")
@@ -134,14 +77,12 @@ pub fn input(
         .set_text(title);
 
     objects
-        .object::<gtk::Label>("input-descr")
+        .object::<gtk::Label>("input-description")
         .unwrap()
         .set_text(input_descr);
 
-    objects
-        .object::<gtk::Entry>("input")
-        .unwrap()
-        .set_placeholder_text(Some(placeholder));
+    let input = objects.object::<gtk::Entry>("input").unwrap();
+    input.set_placeholder_text(Some(placeholder));
 
     let okbutton = objects.object::<gtk::Button>("ok-button").unwrap();
     okbutton.set_label(ok);
@@ -163,6 +104,10 @@ pub fn input(
         }),
     );
 
+    input.connect_activate(clone!(@strong okbutton => move |_| {
+        okbutton.emit_clicked();
+    }));
+
     cancelbutton.connect_clicked(
         clone!(@strong model_ptr, @strong view, @strong dialogwin, @strong context => move |_: &gtk::Button| {
             update(model_ptr.clone(), &view, AppMessage::InputDialogCanceled(context.clone()));
@@ -172,9 +117,9 @@ pub fn input(
     );
 
     dialogwin.connect_show(
-        clone!(@strong model_ptr, @strong view => move |_: &gtk::Window| {
+        clone!(@strong model_ptr, @strong view, @strong context => move |_: &gtk::Window| {
             view.set_sensitive(false);
-            update(model_ptr.clone(), &view, AppMessage::InputDialogOpened);
+            update(model_ptr.clone(), &view, AppMessage::InputDialogOpened(context.clone()));
         }),
     );
 
@@ -189,6 +134,8 @@ pub fn input(
     dialogwin.set_modal(true);
     dialogwin.set_transient_for(Some(view));
     dialogwin.present();
+
+    input.grab_focus();
 }
 
 #[derive(Debug, Clone)]
@@ -199,122 +146,26 @@ pub struct ExportDialogView {
 }
 
 pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppModel) {
-    let objects = gtk::Builder::from_string(indoc::indoc! {r#"
-        <interface>
-          <object class="GtkWindow" id="export-dialog-window">
-            <child type="titlebar">
-              <object class="GtkHeaderBar">
-                <style>
-                  <class name="less-tall" />
-                </style>
-                <property name="decoration-layout">:close</property>
-                <property name="title-widget">
-                  <object class="GtkLabel">
-                    <property name="label">Export</property>
-                    <property name="single-line-mode">true</property>
-                    <style>
-                      <class name="title" />
-                    </style>
-                  </object>
-                </property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkBox">
-                <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
-                <child>
-                  <object class="GtkBox">
-                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                    <child>
-                      <object class="GtkLabel">
-                        <property name="label">Target directory:</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkEntry" id="target_dir_entry">
-                        <property name="placeholder-text">/path/to/export</property>
-                        <property name="hexpand">true</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="browse_button">
-                        <property name="label">Browse</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkBox">
-                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                    <child>
-                      <object class="GtkButton" id="export_button">
-                        <property name="label">Export</property>
-                        <property name="sensitive">false</property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkButton" id="cancel_button">
-                        <property name="label">Cancel</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="plain_copy_radio_button">
-                    <property name="label">Plain copy</property>
-                    <property name="active">true</property>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkCheckButton" id="convert_radio_button">
-                    <property name="label">Convert</property>
-                    <property name="group">plain_copy_radio_button</property>
-                  </object>
-                </child>
-                <child>
-                  <object class="GtkBox">
-                    <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                    <child>
-                      <object class="GtkDropDown" id="conversion_entry">
-                        <property name="sensitive" bind-source="convert_radio_button" bind-property="active">false</property>
-                        <property name="model">
-                          <object class="GtkStringList">
-                            <items>
-                              <item>WAV 44.1 kHz 16-bit</item>
-                            </items>
-                          </object>
-                        </property>
-                      </object>
-                    </child>
-                    <child>
-                      <object class="GtkButton">
-                        <property name="label">Profiles ...</property>
-                        <property name="sensitive">false</property>
-                      </object>
-                    </child>
-                  </object>
-                </child>
-              </object>
-            </child>
-          </object>
-        </interface>
-    "#});
+    let objects = gtk::Builder::from_resource("/export-dialog.ui");
 
     let dialogwin = objects
         .object::<gtk::Window>("export-dialog-window")
         .unwrap();
 
-    let target_dir_entry = objects.object::<gtk::Entry>("target_dir_entry").unwrap();
-    let browse_button = objects.object::<gtk::Button>("browse_button").unwrap();
-    let export_button = objects.object::<gtk::Button>("export_button").unwrap();
-    let cancel_button = objects.object::<gtk::Button>("cancel_button").unwrap();
+    let target_dir_entry = objects
+        .object::<gtk::Entry>("target-directory-entry")
+        .unwrap();
+
+    let browse_button = objects.object::<gtk::Button>("browse-button").unwrap();
+    let export_button = objects.object::<gtk::Button>("export-button").unwrap();
+    let cancel_button = objects.object::<gtk::Button>("cancel-button").unwrap();
 
     let plain_copy_radio = objects
-        .object::<gtk::CheckButton>("plain_copy_radio_button")
+        .object::<gtk::CheckButton>("plain-copy-radio-button")
         .unwrap();
 
     let convert_radio = objects
-        .object::<gtk::CheckButton>("convert_radio_button")
+        .object::<gtk::CheckButton>("convert-radio-button")
         .unwrap();
 
     target_dir_entry.set_text(&model.viewvalues.sets_export_target_dir_entry);

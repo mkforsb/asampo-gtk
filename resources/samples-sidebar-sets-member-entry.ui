@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface>
+  <!-- css-parents(#samples-page #samples-sidebar.foo.bar #samples-sidebar-sets-list) -->
+  <object class="GtkFlowBoxChild" id="{uuid}-entry">
+    <child>
+      <object class="GtkBox" id="{uuid}-combo-button">
+        <style>
+          <class name="combo-button" />
+        </style>
+        <property name="orientation">horizontal</property>
+        <child>
+          <object class="GtkButton" id="{uuid}-combo-button-label">
+            <style>
+              <class name="combo-button-label" />
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="{uuid}-combo-button-ear">
+            <style>
+              <class name="combo-button-ear" />
+            </style>
+            <property name="icon-name">window-close-symbolic</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

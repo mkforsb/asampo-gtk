@@ -1,49 +1,292 @@
 .titlebar.less-tall {
-	padding-top: 0px;
-	padding-bottom: 0px;
-	min-height: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    min-height: 0px;
 }
 
 .titlebar.less-tall * {
-	padding-top: 0px;
-	padding-bottom: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
 }
 
-frame.settings-group {
-    padding: 16px;
-}
-
-label.settings-group-title {
-    font-size: 120%;
-}
-
-frame.settings-group grid > * {
-  margin: 4px;
-}
-
-frame.settings-group grid > * > * {
-  margin: 4px;
-}
-
-listview row {
-    padding: 4px;
-    border-bottom: 1px solid #eee;
-    margin-left: 6px;
-}
-
-overlay frame.progress-popup {
+#progress-popup {
     background: #fff;
-    margin-bottom: 8px;
-    margin-right: 8px;
-    box-shadow: 2px 2px 12px #aaa;
+    margin-bottom: 1em;
+    margin-right: 1em;
+    box-shadow: 0.25em 0.25em 1em #aaa;
 }
 
-overlay frame.progress-popup progressbar {
+#progress-popup progressbar {
     color: #000;
     font-size: 100%;
-    margin: 8px;
+    margin: 1em;
 }
 
-overlay frame.progress-popup progressbar text {
-    margin-bottom: 8px;
+#progress-popup progressbar text {
+    margin-bottom: 0.5em;
+}
+
+overlay#input-dialog {
+    padding: 1em;
+}
+
+#input-dialog label {
+    padding-right: 0.5em;
+}
+
+#input-dialog .button-box {
+    padding-top: 1em;
+}
+
+#input-dialog .button-box #ok-button {
+    margin-right: 0.5em;
+}
+
+#export-dialog {
+    padding: 1em;
+}
+
+#export-dialog #target-directory-box {
+    margin-bottom: 1em;
+}
+
+#export-dialog #target-directory-entry {
+    margin-left: 0.5em;
+}
+
+#settings-page .settings-group-title {
+    font-size: 120%;
+    min-width: 35em;
+    margin-top: 1.5em;
+}
+
+#settings-page .settings-group-frame {
+    padding-left: 1.5em;
+    padding-right: 1.5em;
+    padding-bottom: 0.8em;
+    min-width: 38em;
+}
+
+#settings-page .settings-row {
+    margin-top: 0.8em;
+}
+
+#settings-page .setting-label {
+    min-width: 16em;
+}
+
+#settings-page .setting-entry {
+    min-width: 21em;
+}
+
+#sources-page #sources-add-frame {
+    margin-top: 1em;
+    margin-left: 1em;
+    margin-right: 1em;
+}
+
+#sources-page #sources-add-frame notebook stack {
+    padding-top: 0.5em;
+}
+
+#sources-page #sources-add-frame .properties-row {
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-top: 0.4em;
+    padding-bottom: 0.4em;
+    min-width: 30em;
+}
+
+#sources-page #sources-add-frame .property-label {
+    min-width: 8em;
+}
+
+#sources-page #sources-add-frame .button-box {
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-top: 0.4em;
+    padding-bottom: 0.8em;
+    min-width: 30em;
+}
+
+#sources-page #sources-list row {
+    padding: 0.5em;
+}
+
+#sources-page #sources-list .source-enabled-checkbutton {
+    margin-left: 0.5em;
+}
+
+#sources-page #sources-list .source-name-label {
+    margin-left: 0.7em;
+}
+
+#sources-page #sources-list .source-sample-count-label {
+    margin-left: 0.4em;
+}
+
+#sources-page #sources-list .source-delete-button {
+    background: #fafafa;
+    margin-right: 1em;
+}
+
+#sources-page #sources-list .source-delete-button:hover {
+    background: #eaeaea;
+}
+
+#sources-page #sources-list .source-delete-button:active {
+    background: #cacaca;
+}
+
+#samples-page #samples-list-frame {
+    margin: 0.5em;
+}
+
+#samples-page #samples-listview row {
+    padding: 0.5em 0.5em 0.5em 0.7em;
+    border-bottom: 1px solid #ddd;
+}
+
+#samples-page #samples-sidebar-name-label {
+    font-weight: bold;
+    font-size: 110%;
+    padding-left: 0.5em;
+    padding-bottom: 0.5em;
+}
+
+#samples-page #samples-sidebar #properties-box {
+    margin-left: 0.5em;
+}
+
+#samples-page #samples-sidebar .properties-row {
+    padding: 0.25em;
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
+    border-color: #ddd;
+}
+
+#samples-page #samples-sidebar .property-label {
+    min-width: 7em;
+}
+
+#samples-page #samples-sidebar-sets-list-label {
+    padding-left: 0.5em;
+    padding-top: 1.5em;
+    font-weight: bold;
+}
+
+#samples-page #samples-sidebar-sets-list-frame {
+    min-height: 2em;
+    padding: 0.1em;
+    margin: 0.5em;
+}
+
+#samples-page #samples-sidebar-sets-list row {
+    padding: 0.25em;
+}
+
+#samples-page #samples-sidebar-sets-list button.combo-button-label:hover {
+    background: #d0e0f0;
+}
+
+#samples-page #samples-sidebar-sets-list button.combo-button-label:active {
+    background: #c0d0e0;
+}
+
+#samples-page #samples-sidebar-sets-list button.combo-button-label {
+    background: #dfefff;
+    font-size: 100%;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    border-radius: 0px;
+    border-width: 1px 0px 1px 1px;
+}
+
+#samples-page #samples-sidebar-sets-list button.combo-button-ear {
+    padding: 0px;
+    border-radius: 0px;
+}
+
+#samples-page #samples-sidebar-sets-button-box {
+    margin-left: 0.6em;
+}
+
+#samples-page #samples-sidebar-sets-button-box button {
+    margin-right: 0.5em;
+}
+
+#sets-page #sets-list-frame {
+    margin: 0.5em;
+}
+
+#sets-page #sets-list row {
+    padding: 0.5em;
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
+    border-color: #ddd;
+}
+
+#sets-page #sets-list .set-delete-button {
+    background: #fafafa;
+    margin-right: 1em;
+    padding: 0px;
+}
+
+#sets-page #sets-list .set-delete-button:hover {
+    background: #eaeaea;
+}
+
+#sets-page #sets-list .set-delete-button:active {
+    background: #cacaca;
+}
+
+#sets-page #sets-add-set-button {
+    margin: 0.0em 0.5em 0.5em 0.5em;
+}
+
+#sets-page #sets-details-name-label {
+    font-size: 110%;
+    font-weight: bold;
+    padding: 0.5em 0.5em 0em 0.5em;
+}
+
+#sets-page #sets-details-sample-list-frame {
+    margin: 0.5em;
+}
+
+#sets-page #sets-details-sample-list row {
+    padding: 0.5em;
+    border-style: solid;
+    border-width: 0px 0px 1px 0px;
+    border-color: #ddd;
+}
+
+#sets-page #sets-details-sample-list row button {
+    background: #fafafa;
+}
+
+#sets-page #sets-details-sample-list row button:hover {
+    background: #eaeaea;
+}
+
+#sets-page #sets-details-sample-list row button:active {
+    background: #cacaca;
+}
+
+#sets-page #sets-details-sample-list .set-sample-find-button {
+    margin-right: 1em;
+}
+
+#sets-page #sets-details-sample-list .set-sample-delete-button {
+    margin-right: 1em;
+}
+
+#sets-page #sets-details-below-list-box {
+    margin-left: 1em;
+    margin-bottom: 0.5em;
+    margin-right: 0.5em;
+}
+
+#sets-page #sets-details-labelling-choice-label {
+    margin-right: 0.5em;
 }

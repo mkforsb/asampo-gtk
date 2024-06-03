@@ -5,7 +5,12 @@
 use gtk::{glib::clone, prelude::*, GestureClick};
 use libasampo::prelude::*;
 
-use crate::{update, view::AsampoView, AppMessage, AppModel, AppModelPtr};
+use crate::{
+    update,
+    util::{resource_as_string, uuidize_builder_template},
+    view::AsampoView,
+    AppMessage, AppModel, AppModelPtr,
+};
 
 pub fn setup_sources_page(model_ptr: AppModelPtr, view: &AsampoView) {
     view.sources_add_fs_name_entry.connect_changed(
@@ -55,51 +60,10 @@ pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &Asamp
     view.sources_list.remove_all();
 
     for uuid in model.sources_order.iter() {
-        let objects = gtk::Builder::from_string(&indoc::formatdoc! {r#"
-            <interface>
-                <object class="GtkListBoxRow" id="{uuid}-row">
-                    <child>
-                        <object class="GtkBox">
-                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                            <child>
-                                <object class="GtkCheckButton" id="{uuid}-enable-checkbutton">
-                                    <property name="margin-top">10</property>
-                                    <property name="margin-start">10</property>
-                                    <property name="margin-bottom">10</property>
-                                    <property name="tooltip-text">Enable?</property>
-                                </object>
-                            </child>
-                            <child>
-                                <object class="GtkLabel" id="{uuid}-name-label">
-                                    <property name="label"></property>
-                                    <property name="xalign">0.0</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_bottom">10</property>
-                                </object>
-                            </child>
-                            <child>
-                                <object class="GtkLabel" id="{uuid}-count-label">
-                                    <property name="label"></property>
-                                    <property name="halign">GTK_ALIGN_FILL</property>
-                                    <property name="hexpand">true</property>
-                                    <property name="xalign">0.0</property>
-                                    <property name="margin_start">10</property>
-                                    <property name="margin_top">10</property>
-                                    <property name="margin_bottom">10</property>
-                                </object>
-                            </child>
-                            <child>
-                                <object class="GtkButton" id="{uuid}-delete-button">
-                                    <property name="label">Delete</property>
-                                    <property name="margin_end">16</property>
-                                </object>
-                            </child>
-                        </object>
-                    </child>
-                </object>
-            </interface>
-        "#});
+        let objects = gtk::Builder::from_string(&uuidize_builder_template(
+            &resource_as_string("/sources-list-row.ui").unwrap(),
+            *uuid,
+        ));
 
         let row = objects
             .object::<gtk::ListBoxRow>(&format!("{uuid}-row"))

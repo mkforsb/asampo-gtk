@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface>
+  <!-- css-parents(#sources-page #sources-list) -->
+  <object class="GtkListBoxRow" id="{uuid}-row">
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <child>
+          <object class="GtkCheckButton" id="{uuid}-enable-checkbutton">
+            <style>
+              <class name="source-enabled-checkbutton" />
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="{uuid}-name-label">
+            <style>
+              <class name="source-name-label" />
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="{uuid}-count-label">
+            <style>
+              <class name="source-sample-count-label" />
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="{uuid}-delete-button">
+            <style>
+              <class name="source-delete-button" />
+            </style>
+            <property name="hexpand">true</property>
+            <property name="halign">end</property>
+            <property name="icon-name">user-trash-symbolic</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

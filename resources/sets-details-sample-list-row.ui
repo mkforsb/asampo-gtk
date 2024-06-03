@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface>
+  <!-- css-parents(#sets-page #sets-details-sample-list) -->
+  <object class="GtkListBoxRow" id="{id}-row">
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <child>
+          <object class="GtkLabel" id="{id}-name-label">
+            <style>
+              <class name="set-sample-name-label" />
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="{id}-find-button">
+            <style>
+              <class name="set-sample-find-button" />
+            </style>
+            <property name="hexpand">true</property>
+            <property name="halign">end</property>
+            <property name="icon-name">edit-find-symbolic</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="{id}-delete-button">
+            <style>
+              <class name="set-sample-delete-button" />
+            </style>
+            <property name="icon-name">user-trash-symbolic</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

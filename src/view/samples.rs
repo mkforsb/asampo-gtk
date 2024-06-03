@@ -17,9 +17,16 @@ use gtk::{
     prelude::*,
     EventControllerKey, GestureClick,
 };
-use libasampo::{prelude::*, samples::Sample};
+use libasampo::{prelude::*, samples::Sample, samplesets::SampleSet};
+use uuid::Uuid;
 
-use crate::{model::AppModel, update, util, view::AsampoView, AppMessage, AppModelPtr, WithModel};
+use crate::{
+    model::AppModel,
+    update,
+    util::{self, resource_as_string, uuidize_builder_template},
+    view::AsampoView,
+    AppMessage, AppModelPtr, WithModel,
+};
 
 #[derive(Default, Debug)]
 pub struct SampleListEntryState {
@@ -59,6 +66,7 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
     let factory = gtk::SignalListItemFactory::new();
 
     factory.connect_setup(move |_, list_item| {
+        // TODO: move to builder xml template
         let label = gtk::Label::new(None);
         label.set_xalign(0.0);
 
@@ -200,15 +208,39 @@ pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &A
 
             view.samples_sidebar_sets_list.remove_all();
 
-            for uuid in &model.sets_order {
-                let set = model.sets.get(uuid).unwrap();
+            let mut containing_sets = model
+                .sets
+                .iter()
+                .filter_map(|(uuid, set)| {
+                    if set.contains(sample) {
+                        Some((uuid, set))
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<(&Uuid, &SampleSet)>>();
 
-                if set.contains(sample) {
-                    view.samples_sidebar_sets_list
-                        .append(&gtk::Label::builder().label(set.name()).build());
-                }
+            containing_sets.sort_by(|a, b| a.1.name().cmp(b.1.name()));
+
+            for (uuid, set) in containing_sets {
+                let stuff = gtk::Builder::from_string(&uuidize_builder_template(
+                    &resource_as_string("/samples-sidebar-sets-member-entry.ui").unwrap(),
+                    *uuid,
+                ));
+
+                stuff
+                    .object::<gtk::Button>(format!("{uuid}-combo-button-label"))
+                    .unwrap()
+                    .set_label(set.name());
+
+                view.samples_sidebar_sets_list.append(
+                    &stuff
+                        .object::<gtk::FlowBoxChild>(format!("{uuid}-entry"))
+                        .unwrap(),
+                );
             }
         }
+
         None => {
             view.samples_sidebar_name_label.set_text("-");
             view.samples_sidebar_rate_label.set_text("-");

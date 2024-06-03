@@ -2,7 +2,9 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
+use anyhow::anyhow;
 use gtk::{glib::object::IsA, prelude::*};
+use uuid::Uuid;
 
 use crate::ext::OptionMapExt;
 
@@ -134,4 +136,26 @@ pub fn set_dropdown_choice<T: PartialEq>(
     {
         dropdown.set_selected(position.try_into().unwrap());
     }
+}
+
+pub fn resource_as_string(path: &str) -> Result<String, anyhow::Error> {
+    let mut buffer = [0u8; 1048576];
+
+    gtk::gio::resources_open_stream(path, gtk::gio::ResourceLookupFlags::NONE)?
+        .read_all(&mut buffer, None::<&gtk::gio::Cancellable>)?;
+
+    let end = buffer
+        .iter()
+        .position(|x| *x == 0)
+        .ok_or(anyhow!("Resource too large"))?;
+
+    Ok(String::from_utf8(buffer[0..end].to_vec())?)
+}
+
+pub fn uuidize_builder_template(xml: &str, uuid: Uuid) -> String {
+    xml.replace("{uuid}", &format!("{uuid}"))
+}
+
+pub fn idize_builder_template(xml: &str, id: usize) -> String {
+    xml.replace("{id}", &format!("{id}"))
 }

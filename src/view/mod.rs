@@ -21,8 +21,8 @@ pub struct AsampoViewState {
     #[template_child(id = "main-menu-button")]
     pub main_menu_button: gtk::TemplateChild<gtk::MenuButton>,
 
-    #[template_child(id = "progress-popup-frame")]
-    pub progress_popup_frame: gtk::TemplateChild<gtk::Frame>,
+    #[template_child(id = "progress-popup")]
+    pub progress_popup: gtk::TemplateChild<gtk::Frame>,
 
     #[template_child(id = "progress-popup-progress-bar")]
     pub progress_popup_progress_bar: gtk::TemplateChild<gtk::ProgressBar>,
@@ -118,7 +118,7 @@ pub struct AsampoViewState {
     pub samples_sidebar_source_label: gtk::TemplateChild<gtk::Label>,
 
     #[template_child(id = "samples-sidebar-sets-list")]
-    pub samples_sidebar_sets_list: gtk::TemplateChild<gtk::ListBox>,
+    pub samples_sidebar_sets_list: gtk::TemplateChild<gtk::FlowBox>,
 
     #[template_child(id = "samples-sidebar-add-to-set-button")]
     pub samples_sidebar_add_to_set_button: gtk::TemplateChild<gtk::Button>,
@@ -126,20 +126,29 @@ pub struct AsampoViewState {
     #[template_child(id = "samples-sidebar-add-to-prev-button")]
     pub samples_sidebar_add_to_prev_button: gtk::TemplateChild<gtk::Button>,
 
+    #[template_child(id = "sets-list-frame")]
+    pub sets_list_frame: gtk::TemplateChild<gtk::Frame>,
+
     #[template_child(id = "sets-list")]
     pub sets_list: gtk::TemplateChild<gtk::ListBox>,
 
+    #[template_child(id = "sets-add-set-button")]
+    pub sets_add_set_button: gtk::TemplateChild<gtk::Button>,
+
     #[template_child(id = "sets-details-name-label")]
     pub sets_details_name_label: gtk::TemplateChild<gtk::Label>,
+
+    #[template_child(id = "sets-details-sample-list-frame")]
+    pub sets_details_sample_list_frame: gtk::TemplateChild<gtk::Frame>,
+
+    #[template_child(id = "sets-details-sample-list")]
+    pub sets_details_sample_list: gtk::TemplateChild<gtk::ListBox>,
 
     #[template_child(id = "sets-details-labelling-kind-entry")]
     pub sets_details_labelling_kind_entry: gtk::TemplateChild<gtk::DropDown>,
 
     #[template_child(id = "sets-details-export-button")]
     pub sets_details_export_button: gtk::TemplateChild<gtk::Button>,
-
-    #[template_child(id = "sets-details-sample-list")]
-    pub sets_details_sample_list: gtk::TemplateChild<gtk::ListBox>,
 }
 
 impl WidgetImpl for AsampoViewState {}

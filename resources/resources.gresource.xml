@@ -2,6 +2,12 @@
 <gresources>
   <gresource prefix="/">
     <file compressed="true" preprocess="xml-stripblanks">asampo.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">samples-sidebar-sets-member-entry.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">sources-list-row.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">sets-details-sample-list-row.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">sets-list-row.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">export-dialog.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">input-dialog.ui</file>
     <file compressed="true">style.css</file>
   </gresource>
 </gresources>

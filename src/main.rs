@@ -41,7 +41,7 @@ use libasampo::{
     samples::Sample,
     samplesets::{
         export::{Conversion, ExportJob, ExportJobMessage},
-        DrumkitLabelling, SampleSet, SampleSetLabelling,
+        BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
     sources::{file_system_source::FilesystemSource, Source},
 };
@@ -89,6 +89,7 @@ impl std::error::Error for ErrorWithEffect {}
 #[derive(Debug, Clone)]
 enum InputDialogContext {
     AddToSampleset,
+    CreateSampleSet,
 }
 
 #[derive(Debug, Clone)]
@@ -125,7 +126,7 @@ enum AppMessage {
     SaveToSavefile(String),
     DialogError(gtk::glib::Error),
     AddSampleSetClicked,
-    InputDialogOpened,
+    InputDialogOpened(InputDialogContext),
     InputDialogSubmitted(InputDialogContext, String),
     InputDialogCanceled(InputDialogContext),
     SelectFolderDialogOpened(SelectFolderDialogContext),
@@ -635,15 +636,31 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model)
         }
 
-        AppMessage::AddSampleSetClicked => Ok(model),
-
-        AppMessage::InputDialogOpened => Ok(AppModel {
+        AppMessage::AddSampleSetClicked => Ok(AppModel {
             viewflags: ViewFlags {
-                samples_sidebar_add_to_set_show_dialog: false,
+                sets_add_set_show_dialog: true,
                 ..model.viewflags
             },
             ..model
         }),
+
+        AppMessage::InputDialogOpened(context) => match context {
+            InputDialogContext::AddToSampleset => Ok(AppModel {
+                viewflags: ViewFlags {
+                    samples_sidebar_add_to_set_show_dialog: false,
+                    ..model.viewflags
+                },
+                ..model
+            }),
+
+            InputDialogContext::CreateSampleSet => Ok(AppModel {
+                viewflags: ViewFlags {
+                    sets_add_set_show_dialog: false,
+                    ..model.viewflags
+                },
+                ..model
+            }),
+        },
 
         AppMessage::InputDialogCanceled(_context) => Ok(model),
 
@@ -651,6 +668,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             InputDialogContext::AddToSampleset => {
                 let (model, set_uuid) = model_util::get_or_create_sampleset(model, text)?;
                 model_util::add_selected_sample_to_sampleset_by_uuid(model, &set_uuid)
+            }
+
+            InputDialogContext::CreateSampleSet => {
+                Ok(model.add_sampleset(SampleSet::BaseSampleSet(BaseSampleSet::new(text))))
             }
         },
 
@@ -949,6 +970,18 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         );
     }
 
+    if new.viewflags.sets_add_set_show_dialog {
+        dialogs::input(
+            model_ptr.clone(),
+            view,
+            InputDialogContext::CreateSampleSet,
+            "Create set",
+            "Name of set:",
+            "Favorites",
+            "Create",
+        );
+    }
+
     if new.viewflags.sets_export_show_dialog {
         dialogs::sampleset_export(model_ptr.clone(), view, new.clone());
     }
@@ -1029,12 +1062,12 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             Some(model::ExportState::Exporting) => {
                 if let Some(dv) = new.viewvalues.sets_export_dialog_view {
                     dv.window.close();
-                    view.progress_popup_frame.set_visible(true);
+                    view.progress_popup.set_visible(true);
                 }
             }
 
             Some(model::ExportState::Finished) => {
-                view.progress_popup_frame.set_visible(false);
+                view.progress_popup.set_visible(false);
             }
 
             None => (),
@@ -1063,12 +1096,41 @@ fn main() -> ExitCode {
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
-    app.connect_command_line(clone!(@strong app =>  move |_, _| {
-        app.activate();
-        0
-    }));
+    let cmdline_savefile: Rc<Cell<Option<String>>> = Rc::new(Cell::new(None));
+    let cmdline_page: Rc<Cell<Option<u8>>> = Rc::new(Cell::new(None));
 
-    app.connect_activate(|app| {
+    app.connect_command_line(
+        clone!(@strong app, @strong cmdline_savefile, @strong cmdline_page => move
+            |app: &gtk::Application, args: &gtk::gio::ApplicationCommandLine| {
+                if args.arguments().len() > 1 {
+                    cmdline_savefile.set(Some(args
+                        .arguments()
+                        .get(1)
+                        .unwrap()
+                        .clone()
+                        .into_string()
+                        .unwrap()
+                    ));
+
+                    cmdline_page.set(Some(args
+                        .arguments()
+                        .get(2)
+                        .unwrap()
+                        .clone()
+                        .into_string()
+                        .unwrap()
+                        .parse()
+                        .unwrap()
+                    ));
+                }
+
+                app.activate();
+                0
+            }
+        ),
+    );
+
+    app.connect_activate(clone!(@strong cmdline_savefile => move |app| {
         // init css
         let css_provider = gtk::CssProvider::new();
         css_provider.load_from_resource("/style.css");
@@ -1128,6 +1190,14 @@ fn main() -> ExitCode {
         build_actions(app, model_ptr.clone(), &view);
 
         view.present();
+
+        if let Some(path_to_file) = cmdline_savefile.take() {
+            update(model_ptr.clone(), &view, AppMessage::LoadFromSavefile(path_to_file));
+        }
+
+        if let Some(n) = cmdline_page.take() {
+            view.stack.pages().select_item(n.into(), true);
+        }
 
         // timer for AppMessage::TimerTick
         gtk::glib::timeout_add_seconds_local(
@@ -1206,7 +1276,7 @@ fn main() -> ExitCode {
                 gtk::glib::ControlFlow::Continue
             }),
         );
-    });
+    }));
 
     app.run()
 }

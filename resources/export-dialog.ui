@@ -1,0 +1,117 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface>
+  <object class="GtkWindow" id="export-dialog-window">
+    <child type="titlebar">
+      <object class="GtkHeaderBar">
+        <style>
+          <class name="less-tall" />
+        </style>
+        <property name="decoration-layout">:close</property>
+        <property name="title-widget">
+          <object class="GtkLabel">
+            <property name="label">Export</property>
+            <property name="single-line-mode">true</property>
+            <style>
+              <class name="title" />
+            </style>
+          </object>
+        </property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkOverlay">
+        <property name="name">export-dialog</property>
+        <child>
+          <object class="GtkBox">
+            <property name="orientation">vertical</property>
+            <child>
+              <object class="GtkBox">
+                <property name="name">target-directory-box</property>
+                <property name="orientation">horizontal</property>
+                <child>
+                  <object class="GtkLabel">
+                    <property name="name">target-directory-label</property>
+                    <property name="label">Target directory:</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="target-directory-entry">
+                    <property name="name">target-directory-entry</property>
+                    <property name="placeholder-text">/path/to/export</property>
+                    <property name="hexpand">true</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="browse-button">
+                    <property name="name">browse-button</property>
+                    <property name="icon-name">folder-open-symbolic</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <child>
+                  <object class="GtkButton" id="export-button">
+                    <property name="name">export-button</property>
+                    <property name="label">Export</property>
+                    <property name="sensitive">false</property>
+                    <property name="hexpand">true</property>
+                    <property name="halign">end</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="cancel-button">
+                    <property name="name">cancel-button</property>
+                    <property name="label">Cancel</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="plain-copy-radio-button">
+                <property name="name">plain-copy-radio-button</property>
+                <property name="label">Plain copy</property>
+                <property name="active">true</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkCheckButton" id="convert-radio-button">
+                <property name="name">convert-radio-button</property>
+                <property name="label">Convert</property>
+                <property name="group">plain-copy-radio-button</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">horizontal</property>
+                <child>
+                  <object class="GtkDropDown" id="conversion-entry">
+                    <property name="name">conversion-entry</property>
+                    <property name="sensitive" bind-source="convert-radio-button" bind-property="active">false</property>
+                    <property name="model">
+                      <object class="GtkStringList">
+                        <items>
+                          <item>WAV 44.1 kHz 16-bit</item>
+                        </items>
+                      </object>
+                    </property>
+                    <property name="hexpand">true</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="profiles-button">
+                    <property name="name">profiles-button</property>
+                    <property name="label">Profiles ...</property>
+                    <property name="sensitive">false</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

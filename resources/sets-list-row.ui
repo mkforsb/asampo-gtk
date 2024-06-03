@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface>
+  <!-- css-parents(#sets-page #sets-list) -->
+  <object class="GtkListBoxRow" id="{uuid}-row">
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <child>
+          <object class="GtkLabel" id="{uuid}-name-label">
+            <style>
+              <class name="set-name-label" />
+            </style>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="{uuid}-delete-button">
+            <style>
+              <class name="set-delete-button" />
+            </style>
+            <property name="hexpand">true</property>
+            <property name="halign">end</property>
+            <property name="icon-name">user-trash-symbolic</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
