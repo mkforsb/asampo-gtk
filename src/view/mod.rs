@@ -18,133 +18,133 @@ use gtk::subclass::prelude::*;
 #[derive(gtk::CompositeTemplate, Default, Debug)]
 #[template(resource = "/asampo.ui")]
 pub struct AsampoViewState {
-    #[template_child]
+    #[template_child(id = "main-menu-button")]
     pub main_menu_button: gtk::TemplateChild<gtk::MenuButton>,
 
-    #[template_child]
+    #[template_child(id = "progress-popup-frame")]
     pub progress_popup_frame: gtk::TemplateChild<gtk::Frame>,
 
-    #[template_child]
+    #[template_child(id = "progress-popup-progress-bar")]
     pub progress_popup_progress_bar: gtk::TemplateChild<gtk::ProgressBar>,
 
-    #[template_child]
+    #[template_child(id = "stack")]
     pub stack: gtk::TemplateChild<gtk::Stack>,
 
-    #[template_child]
+    #[template_child(id = "settings-output-sample-rate-entry")]
     pub settings_output_sample_rate_entry: gtk::TemplateChild<gtk::DropDown>,
 
-    #[template_child]
+    #[template_child(id = "settings-buffer-size-entry")]
     pub settings_buffer_size_entry: gtk::TemplateChild<gtk::SpinButton>,
 
-    #[template_child]
+    #[template_child(id = "settings-latency-approx-label")]
     pub settings_latency_approx_label: gtk::TemplateChild<gtk::Label>,
 
-    #[template_child]
+    #[template_child(id = "settings-sample-rate-conversion-quality-entry")]
     pub settings_sample_rate_conversion_quality_entry: gtk::TemplateChild<gtk::DropDown>,
 
-    #[template_child]
+    #[template_child(id = "settings-sample-playback-behavior-entry")]
     pub settings_sample_playback_behavior_entry: gtk::TemplateChild<gtk::DropDown>,
 
-    #[template_child]
+    #[template_child(id = "settings-config-save-path-entry")]
     pub settings_config_save_path_entry: gtk::TemplateChild<gtk::Entry>,
 
-    #[template_child]
+    #[template_child(id = "sources-add-frame")]
     pub sources_add_frame: gtk::TemplateChild<gtk::Frame>,
 
-    #[template_child]
+    #[template_child(id = "sources-add-fs-name-entry")]
     pub sources_add_fs_name_entry: gtk::TemplateChild<gtk::Entry>,
 
-    #[template_child]
+    #[template_child(id = "sources-add-fs-path-entry")]
     pub sources_add_fs_path_entry: gtk::TemplateChild<gtk::Entry>,
 
-    #[template_child]
+    #[template_child(id = "sources-add-fs-path-browse-button")]
     pub sources_add_fs_path_browse_button: gtk::TemplateChild<gtk::Button>,
 
-    #[template_child]
+    #[template_child(id = "sources-add-fs-extensions-entry")]
     pub sources_add_fs_extensions_entry: gtk::TemplateChild<gtk::Entry>,
 
-    #[template_child]
+    #[template_child(id = "sources-add-fs-add-button")]
     pub sources_add_fs_add_button: gtk::TemplateChild<gtk::Button>,
 
-    #[template_child]
+    #[template_child(id = "sources-edit-frame")]
     pub sources_edit_frame: gtk::TemplateChild<gtk::Frame>,
 
-    #[template_child]
+    #[template_child(id = "sources-edit-fs-name-entry")]
     pub sources_edit_fs_name_entry: gtk::TemplateChild<gtk::Entry>,
 
-    #[template_child]
+    #[template_child(id = "sources-edit-fs-path-entry")]
     pub sources_edit_fs_path_entry: gtk::TemplateChild<gtk::Entry>,
 
-    #[template_child]
+    #[template_child(id = "sources-edit-fs-path-browse-button")]
     pub sources_edit_fs_path_browse_button: gtk::TemplateChild<gtk::Button>,
 
-    #[template_child]
+    #[template_child(id = "sources-edit-fs-extensions-entry")]
     pub sources_edit_fs_extensions_entry: gtk::TemplateChild<gtk::Entry>,
 
-    #[template_child]
+    #[template_child(id = "sources-edit-fs-save-button")]
     pub sources_edit_fs_save_button: gtk::TemplateChild<gtk::Button>,
 
-    #[template_child]
+    #[template_child(id = "sources-edit-fs-cancel-button")]
     pub sources_edit_fs_cancel_button: gtk::TemplateChild<gtk::Button>,
 
-    #[template_child]
+    #[template_child(id = "sources-list")]
     pub sources_list: gtk::TemplateChild<gtk::ListBox>,
 
-    #[template_child]
+    #[template_child(id = "samples-list-filter-entry")]
     pub samples_list_filter_entry: gtk::TemplateChild<gtk::Entry>,
 
-    #[template_child]
+    #[template_child(id = "samples-listview")]
     pub samples_listview: gtk::TemplateChild<gtk::ListView>,
 
-    #[template_child]
+    #[template_child(id = "samples-sidebar-waveform")]
     pub samples_sidebar_waveform: gtk::TemplateChild<gtk::DrawingArea>,
 
-    #[template_child]
+    #[template_child(id = "samples-sidebar-name-label")]
     pub samples_sidebar_name_label: gtk::TemplateChild<gtk::Label>,
 
-    #[template_child]
+    #[template_child(id = "samples-sidebar-format-label")]
     pub samples_sidebar_format_label: gtk::TemplateChild<gtk::Label>,
 
-    #[template_child]
+    #[template_child(id = "samples-sidebar-rate-label")]
     pub samples_sidebar_rate_label: gtk::TemplateChild<gtk::Label>,
 
-    #[template_child]
+    #[template_child(id = "samples-sidebar-size-label")]
     pub samples_sidebar_size_label: gtk::TemplateChild<gtk::Label>,
 
-    #[template_child]
+    #[template_child(id = "samples-sidebar-length-label")]
     pub samples_sidebar_length_label: gtk::TemplateChild<gtk::Label>,
 
-    #[template_child]
+    #[template_child(id = "samples-sidebar-source-label")]
     pub samples_sidebar_source_label: gtk::TemplateChild<gtk::Label>,
 
-    #[template_child]
+    #[template_child(id = "samples-sidebar-sets-list")]
     pub samples_sidebar_sets_list: gtk::TemplateChild<gtk::ListBox>,
 
-    #[template_child]
+    #[template_child(id = "samples-sidebar-add-to-set-button")]
     pub samples_sidebar_add_to_set_button: gtk::TemplateChild<gtk::Button>,
 
-    #[template_child]
+    #[template_child(id = "samples-sidebar-add-to-prev-button")]
     pub samples_sidebar_add_to_prev_button: gtk::TemplateChild<gtk::Button>,
 
-    #[template_child]
+    #[template_child(id = "samplesets-add-name-entry")]
     pub samplesets_add_name_entry: gtk::TemplateChild<gtk::Entry>,
 
-    #[template_child]
+    #[template_child(id = "samplesets-add-add-button")]
     pub samplesets_add_add_button: gtk::TemplateChild<gtk::Button>,
 
-    #[template_child]
+    #[template_child(id = "samplesets-list")]
     pub samplesets_list: gtk::TemplateChild<gtk::ListBox>,
 
-    #[template_child]
+    #[template_child(id = "samplesets-detail-name-label")]
     pub samplesets_detail_name_label: gtk::TemplateChild<gtk::Label>,
 
-    #[template_child]
+    #[template_child(id = "samplesets-detail-labelling-kind-entry")]
     pub samplesets_detail_labelling_kind_entry: gtk::TemplateChild<gtk::DropDown>,
 
-    #[template_child]
+    #[template_child(id = "samplesets-detail-export-button")]
     pub samplesets_detail_export_button: gtk::TemplateChild<gtk::Button>,
 
-    #[template_child]
+    #[template_child(id = "samplesets-detail-sample-list")]
     pub samplesets_detail_sample_list: gtk::TemplateChild<gtk::ListBox>,
 }
 
