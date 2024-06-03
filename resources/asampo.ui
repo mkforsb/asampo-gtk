@@ -850,30 +850,9 @@
                       <object class="GtkBox">
                         <property name="orientation">GTK_ORIENTATION_VERTICAL</property>
                         <child>
-                          <object class="GtkBox">
-                            <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
-                            <child>
-                              <object class="GtkLabel">
-                                <property name="label">New set:</property>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkEntry" id="samplesets-add-name-entry">
-                                <property name="placeholder_text">Name</property>
-                              </object>
-                            </child>
-                            <child>
-                              <object class="GtkButton" id="samplesets-add-add-button">
-                                <property name="sensitive">false</property>
-                                <property name="label">Add</property>
-                              </object>
-                            </child>
-                          </object>
-                        </child>
-                        <child>
                           <object class="GtkScrolledWindow">
                             <child>
-                              <object class="GtkListBox" id="samplesets-list">
+                              <object class="GtkListBox" id="sets-list">
                                 <property name="vexpand">true</property>
                               </object>
                             </child>
@@ -888,16 +867,16 @@
                           <object class="GtkBox">
                             <property name="orientation">GTK_ORIENTATION_HORIZONTAL</property>
                             <child>
-                              <object class="GtkLabel" id="samplesets-detail-name-label">
+                              <object class="GtkLabel" id="sets-detail-name-label">
                                 <property name="label" />
                               </object>
                             </child>
                             <child>
-                              <object class="GtkDropDown" id="samplesets-detail-labelling-kind-entry">
+                              <object class="GtkDropDown" id="sets-detail-labelling-kind-entry">
                               </object>
                             </child>
                             <child>
-                              <object class="GtkButton" id="samplesets-detail-export-button">
+                              <object class="GtkButton" id="sets-detail-export-button">
                                 <property name="label">Export</property>
                                 <property name="sensitive">false</property>
                               </object>
@@ -907,7 +886,7 @@
                         <child>
                           <object class="GtkScrolledWindow">
                             <child>
-                              <object class="GtkListBox" id="samplesets-detail-sample-list">
+                              <object class="GtkListBox" id="sets-detail-sample-list">
                                 <property name="vexpand">true</property>
                               </object>
                             </child>

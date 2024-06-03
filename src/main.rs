@@ -41,7 +41,7 @@ use libasampo::{
     samples::Sample,
     samplesets::{
         export::{Conversion, ExportJob, ExportJobMessage},
-        BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
+        DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
     sources::{file_system_source::FilesystemSource, Source},
 };
@@ -124,7 +124,6 @@ enum AppMessage {
     LoadFromSavefile(String),
     SaveToSavefile(String),
     DialogError(gtk::glib::Error),
-    AddSampleSetNameChanged(String),
     AddSampleSetClicked,
     InputDialogOpened,
     InputDialogSubmitted(InputDialogContext, String),
@@ -636,39 +635,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model)
         }
 
-        AppMessage::AddSampleSetNameChanged(text) => Ok(AppModel {
-            viewflags: ViewFlags {
-                sets_add_fields_valid: !text.is_empty(),
-                ..model.viewflags
-            },
-            viewvalues: ViewValues {
-                sets_add_name_entry: text,
-                ..model.viewvalues
-            },
-            ..model
-        }),
-
-        AppMessage::AddSampleSetClicked => {
-            assert!(!model.viewvalues.sets_add_name_entry.is_empty());
-
-            let set = SampleSet::BaseSampleSet(BaseSampleSet::new(
-                model.viewvalues.sets_add_name_entry.clone(),
-            ));
-
-            let result = model.add_sampleset(set);
-
-            Ok(AppModel {
-                viewflags: ViewFlags {
-                    sets_add_fields_valid: false,
-                    ..result.viewflags
-                },
-                viewvalues: ViewValues {
-                    sets_add_name_entry: "".to_string(),
-                    ..result.viewvalues
-                },
-                ..result
-            })
-        }
+        AppMessage::AddSampleSetClicked => Ok(model),
 
         AppMessage::InputDialogOpened => Ok(AppModel {
             viewflags: ViewFlags {
@@ -944,7 +911,6 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     maybe_update_text!(old, new, view, sources_add_fs_name_entry);
     maybe_update_text!(old, new, view, sources_add_fs_path_entry);
     maybe_update_text!(old, new, view, sources_add_fs_extensions_entry);
-    maybe_update_text!(old, new, view, sets_add_name_entry);
 
     if let Some(dialogview) = &new.viewvalues.sets_export_dialog_view {
         maybe_update_text!(
@@ -1038,11 +1004,6 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
                     .set_label(&format!("Add to '{}'", set.name()));
             }
         }
-    }
-
-    if old.viewflags.sets_add_fields_valid != new.viewflags.sets_add_fields_valid {
-        view.sets_add_add_button
-            .set_sensitive(new.viewflags.sets_add_fields_valid);
     }
 
     if old.sets_selected_set != new.sets_selected_set {

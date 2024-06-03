@@ -29,18 +29,6 @@ pub const LABELLING_OPTIONS: [(&str, LabellingKind); 2] = [
 ];
 
 pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
-    view.sets_add_name_entry.connect_changed(
-        clone!(@strong model_ptr, @strong view => move |e: &gtk::Entry| {
-            update(model_ptr.clone(), &view, AppMessage::AddSampleSetNameChanged(e.text().to_string()));
-        }),
-    );
-
-    view.sets_add_add_button.connect_clicked(
-        clone!(@strong model_ptr, @strong view => move |_e: &gtk::Button| {
-            update(model_ptr.clone(), &view, AppMessage::AddSampleSetClicked);
-        }),
-    );
-
     let labelling_model = gtk::StringList::new(&LABELLING_OPTIONS.keys());
 
     view.sets_detail_labelling_kind_entry
