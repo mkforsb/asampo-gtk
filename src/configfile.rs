@@ -16,7 +16,7 @@ pub enum AudioOutput {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(remote = "audiothread::Quality")]
 pub enum QualitySerde {
-    Fastest,
+    Lowest,
     Low,
     Medium,
     High,
@@ -49,7 +49,7 @@ impl ConfigFileV1 {
         AppConfig {
             output_samplerate_hz: self.output_samplerate_hz,
             buffer_size_samples: self.buffer_size_samples,
-            sample_rate_conversion_quality: self.sample_rate_conversion_quality.clone(),
+            sample_rate_conversion_quality: self.sample_rate_conversion_quality,
             config_save_path: self.config_save_path,
             sample_playback_behavior: self.sample_playback_behavior,
         }
@@ -60,7 +60,7 @@ impl ConfigFileV1 {
             audio_output: AudioOutput::PulseAudioDefault,
             output_samplerate_hz: config.output_samplerate_hz,
             buffer_size_samples: config.buffer_size_samples,
-            sample_rate_conversion_quality: config.sample_rate_conversion_quality.clone(),
+            sample_rate_conversion_quality: config.sample_rate_conversion_quality,
             config_save_path: config.config_save_path.clone(),
             sample_playback_behavior: config.sample_playback_behavior.clone(),
         }

@@ -24,7 +24,7 @@ impl Default for AppConfig {
         AppConfig {
             output_samplerate_hz: 48000,
             buffer_size_samples: 1024,
-            sample_rate_conversion_quality: audiothread::Quality::Fastest,
+            sample_rate_conversion_quality: audiothread::Quality::Lowest,
             config_save_path: ConfigFile::default_path(),
             sample_playback_behavior: SamplePlaybackBehavior::PlayUntilEnd,
         }
@@ -48,7 +48,7 @@ pub const OUTPUT_SAMPLE_RATE_OPTIONS: [(&str, u32); 4] = [
 ];
 
 pub const SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS: [(&str, audiothread::Quality); 4] = [
-    ("Fastest", audiothread::Quality::Fastest),
+    ("Lowest", audiothread::Quality::Lowest),
     ("Low", audiothread::Quality::Low),
     ("Medium", audiothread::Quality::Medium),
     ("High", audiothread::Quality::High),

@@ -24,6 +24,7 @@ use std::{
 };
 
 use anyhow::anyhow;
+use audiothread::{AudioSpec, NonZeroNumFrames};
 use ext::ClonedHashMapExt;
 use model::ExportState;
 use uuid::Uuid;
@@ -204,7 +205,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 log::log!(log::Level::Info, "Respawning audiothread with new config");
 
                 if let Some(prev_tx) = model.audiothread_tx {
-                    match prev_tx.send(audiothread::Message::Shutdown()) {
+                    match prev_tx.send(audiothread::Message::Shutdown) {
                         Ok(_) => std::thread::sleep(Duration::from_millis(10)),
                         Err(e) => {
                             log::log!(log::Level::Error, "Error shutting down audiothread: {e:?}")
@@ -222,9 +223,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                         Some(
                             audiothread::Opts::default()
                                 .with_name("asampo")
-                                .with_sample_rate(config.output_samplerate_hz)
-                                .with_sr_conv_quality(config.sample_rate_conversion_quality.clone())
-                                .with_bufsize_n_stereo_samples(config.buffer_size_samples.into()),
+                                .with_spec(AudioSpec::new(config.output_samplerate_hz, 2)?)
+                                .with_conversion_quality(config.sample_rate_conversion_quality)
+                                .with_buffer_size(
+                                    (config.buffer_size_samples as usize).try_into()?,
+                                ),
                         ),
                     ))),
                     ..model
@@ -286,7 +289,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 sample_rate_conversion_quality: match config::SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS
                     .value_for(&choice)
                 {
-                    Some(value) => value.clone(),
+                    Some(value) => *value,
                     None => {
                         log::log!(
                             log::Level::Error,
@@ -488,11 +491,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                         .ok_or(anyhow!("Failed to get source for sample"))?
                         .stream(&sample.borrow())?;
 
-                    model.audiothread_tx.as_ref().unwrap().send(
-                        audiothread::Message::PlaySymphoniaSource(
+                    model
+                        .audiothread_tx
+                        .as_ref()
+                        .unwrap()
+                        .send(audiothread::Message::PlaySymphoniaSource(
                             audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
-                        ),
-                    )?;
+                        ))
+                        .map_err(|_| anyhow!("Send error on audio thread control channel"))?;
 
                     Ok(AppModel {
                         samplelist_selected_sample: Some(sample.borrow().clone()),
@@ -721,11 +727,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 .ok_or(anyhow!("Failed to get source for sample"))?
                 .stream(&sample)?;
 
-            model.audiothread_tx.as_ref().unwrap().send(
-                audiothread::Message::PlaySymphoniaSource(
+            model
+                .audiothread_tx
+                .as_ref()
+                .unwrap()
+                .send(audiothread::Message::PlaySymphoniaSource(
                     audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
-                ),
-            )?;
+                ))
+                .map_err(|_| anyhow!("Send error on audio thread control channel"))?;
 
             Ok(model)
         }
@@ -1138,8 +1147,18 @@ fn main() -> ExitCode {
             Some(
                 audiothread::Opts::default()
                     .with_name("asampo")
-                    .with_sr_conv_quality(config.sample_rate_conversion_quality.clone())
-                    .with_bufsize_n_stereo_samples(config.buffer_size_samples.into()),
+                    .with_conversion_quality(config.sample_rate_conversion_quality)
+                    .with_buffer_size(
+                        (config.buffer_size_samples as usize)
+                            .try_into()
+                            .unwrap_or_else(|_| {
+                                log::log!(
+                                    log::Level::Error,
+                                    "Invalid buffer size in config, using default"
+                                );
+                                NonZeroNumFrames::new(1024).unwrap()
+                            }),
+                    ),
             ),
         ));
 
