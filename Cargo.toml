@@ -8,17 +8,17 @@ libasampo = { git = "https://github.com/mkforsb/libasampo", features = ["mocks",
 tempfile = "3.10.1"
 
 [dependencies]
+anyhow = "1.0.82"
+audiothread = { git = "https://github.com/mkforsb/libasampo" }
+dirs = "5.0.1"
+env_logger = "0.11.3"
 gtk = { package = "gtk4", version = "0.8.1", features = ["v4_12"] }
 libasampo = { git = "https://github.com/mkforsb/libasampo" }
-audiothread = { git = "https://github.com/mkforsb/libasampo" }
-env_logger = "0.11.3"
-uuid = { version = "1.8.0", features = ["v4", "serde"] }
 log = "0.4.21"
-anyhow = "1.0.82"
-serde = { version = "1.0.197", features = ["derive"] }
-serde_json = "1.0.115"
-dirs = "5.0.1"
 regex = "1.10.4"
+serde_json = "1.0.115"
+serde = { version = "1.0.197", features = ["derive"] }
+uuid = { version = "1.8.0", features = ["v4", "serde"] }
 
 [build-dependencies]
 glib-build-tools = "0.19.0"
