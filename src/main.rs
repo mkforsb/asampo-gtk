@@ -1147,6 +1147,15 @@ fn main() -> ExitCode {
             Some(
                 audiothread::Opts::default()
                     .with_name("asampo")
+                    .with_spec(
+                        AudioSpec::new(config.output_samplerate_hz, 2).unwrap_or_else(|_| {
+                            log::log!(
+                                log::Level::Error,
+                                "Invalid sample rate in config, using default"
+                            );
+                            AudioSpec::new(48000, 2).unwrap()
+                        }),
+                    )
                     .with_conversion_quality(config.sample_rate_conversion_quality)
                     .with_buffer_size(
                         (config.buffer_size_samples as usize)
