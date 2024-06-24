@@ -4,7 +4,7 @@ version = "0.0.0"
 edition = "2021"
 
 [dev-dependencies]
-libasampo = { git = "https://github.com/mkforsb/libasampo", features = ["mocks", "fakes"] }
+libasampo = { git = "https://github.com/mkforsb/libasampo", features = ["mocks", "fakes", "audiothread-integration"] }
 tempfile = "3.10.1"
 
 [dependencies]
@@ -13,7 +13,7 @@ audiothread = { git = "https://github.com/mkforsb/libasampo" }
 dirs = "5.0.1"
 env_logger = "0.11.3"
 gtk = { package = "gtk4", version = "0.8.1", features = ["v4_12"] }
-libasampo = { git = "https://github.com/mkforsb/libasampo" }
+libasampo = { git = "https://github.com/mkforsb/libasampo", features = ["audiothread-integration"] }
 log = "0.4.21"
 regex = "1.10.4"
 serde_json = "1.0.115"

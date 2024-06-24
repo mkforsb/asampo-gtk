@@ -16,6 +16,7 @@ use libasampo::{
     prelude::*,
     samples::Sample,
     samplesets::{export::ExportJobMessage, SampleSet},
+    sequences::drumkit_render_thread,
     sources::Source,
 };
 use uuid::Uuid;
@@ -109,6 +110,7 @@ pub struct AppModel {
     pub viewvalues: ViewValues,
     pub audiothread_tx: Option<Sender<audiothread::Message>>,
     pub _audiothread_handle: Option<Rc<JoinHandle<()>>>,
+    pub dks_render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
     pub sources_loading: HashMap<Uuid, Rc<Receiver<Result<Sample, libasampo::errors::Error>>>>,
@@ -137,6 +139,17 @@ impl AppModel {
             None => "???".to_string(),
         };
 
+        let dks_render_thread_tx = if let Some(audiothread_tx) = &tx {
+            use drumkit_render_thread as dkr;
+
+            let (dks_render_thread_tx, dks_render_thread_rx) = mpsc::channel::<dkr::Message>();
+            let _ = dkr::spawn(audiothread_tx.clone(), dks_render_thread_rx);
+
+            Some(dks_render_thread_tx)
+        } else {
+            None
+        };
+
         AppModel {
             config,
             config_save_timeout: None,
@@ -149,6 +162,7 @@ impl AppModel {
             },
             audiothread_tx: tx,
             _audiothread_handle: handle,
+            dks_render_thread_tx,
             sources: HashMap::new(),
             sources_order: Vec::new(),
             sources_loading: HashMap::new(),
