@@ -205,6 +205,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
                 log::log!(log::Level::Info, "Respawning audiothread with new config");
 
+                let had_dks_render_thread = model.dks_render_thread_tx.is_some();
+
                 if let Some(control_tx) = &model.dks_render_thread_tx {
                     match control_tx.send(drumkit_render_thread::Message::Shutdown) {
                         Ok(_) => (),
@@ -232,23 +234,36 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     }
                 }
 
-                let (tx, rx) = mpsc::channel();
+                let (audiothread_tx, audiothread_rx) = mpsc::channel::<audiothread::Message>();
+
+                let _audiothread_handle = Some(Rc::new(audiothread::spawn(
+                    audiothread_rx,
+                    Some(
+                        audiothread::Opts::default()
+                            .with_name("asampo")
+                            .with_spec(AudioSpec::new(config.output_samplerate_hz, 2)?)
+                            .with_conversion_quality(config.sample_rate_conversion_quality)
+                            .with_buffer_size((config.buffer_size_samples as usize).try_into()?),
+                    ),
+                )));
+
+                let dks_render_thread_tx = if had_dks_render_thread {
+                    use drumkit_render_thread as dkr;
+
+                    let (dks_render_thread_tx, dks_render_thread_rx) =
+                        mpsc::channel::<dkr::Message>();
+                    let _ = dkr::spawn(audiothread_tx.clone(), dks_render_thread_rx);
+
+                    Some(dks_render_thread_tx)
+                } else {
+                    None
+                };
 
                 Ok(AppModel {
                     config_save_timeout: None,
-                    audiothread_tx: Some(tx),
-                    _audiothread_handle: Some(Rc::new(audiothread::spawn(
-                        rx,
-                        Some(
-                            audiothread::Opts::default()
-                                .with_name("asampo")
-                                .with_spec(AudioSpec::new(config.output_samplerate_hz, 2)?)
-                                .with_conversion_quality(config.sample_rate_conversion_quality)
-                                .with_buffer_size(
-                                    (config.buffer_size_samples as usize).try_into()?,
-                                ),
-                        ),
-                    ))),
+                    audiothread_tx: Some(audiothread_tx),
+                    _audiothread_handle,
+                    dks_render_thread_tx,
                     ..model
                 })
             } else {
