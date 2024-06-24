@@ -44,6 +44,7 @@ use libasampo::{
         export::{Conversion, ExportJob, ExportJobMessage},
         BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
+    sequences::drumkit_render_thread,
     sources::{file_system_source::FilesystemSource, Source},
 };
 
@@ -204,11 +205,29 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
                 log::log!(log::Level::Info, "Respawning audiothread with new config");
 
+                if let Some(control_tx) = &model.dks_render_thread_tx {
+                    match control_tx.send(drumkit_render_thread::Message::Shutdown) {
+                        Ok(_) => (),
+                        Err(e) => {
+                            log::log!(
+                                log::Level::Error,
+                                "Error shutting down drumkit sequence render thread: {e}"
+                            );
+                        }
+                    }
+                }
+
+                // TODO: sequence the shutdown in some other way to avoid sleeping the main thread
+                std::thread::sleep(Duration::from_millis(250));
+
                 if let Some(prev_tx) = model.audiothread_tx {
                     match prev_tx.send(audiothread::Message::Shutdown) {
-                        Ok(_) => std::thread::sleep(Duration::from_millis(10)),
+                        Ok(_) => {
+                            // give audiothread some time to shut down gracefully
+                            std::thread::sleep(Duration::from_millis(10))
+                        }
                         Err(e) => {
-                            log::log!(log::Level::Error, "Error shutting down audiothread: {e:?}")
+                            log::log!(log::Level::Error, "Error shutting down audiothread: {e}")
                         }
                     }
                 }
