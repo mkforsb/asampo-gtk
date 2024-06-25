@@ -980,7 +980,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 }
             }
 
-            Ok(model)
+            match &model.dks_render_thread_tx {
+                Some(_) => Ok(AppModel {
+                    dks_render_thread_tx: None,
+                    ..model
+                }),
+
+                None => Ok(model),
+            }
         }
 
         AppMessage::DrumMachineTempoChanged(_tempo) => Ok(model),
