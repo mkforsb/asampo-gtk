@@ -29,10 +29,16 @@
         <property name="decoration-layout">:menu,minimize,maximize,close</property>
         <property name="title-widget">
           <object class="GtkBox">
-            <property name="orientation">vertical</property>
+            <property name="orientation">horizontal</property>
             <child>
               <object class="GtkStackSwitcher">
                 <property name="stack">stack</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="titlebar-stop-button">
+                <property name="name">titlebar-stop-button</property>
+                <property name="icon-name">audio-volume-muted-symbolic</property>
               </object>
             </child>
           </object>

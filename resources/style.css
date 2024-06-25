@@ -9,6 +9,10 @@
     padding-bottom: 0px;
 }
 
+#titlebar-stop-button {
+  margin-left: 1em;
+}
+
 #progress-popup {
     background: #fff;
     margin-bottom: 1em;

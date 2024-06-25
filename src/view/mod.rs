@@ -18,6 +18,9 @@ use gtk::subclass::prelude::*;
 #[derive(gtk::CompositeTemplate, Default, Debug)]
 #[template(resource = "/asampo.ui")]
 pub struct AsampoViewState {
+    #[template_child(id = "titlebar-stop-button")]
+    pub titlebar_stop_button: gtk::TemplateChild<gtk::Button>,
+
     #[template_child(id = "main-menu-button")]
     pub main_menu_button: gtk::TemplateChild<gtk::MenuButton>,
 

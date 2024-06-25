@@ -146,6 +146,7 @@ enum AppMessage {
     ConversionExportSelected,
     ExportJobMessage(libasampo::samplesets::export::ExportJobMessage),
     ExportJobDisconnected,
+    StopAllSoundButtonClicked,
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -220,6 +221,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 }
 
                 // TODO: sequence the shutdown in some other way to avoid sleeping the main thread
+                // give drum machine thread some time to shut down gracefully
                 std::thread::sleep(Duration::from_millis(250));
 
                 if let Some(prev_tx) = model.audiothread_tx {
@@ -945,6 +947,28 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ..model
             })
         }
+
+        AppMessage::StopAllSoundButtonClicked => {
+            if let Some(dks_render_thread_tx) = &model.dks_render_thread_tx {
+                match dks_render_thread_tx.send(drumkit_render_thread::Message::Shutdown) {
+                    Ok(_) => (),
+                    Err(e) => log::log!(log::Level::Error, "Stop all sounds error: {e}"),
+                }
+
+                // TODO: find a good way to avoid having to sleep
+                // give drum machine thread some time to shut down gracefully
+                std::thread::sleep(std::time::Duration::from_millis(250));
+            }
+
+            if let Some(audiothread_tx) = &model.audiothread_tx {
+                match audiothread_tx.send(audiothread::Message::DropAll) {
+                    Ok(_) => (),
+                    Err(e) => log::log!(log::Level::Error, "Stop all sounds error: {e}"),
+                }
+            }
+
+            Ok(model)
+        }
     }
 }
 
@@ -1221,6 +1245,12 @@ fn main() -> ExitCode {
         setup_sets_page(model_ptr.clone(), &view);
 
         build_actions(app, model_ptr.clone(), &view);
+
+        view.titlebar_stop_button.connect_clicked(
+            clone!(@strong model_ptr, @strong view => move |_| {
+                update(model_ptr.clone(), &view, AppMessage::StopAllSoundButtonClicked);
+            }),
+        );
 
         view.present();
 
