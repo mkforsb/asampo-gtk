@@ -42,7 +42,7 @@ use libasampo::{
     samples::Sample,
     samplesets::{
         export::{Conversion, ExportJob, ExportJobMessage},
-        BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
+        BaseSampleSet, DrumkitLabel, DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
     sequences::drumkit_render_thread,
     sources::{file_system_source::FilesystemSource, Source},
@@ -58,6 +58,7 @@ use crate::{
         dialogs,
         menus::build_actions,
         samples::{setup_samples_page, update_samples_sidebar, SampleListEntry},
+        sequences::setup_sequences_page,
         sets::{setup_sets_page, update_samplesets_detail, update_samplesets_list, LabellingKind},
         settings::setup_settings_page,
         sources::{setup_sources_page, update_sources_list},
@@ -147,6 +148,18 @@ enum AppMessage {
     ExportJobMessage(libasampo::samplesets::export::ExportJobMessage),
     ExportJobDisconnected,
     StopAllSoundButtonClicked,
+    DrumMachineTempoChanged(u32),
+    DrumMachineSwingChanged(u32),
+    DrumMachinePlayClicked,
+    DrumMachineStopClicked,
+    DrumMachineBackClicked,
+    DrumMachineSaveSequenceClicked,
+    DrumMachineSaveSequenceAsClicked,
+    DrumMachineSaveSampleSetClicked,
+    DrumMachineSaveSampleSetAsClicked,
+    DrumMachinePadClicked(DrumkitLabel),
+    DrumMachinePartClicked(usize),
+    DrumMachineStepClicked(usize),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -969,6 +982,19 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(model)
         }
+
+        AppMessage::DrumMachineTempoChanged(_tempo) => Ok(model),
+        AppMessage::DrumMachineSwingChanged(_swing) => Ok(model),
+        AppMessage::DrumMachinePlayClicked => Ok(model),
+        AppMessage::DrumMachineStopClicked => Ok(model),
+        AppMessage::DrumMachineBackClicked => Ok(model),
+        AppMessage::DrumMachineSaveSequenceClicked => Ok(model),
+        AppMessage::DrumMachineSaveSequenceAsClicked => Ok(model),
+        AppMessage::DrumMachineSaveSampleSetClicked => Ok(model),
+        AppMessage::DrumMachineSaveSampleSetAsClicked => Ok(model),
+        AppMessage::DrumMachinePadClicked(_n) => Ok(model),
+        AppMessage::DrumMachinePartClicked(_n) => Ok(model),
+        AppMessage::DrumMachineStepClicked(_n) => Ok(model),
     }
 }
 
@@ -1243,6 +1269,7 @@ fn main() -> ExitCode {
         setup_sources_page(model_ptr.clone(), &view);
         setup_samples_page(model_ptr.clone(), &view);
         setup_sets_page(model_ptr.clone(), &view);
+        setup_sequences_page(model_ptr.clone(), &view);
 
         build_actions(app, model_ptr.clone(), &view);
 

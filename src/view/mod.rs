@@ -5,6 +5,7 @@
 pub mod dialogs;
 pub mod menus;
 pub mod samples;
+pub mod sequences;
 pub mod sets;
 pub mod settings;
 pub mod sources;
@@ -152,6 +153,21 @@ pub struct AsampoViewState {
 
     #[template_child(id = "sets-details-export-button")]
     pub sets_details_export_button: gtk::TemplateChild<gtk::Button>,
+
+    #[template_child(id = "sequences-list-frame")]
+    pub sequences_list_frame: gtk::TemplateChild<gtk::Frame>,
+
+    #[template_child(id = "sequences-list")]
+    pub sequences_list: gtk::TemplateChild<gtk::ListBox>,
+
+    #[template_child(id = "sequences-add-sequence-button")]
+    pub sequences_add_sequence_button: gtk::TemplateChild<gtk::Button>,
+
+    #[template_child(id = "sequences-editor-name-label")]
+    pub sequences_editor_name_label: gtk::TemplateChild<gtk::Label>,
+
+    #[template_child(id = "sequences-editor-drum-machine-frame")]
+    pub sequences_editor_drum_machine_frame: gtk::TemplateChild<gtk::Frame>,
 }
 
 impl WidgetImpl for AsampoViewState {}

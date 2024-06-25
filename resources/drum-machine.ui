@@ -1,0 +1,350 @@
+<?xml version='1.0' encoding='utf-8'?>
+<interface>
+  <!-- css-parents(#sequences-page #sequences-editor-drum-machine-frame) -->
+  <object class="GtkBox" id="drum-machine-root">
+    <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkBox">
+        <property name="orientation">horizontal</property>
+        <child>
+          <object class="GtkAdjustment" id="-sequences-editor-tempo-adjustment">
+            <property name="lower">1</property>
+            <property name="upper">500</property>
+            <property name="value">120</property>
+            <property name="step-increment">1</property>
+            <property name="page-increment">10</property>
+          </object>
+          <object class="GtkFrame" id="sequences-editor-tempo-entry-frame">
+            <property name="name">sequences-editor-tempo-entry-frame</property>
+            <style>
+              <class name="spin-value-frame" />
+            </style>
+            <property name="label">Tempo</property>
+            <child>
+              <object class="GtkSpinButton" id="sequences-editor-tempo-entry">
+                <property name="name">sequences-editor-tempo-entry</property>
+                <property name="adjustment">-sequences-editor-tempo-adjustment</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkAdjustment" id="-sequences-editor-swing-adjustment">
+            <property name="lower">0</property>
+            <property name="upper">99</property>
+            <property name="value">0</property>
+            <property name="step-increment">1</property>
+            <property name="page-increment">10</property>
+          </object>
+          <object class="GtkFrame" id="sequences-editor-swing-entry-frame">
+            <property name="name">sequences-editor-swing-entry-frame</property>
+            <style>
+              <class name="spin-value-frame" />
+            </style>
+            <property name="label">Swing</property>
+            <child>
+              <object class="GtkSpinButton" id="sequences-editor-swing-entry">
+                <property name="name">sequences-editor-swing-entry</property>
+                <property name="adjustment">-sequences-editor-swing-adjustment</property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox" id="sequences-editor-transport-buttons">
+            <property name="name">sequences-editor-transport-buttons</property>
+            <property name="orientation">horizontal</property>
+            <property name="halign">end</property>
+            <property name="hexpand">true</property>
+            <child>
+              <object class="GtkButton" id="sequences-editor-play-button">
+                <property name="name">sequences-editor-play-button</property>
+                <property name="icon-name">media-playback-start-symbolic</property>
+                <property name="width-request">80</property>
+                <property name="height-request">60</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="sequences-editor-stop-button">
+                <property name="name">sequences-editor-stop-button</property>
+                <property name="icon-name">media-playback-stop-symbolic</property>
+                <property name="width-request">80</property>
+                <property name="height-request">60</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="sequences-editor-back-button">
+                <property name="name">sequences-editor-back-button</property>
+                <property name="icon-name">media-skip-backward-symbolic</property>
+                <property name="width-request">80</property>
+                <property name="height-request">60</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkFlowBox" id="sequences-editor-ops-row">
+        <property name="name">sequences-editor-ops-row</property>
+        <property name="halign">center</property>
+        <property name="min-children-per-line">3</property>
+        <property name="column-spacing">10</property>
+        <property name="selection-mode">none</property>
+        <child>
+          <object class="GtkButton" id="sequences-editor-save-seq-button">
+            <property name="name">sequences-editor-save-seq-button</property>
+            <property name="label">Save sequence</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-save-seq-as-button">
+            <property name="name">sequences-editor-save-seq-as-button</property>
+            <property name="label">Save sequence as ..</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-save-set-button">
+            <property name="name">sequences-editor-save-set-button</property>
+            <property name="label">Save sample set</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-save-set-as-button">
+            <property name="name">sequences-editor-save-set-as-button</property>
+            <property name="label">Save sample set as ..</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkFlowBox" id="sequences-editor-pads">
+        <property name="name">sequences-editor-pads</property>
+        <property name="homogeneous">true</property>
+        <property name="min-children-per-line">8</property>
+        <property name="max-children-per-line">8</property>
+        <property name="row-spacing">6</property>
+        <property name="column-spacing">6</property>
+        <property name="selection-mode">none</property>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-0">
+            <property name="name">sequences-editor-pad-0</property>
+            <property name="height-request">60</property>
+            <property name="label">RS</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-1">
+            <property name="name">sequences-editor-pad-1</property>
+            <property name="height-request">60</property>
+            <property name="label">CP</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-2">
+            <property name="name">sequences-editor-pad-2</property>
+            <property name="height-request">60</property>
+            <property name="label">CH</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-3">
+            <property name="name">sequences-editor-pad-3</property>
+            <property name="height-request">60</property>
+            <property name="label">OH</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-4">
+            <property name="name">sequences-editor-pad-4</property>
+            <property name="height-request">60</property>
+            <property name="label">CR</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-5">
+            <property name="name">sequences-editor-pad-5</property>
+            <property name="height-request">60</property>
+            <property name="label">RD</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-6">
+            <property name="name">sequences-editor-pad-6</property>
+            <property name="height-request">60</property>
+            <property name="label">SH</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-7">
+            <property name="name">sequences-editor-pad-7</property>
+            <property name="height-request">60</property>
+            <property name="label">P1</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-8">
+            <property name="name">sequences-editor-pad-8</property>
+            <property name="height-request">60</property>
+            <property name="label">BD</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-9">
+            <property name="name">sequences-editor-pad-9</property>
+            <property name="height-request">60</property>
+            <property name="label">SD</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-10">
+            <property name="name">sequences-editor-pad-10</property>
+            <property name="height-request">60</property>
+            <property name="label">LT</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-11">
+            <property name="name">sequences-editor-pad-11</property>
+            <property name="height-request">60</property>
+            <property name="label">MT</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-12">
+            <property name="name">sequences-editor-pad-12</property>
+            <property name="height-request">60</property>
+            <property name="label">HT</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-13">
+            <property name="name">sequences-editor-pad-13</property>
+            <property name="height-request">60</property>
+            <property name="label">P2</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-14">
+            <property name="name">sequences-editor-pad-14</property>
+            <property name="height-request">60</property>
+            <property name="label">P3</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-pad-15">
+            <property name="name">sequences-editor-pad-15</property>
+            <property name="height-request">60</property>
+            <property name="label">P4</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkFlowBox" id="sequences-editor-parts">
+        <property name="name">sequences-editor-parts</property>
+        <property name="homogeneous">true</property>
+        <property name="min-children-per-line">4</property>
+        <property name="max-children-per-line">4</property>
+        <property name="row-spacing">6</property>
+        <property name="column-spacing">6</property>
+        <property name="selection-mode">none</property>
+        <child>
+          <object class="GtkButton" id="sequences-editor-part-0">
+            <property name="name">sequences-editor-part-1</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-part-1">
+            <property name="name">sequences-editor-part-2</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-part-2">
+            <property name="name">sequences-editor-part-3</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-part-3">
+            <property name="name">sequences-editor-part-4</property>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkFlowBox" id="sequences-editor-steps">
+        <property name="name">sequences-editor-steps</property>
+        <property name="homogeneous">true</property>
+        <property name="min-children-per-line">16</property>
+        <property name="max-children-per-line">16</property>
+        <property name="row-spacing">10</property>
+        <property name="column-spacing">6</property>
+        <property name="selection-mode">none</property>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-0">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-1">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-2">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-3">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-4">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-5">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-6">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-7">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-8">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-9">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-10">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-11">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-12">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-13">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-14">
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="sequences-editor-step-15">
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

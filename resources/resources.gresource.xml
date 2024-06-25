@@ -8,6 +8,7 @@
     <file compressed="true" preprocess="xml-stripblanks">sets-list-row.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">export-dialog.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">input-dialog.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">drum-machine.ui</file>
     <file compressed="true">style.css</file>
   </gresource>
 </gresources>

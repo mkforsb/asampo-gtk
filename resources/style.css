@@ -294,3 +294,57 @@ overlay#input-dialog {
 #sets-page #sets-details-labelling-choice-label {
     margin-right: 0.5em;
 }
+
+#sequences-page #sequences-editor-tempo-entry-frame {
+    margin-left: 2em;
+    margin-top: 2em;
+} 
+
+#sequences-page #sequences-editor-swing-entry-frame {
+    margin-left: 2em;
+    margin-top: 2em;
+}
+
+#sequences-page #sequences-editor-transport-buttons {
+    margin-top: 2em;
+    margin-right: 2em;
+}
+
+#sequences-page #sequences-editor-transport-buttons button {
+    margin-left: 2em;
+    padding-left: 2em;
+    padding-right: 2em;
+    -gtk-icon-size: 2em;
+}
+
+#sequences-page #sequences-editor-ops-row {
+    margin-left: 2em;
+    margin-top: 1em;
+}
+
+#sequences-page #sequences-editor-pads {
+    margin-left: 2em;
+    margin-right: 2em;
+    margin-top: 1em;
+}
+
+#sequences-page #sequences-editor-pads button label {
+    opacity: 0.25;
+    margin-top: 2em;
+}
+
+#sequences-page #sequences-editor-parts {
+    margin-left: 2em;
+    margin-right: 2em;
+    margin-top: 1em;
+}
+
+#sequences-page #sequences-editor-steps {
+    margin-left: 2em;
+    margin-right: 2em;
+    margin-bottom: 1em;
+}
+
+#sequences-page #sequences-editor-steps button {
+    min-width: 0em;
+}

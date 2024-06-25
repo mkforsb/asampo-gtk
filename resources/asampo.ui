@@ -1061,8 +1061,73 @@
                   <object class="GtkOverlay">
                     <property name="name">sequences-page</property>
                     <child>
-                      <object class="GtkLabel">
-                        <property name="label">This is the sequences page</property>
+                      <object class="GtkPaned">
+                        <property name="orientation">horizontal</property>
+                        <child>
+                          <object class="GtkBox">
+                            <property name="orientation">vertical</property>
+                            <child>
+                              <object class="GtkFrame" id="sequences-list-frame">
+                                <property name="name">sequences-list-frame</property>
+                                <property name="label">Sequences</property>
+                                <child>
+                                  <object class="GtkScrolledWindow">
+                                    <child>
+                                      <object class="GtkListBox" id="sequences-list">
+                                        <property name="name">sequences-list</property>
+                                        <property name="vexpand">true</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkButton" id="sequences-add-sequence-button">
+                                <property name="name">sequences-add-sequence-button</property>
+                                <property name="hexpand">true</property>
+                                <property name="halign">fill</property>
+                                <property name="icon-name">list-add-symbolic</property>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <child>
+                          <object class="GtkScrolledWindow">
+                            <child>
+                              <object class="GtkBox">
+                                <property name="orientation">vertical</property>
+                                <child>
+                                  <object class="GtkLabel" id="sequences-editor-name-label">
+                                    <property name="name">sequences-editor-name-label</property>
+                                    <property name="label" />
+                                    <property name="xalign">0.0</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkFrame" id="sequences-editor-drum-machine-frame">
+                                    <property name="name">sequences-editor-drum-machine-frame</property>
+                                    <property name="halign">center</property>
+                                    <property name="width-request">700</property>
+                                  </object>
+                                </child>
+                                <child>
+                                  <object class="GtkBox">
+                                    <property name="name">sequences-editor-below-drum-machine-box</property>
+                                    <property name="orientation">horizontal</property>
+                                    <child>
+                                      <object class="GtkLabel">
+                                        <property name="label">Drum machine tips</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                            </child>
+                          </object>
+                        </child>
+                        <property name="wide-handle">true</property>
+                        <property name="position">300</property>
                       </object>
                     </child>
                   </object>
