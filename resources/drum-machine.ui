@@ -51,9 +51,12 @@
           </object>
         </child>
         <child>
-          <object class="GtkBox" id="sequences-editor-transport-buttons">
+          <object class="GtkFlowBox" id="sequences-editor-transport-buttons">
             <property name="name">sequences-editor-transport-buttons</property>
-            <property name="orientation">horizontal</property>
+            <property name="homogeneous">true</property>
+            <property name="min-children-per-line">3</property>
+            <property name="max-children-per-line">3</property>
+            <property name="column-spacing">6</property>
             <property name="halign">end</property>
             <property name="hexpand">true</property>
             <child>
