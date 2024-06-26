@@ -295,12 +295,19 @@ overlay#input-dialog {
     margin-right: 0.5em;
 }
 
+#sequences-page #sequences-editor-drum-machine-frame {
+    background: radial-gradient(circle, rgba(240,240,240,1) 0%, rgba(220,220,220,1) 100%);
+    box-shadow: 0px 0px 14px 0px #777;
+}
+
 #sequences-page #sequences-editor-tempo-entry-frame {
+    box-shadow: 0px 1px 2px 0px #777;
     margin-left: 2em;
     margin-top: 2em;
 } 
 
 #sequences-page #sequences-editor-swing-entry-frame {
+    box-shadow: 0px 1px 2px 0px #777;
     margin-left: 2em;
     margin-top: 2em;
 }
@@ -311,7 +318,8 @@ overlay#input-dialog {
 }
 
 #sequences-page #sequences-editor-transport-buttons button {
-    margin-left: 2em;
+    margin-left: 2em  border-width: 2px;
+    box-shadow: 0px 4px 4px 0px #777;;
     padding-left: 2em;
     padding-right: 2em;
     -gtk-icon-size: 2em;
@@ -322,21 +330,36 @@ overlay#input-dialog {
     margin-top: 1em;
 }
 
+#sequences-page #sequences-editor-ops-row button {
+    box-shadow: 0px 1px 4px 0px #777;
+}
+
 #sequences-page #sequences-editor-pads {
     margin-left: 2em;
     margin-right: 2em;
     margin-top: 1em;
 }
 
+#sequences-editor-pads button {
+    border-width: 2px;
+    box-shadow: 0px 2px 3px 0px #555
+}
+
 #sequences-page #sequences-editor-pads button label {
-    opacity: 0.25;
+    opacity: 0.5;
     margin-top: 2em;
+    font-size: 0.8em;
 }
 
 #sequences-page #sequences-editor-parts {
     margin-left: 2em;
     margin-right: 2em;
     margin-top: 1em;
+}
+
+#sequences-editor-parts button {
+    border-width: 2px;
+    box-shadow: 0px 2px 3px 0px #555;
 }
 
 #sequences-page #sequences-editor-steps {
@@ -347,4 +370,6 @@ overlay#input-dialog {
 
 #sequences-page #sequences-editor-steps button {
     min-width: 0em;
+    border-width: 2px;
+    box-shadow: 0px 2px 3px 0px #555;
 }
