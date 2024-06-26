@@ -102,6 +102,19 @@ impl Default for ViewValues {
 }
 
 #[derive(Clone, Debug)]
+pub struct DrumMachineModel {
+    pub render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
+}
+
+impl DrumMachineModel {
+    pub fn new(render_thread_tx: Option<Sender<drumkit_render_thread::Message>>) -> Self {
+        Self {
+            render_thread_tx,
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct AppModel {
     pub config: Option<AppConfig>,
     pub config_save_timeout: Option<std::time::Instant>,
@@ -110,7 +123,6 @@ pub struct AppModel {
     pub viewvalues: ViewValues,
     pub audiothread_tx: Option<Sender<audiothread::Message>>,
     pub _audiothread_handle: Option<Rc<JoinHandle<()>>>,
-    pub dks_render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
     pub sources_loading: HashMap<Uuid, Rc<Receiver<Result<Sample, libasampo::errors::Error>>>>,
@@ -123,6 +135,7 @@ pub struct AppModel {
     pub sets_export_state: Option<ExportState>,
     pub sets_export_progress: Option<(usize, usize)>,
     pub export_job_rx: Option<Rc<Receiver<ExportJobMessage>>>,
+    pub drum_machine: DrumMachineModel,
 }
 
 pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
@@ -162,7 +175,6 @@ impl AppModel {
             },
             audiothread_tx: tx,
             _audiothread_handle: handle,
-            dks_render_thread_tx,
             sources: HashMap::new(),
             sources_order: Vec::new(),
             sources_loading: HashMap::new(),
@@ -175,6 +187,7 @@ impl AppModel {
             sets_export_state: None,
             sets_export_progress: None,
             export_job_rx: None,
+            drum_machine: DrumMachineModel::new(dks_render_thread_tx),
         }
     }
 

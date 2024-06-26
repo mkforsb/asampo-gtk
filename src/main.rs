@@ -26,7 +26,7 @@ use std::{
 use anyhow::anyhow;
 use audiothread::{AudioSpec, NonZeroNumFrames};
 use ext::ClonedHashMapExt;
-use model::ExportState;
+use model::{DrumMachineModel, ExportState};
 use uuid::Uuid;
 
 use gtk::{
@@ -219,9 +219,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
                 log::log!(log::Level::Info, "Respawning audiothread with new config");
 
-                let had_dks_render_thread = model.dks_render_thread_tx.is_some();
+                let had_dks_render_thread = model.drum_machine.render_thread_tx.is_some();
 
-                if let Some(control_tx) = &model.dks_render_thread_tx {
+                if let Some(control_tx) = &model.drum_machine.render_thread_tx {
                     match control_tx.send(drumkit_render_thread::Message::Shutdown) {
                         Ok(_) => (),
                         Err(e) => {
@@ -278,7 +278,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     config_save_timeout: None,
                     audiothread_tx: Some(audiothread_tx),
                     _audiothread_handle,
-                    dks_render_thread_tx,
+                    drum_machine: DrumMachineModel {
+                        render_thread_tx: dks_render_thread_tx,
+                        ..model.drum_machine
+                    },
                     ..model
                 })
             } else {
@@ -962,7 +965,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::StopAllSoundButtonClicked => {
-            if let Some(dks_render_thread_tx) = &model.dks_render_thread_tx {
+            if let Some(dks_render_thread_tx) = &model.drum_machine.render_thread_tx {
                 match dks_render_thread_tx.send(drumkit_render_thread::Message::Shutdown) {
                     Ok(_) => (),
                     Err(e) => log::log!(log::Level::Error, "Stop all sounds error: {e}"),
@@ -980,9 +983,12 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 }
             }
 
-            match &model.dks_render_thread_tx {
+            match &model.drum_machine.render_thread_tx {
                 Some(_) => Ok(AppModel {
-                    dks_render_thread_tx: None,
+                    drum_machine: DrumMachineModel {
+                        render_thread_tx: None,
+                        ..model.drum_machine
+                    },
                     ..model
                 }),
 
