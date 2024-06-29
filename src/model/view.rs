@@ -107,6 +107,8 @@ pub trait ViewModelOps {
     fn set_sources_add_fs_name_entry(self, text: impl Into<String>) -> AppModel;
     fn set_sources_add_fs_path_entry(self, text: impl Into<String>) -> AppModel;
     fn set_sources_add_fs_extensions_entry(self, text: impl Into<String>) -> AppModel;
+    fn signal_sources_add_fs_begin_browse(self) -> AppModel;
+    fn clear_signal_sources_add_fs_begin_browse(self) -> AppModel;
 }
 
 impl ViewModelOps for AppModel {
@@ -220,6 +222,26 @@ impl ViewModelOps for AppModel {
             viewvalues: ViewValues {
                 sources_add_fs_extensions_entry: text.into(),
                 ..self.viewvalues
+            },
+            ..self
+        }
+    }
+
+    fn signal_sources_add_fs_begin_browse(self) -> AppModel {
+        AppModel {
+            viewflags: ViewFlags {
+                sources_add_fs_begin_browse: true,
+                ..self.viewflags
+            },
+            ..self
+        }
+    }
+
+    fn clear_signal_sources_add_fs_begin_browse(self) -> AppModel {
+        AppModel {
+            viewflags: ViewFlags {
+                sources_add_fs_begin_browse: false,
+                ..self.viewflags
             },
             ..self
         }

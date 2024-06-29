@@ -275,7 +275,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     _audiothread_handle,
                     drum_machine,
                     ..model
-                }.clear_config_save_timeout())
+                }
+                .clear_config_save_timeout())
             } else {
                 Ok(model)
             }
@@ -339,13 +340,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             .set_sources_add_fs_path_entry(text)
             .validate_sources_add_fs_fields()),
 
-        AppMessage::AddFilesystemSourcePathBrowseClicked => Ok(AppModel {
-            viewflags: ViewFlags {
-                sources_add_fs_begin_browse: true,
-                ..model.viewflags
-            },
-            ..model
-        }),
+        AppMessage::AddFilesystemSourcePathBrowseClicked => {
+            Ok(model.signal_sources_add_fs_begin_browse())
+        }
 
         AppMessage::AddFilesystemSourcePathBrowseSubmitted(text) => Ok(AppModel {
             viewvalues: ViewValues {
@@ -637,13 +634,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         // TODO: replace with function pointer, just like "ok" and "cancel" for input dialog?
         AppMessage::SelectFolderDialogOpened(context) => match context {
-            SelectFolderDialogContext::BrowseForFilesystemSource => Ok(AppModel {
-                viewflags: ViewFlags {
-                    sources_add_fs_begin_browse: false,
-                    ..model.viewflags
-                },
-                ..model
-            }),
+            SelectFolderDialogContext::BrowseForFilesystemSource => {
+                Ok(model.clear_signal_sources_add_fs_begin_browse())
+            }
 
             SelectFolderDialogContext::BrowseForExportTargetDirectory => Ok(AppModel {
                 viewflags: ViewFlags {
