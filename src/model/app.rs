@@ -98,44 +98,6 @@ impl AppModel {
         }
     }
 
-    pub fn add_source(self, source: Source) -> Self {
-        AppModel {
-            viewvalues: ViewValues {
-                sources_sample_count: self
-                    .viewvalues
-                    .sources_sample_count
-                    .clone_and_insert(*source.uuid(), 0),
-                ..self.viewvalues
-            },
-            sources_order: self.sources_order.clone_and_push(*source.uuid()),
-            sources: self.sources.clone_and_insert(*source.uuid(), source),
-            ..self
-        }
-    }
-
-    pub fn enable_source(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
-        Ok(AppModel {
-            viewvalues: ViewValues {
-                sources_sample_count: self.viewvalues.sources_sample_count.cloned_update_with(
-                    |mut m| {
-                        *(m.get_mut(uuid).unwrap()) = 0;
-                        Ok(m)
-                    },
-                )?,
-                ..self.viewvalues
-            },
-            sources: self.sources.cloned_update_with(
-                |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
-                    s.get_mut(uuid)
-                        .ok_or_else(|| anyhow!("Failed to enable source: uuid not found!"))?
-                        .enable();
-                    Ok(s)
-                },
-            )?,
-            ..self
-        })
-    }
-
     pub fn disable_source(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
         self.samples
             .borrow_mut()
@@ -169,15 +131,6 @@ impl AppModel {
             sources: model.sources.clone_and_remove(uuid)?,
             ..model
         })
-    }
-
-    pub fn map<F: FnOnce(Self) -> Self>(self, f: F) -> Self {
-        f(self)
-    }
-
-    pub fn map_ref<F: FnOnce(&Self)>(self, f: F) -> Self {
-        f(&self);
-        self
     }
 
     pub fn populate_samples_listmodel(&self) {
@@ -238,6 +191,69 @@ impl AppModel {
         Ok(AppModel {
             sets_order: self.sets_order.clone_and_remove(uuid)?,
             sets: self.sets.clone_and_remove(uuid)?,
+            ..self
+        })
+    }
+}
+
+pub trait AppModelOps {
+    fn add_source(self, source: Source) -> Result<AppModel, anyhow::Error>;
+
+    fn add_source_loader(
+        self,
+        source_uuid: Uuid,
+        loader: mpsc::Receiver<Result<Sample, libasampo::errors::Error>>,
+    ) -> Result<AppModel, anyhow::Error>;
+
+    fn enable_source(self, uuid: &Uuid) -> Result<AppModel, anyhow::Error>;
+}
+
+impl AppModelOps for AppModel {
+    fn add_source(self, source: Source) -> Result<AppModel, anyhow::Error> {
+        debug_assert!(self.sources.len() == self.sources_order.len());
+        debug_assert!(self
+            .sources
+            .iter()
+            .all(|(_uuid, source)| self.sources_order.iter().any(|uuid| source.uuid() == uuid)));
+
+        if self.sources.contains_key(source.uuid()) {
+            Err(anyhow!("Failed to add source: UUID in use"))
+        } else {
+            Ok(AppModel {
+                sources_order: self.sources_order.clone_and_push(*source.uuid()),
+                sources: self.sources.clone_and_insert(*source.uuid(), source),
+                ..self
+            })
+        }
+    }
+
+    fn add_source_loader(
+        self,
+        source_uuid: Uuid,
+        loader_rx: mpsc::Receiver<Result<Sample, libasampo::errors::Error>>,
+    ) -> Result<AppModel, anyhow::Error> {
+        if self.sources_loading.contains_key(&source_uuid) {
+            Err(anyhow!("Failed to add source loader: UUID in use"))
+        } else {
+            Ok(AppModel {
+                sources_loading: self
+                    .sources_loading
+                    .clone_and_insert(source_uuid, Rc::new(loader_rx)),
+                ..self
+            })
+        }
+    }
+
+    fn enable_source(self, uuid: &Uuid) -> Result<AppModel, anyhow::Error> {
+        Ok(AppModel {
+            sources: self.sources.cloned_update_with(
+                |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
+                    s.get_mut(uuid)
+                        .ok_or_else(|| anyhow!("Failed to enable source: UUID not present"))?
+                        .enable();
+                    Ok(s)
+                },
+            )?,
             ..self
         })
     }

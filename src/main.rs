@@ -25,7 +25,7 @@ use std::{
 use anyhow::anyhow;
 use audiothread::{AudioSpec, NonZeroNumFrames};
 use ext::ClonedHashMapExt;
-use model::{DrumMachineModel, ExportState};
+use model::{DrumMachineModel, ExportState, ModelOps};
 use uuid::Uuid;
 
 use gtk::{
@@ -44,14 +44,13 @@ use libasampo::{
         BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
     sequences::{drumkit_render_thread, DrumkitSequenceEvent},
-    sources::{file_system_source::FilesystemSource, Source},
 };
 
 use crate::{
     config::AppConfig,
     configfile::ConfigFile,
     ext::{OptionMapExt, WithModel},
-    model::{AppModel, AppModelPtr, ViewFlags, ViewValues},
+    model::{AppModel, AppModelOps, AppModelPtr, ViewFlags, ViewModelOps, ViewValues},
     util::gtk_find_child_by_builder_id,
     view::{
         dialogs,
@@ -370,23 +369,13 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             ..model
         }),
 
-        AppMessage::AddFilesystemSourceNameChanged(text) => Ok(AppModel {
-            viewvalues: ViewValues {
-                sources_add_fs_name_entry: text,
-                ..model.viewvalues
-            },
-            ..model
-        }
-        .map(model::util::check_sources_add_fs_valid)),
+        AppMessage::AddFilesystemSourceNameChanged(text) => Ok(model
+            .set_sources_add_fs_name_entry(text)
+            .validate_sources_add_fs_fields()),
 
-        AppMessage::AddFilesystemSourcePathChanged(text) => Ok(AppModel {
-            viewvalues: ViewValues {
-                sources_add_fs_path_entry: text,
-                ..model.viewvalues
-            },
-            ..model
-        }
-        .map(model::util::check_sources_add_fs_valid)),
+        AppMessage::AddFilesystemSourcePathChanged(text) => Ok(model
+            .set_sources_add_fs_path_entry(text)
+            .validate_sources_add_fs_fields()),
 
         AppMessage::AddFilesystemSourcePathBrowseClicked => Ok(AppModel {
             viewflags: ViewFlags {
@@ -424,58 +413,12 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model)
         }
 
-        AppMessage::AddFilesystemSourceExtensionsChanged(text) => Ok(AppModel {
-            viewvalues: ViewValues {
-                sources_add_fs_extensions_entry: text,
-                ..model.viewvalues
-            },
-            ..model
-        }
-        .map(model::util::check_sources_add_fs_valid)),
+        AppMessage::AddFilesystemSourceExtensionsChanged(text) => Ok(model
+            .set_sources_add_fs_extensions_entry(text)
+            .validate_sources_add_fs_fields()),
 
         // TODO: more validation, e.g is the path readable
-        AppMessage::AddFilesystemSourceClicked => {
-            let new_source = Source::FilesystemSource(FilesystemSource::new_named(
-                model.viewvalues.sources_add_fs_name_entry.clone(),
-                model.viewvalues.sources_add_fs_path_entry.clone(),
-                model
-                    .viewvalues
-                    .sources_add_fs_extensions_entry
-                    .split(',')
-                    .map(|s| s.trim().to_string())
-                    .collect(),
-            ));
-
-            let uuid = *new_source.uuid();
-            let model = model
-                .add_source(new_source.clone())
-                .enable_source(&uuid)
-                .unwrap();
-
-            let (tx, rx) = std::sync::mpsc::channel::<Result<Sample, libasampo::errors::Error>>();
-
-            std::thread::spawn(clone!(@strong new_source => move || {
-                new_source.list_async(tx);
-            }));
-
-            Ok(AppModel {
-                viewflags: ViewFlags {
-                    sources_add_fs_fields_valid: false,
-                    ..model.viewflags
-                },
-
-                viewvalues: ViewValues {
-                    sources_add_fs_name_entry: String::from(""),
-                    sources_add_fs_path_entry: String::from(""),
-                    sources_add_fs_extensions_entry: String::from(""),
-                    ..model.viewvalues
-                },
-
-                sources_loading: model.sources_loading.clone_and_insert(uuid, Rc::new(rx)),
-                ..model
-            }
-            .map_ref(AppModel::populate_samples_listmodel))
-        }
+        AppMessage::AddFilesystemSourceClicked => model.commit_file_system_source(),
 
         AppMessage::SourceLoadingMessage(uuid, messages) => {
             let mut samples = model.samples.borrow_mut();
@@ -562,7 +505,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             },
             ..model
         }
-        .map_ref(AppModel::populate_samples_listmodel)),
+        .tap(AppModel::populate_samples_listmodel)),
 
         AppMessage::SampleSidebarAddToSetClicked => Ok(AppModel {
             viewflags: ViewFlags {
@@ -596,17 +539,18 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 sources_loading: model.sources_loading.clone_and_insert(uuid, Rc::new(rx)),
                 ..model
             }
+            .reset_source_sample_count(uuid)?
             .enable_source(&uuid)?
-            .map_ref(AppModel::populate_samples_listmodel))
+            .tap(AppModel::populate_samples_listmodel))
         }
 
         AppMessage::SourceDisabled(uuid) => Ok(model
             .disable_source(&uuid)?
-            .map_ref(AppModel::populate_samples_listmodel)),
+            .tap(AppModel::populate_samples_listmodel)),
 
         AppMessage::SourceDeleteClicked(uuid) => Ok(model
             .remove_source(&uuid)?
-            .map_ref(AppModel::populate_samples_listmodel)),
+            .tap(AppModel::populate_samples_listmodel)),
 
         AppMessage::LoadFromSavefile(filename) => {
             log::log!(log::Level::Info, "Loading from {filename}");
@@ -1516,7 +1460,9 @@ mod tests {
         let uuid = *src.uuid();
 
         Savefile::save(
-            &AppModel::new(Some(AppConfig::default()), None, None, None).add_source(src),
+            &AppModel::new(Some(AppConfig::default()), None, None, None)
+                .add_source(src)
+                .unwrap(),
             tmpfile
                 .to_str()
                 .expect("Temporary file should have UTF-8 filename"),

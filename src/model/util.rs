@@ -67,15 +67,3 @@ pub fn add_selected_sample_to_sampleset_by_uuid(
         ..model
     })
 }
-
-pub fn check_sources_add_fs_valid(model: AppModel) -> AppModel {
-    AppModel {
-        viewflags: ViewFlags {
-            sources_add_fs_fields_valid: !model.viewvalues.sources_add_fs_name_entry.is_empty()
-                && !model.viewvalues.sources_add_fs_path_entry.is_empty()
-                && !model.viewvalues.sources_add_fs_extensions_entry.is_empty(),
-            ..model.viewflags
-        },
-        ..model
-    }
-}

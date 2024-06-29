@@ -4,11 +4,14 @@
 
 use std::collections::HashMap;
 
+use anyhow::anyhow;
 use gtk::gio::ListStore;
 use uuid::Uuid;
 
 use crate::{
     config::AppConfig,
+    ext::ClonedHashMapExt,
+    model::AppModel,
     view::{dialogs, samples::SampleListEntry, sequences::DrumMachineView},
 };
 
@@ -90,6 +93,116 @@ impl ViewValues {
                 None => "???".to_string(),
             },
             ..Self::default()
+        }
+    }
+}
+
+pub trait ViewModelOps {
+    fn init_source_sample_count(self, source_uuid: Uuid) -> Result<AppModel, anyhow::Error>;
+    fn reset_source_sample_count(self, source_uuid: Uuid) -> Result<AppModel, anyhow::Error>;
+    fn set_is_sources_add_fs_fields_valid(self, valid: bool) -> AppModel;
+    fn clear_sources_add_fs_fields(self) -> AppModel;
+    fn set_sources_add_fs_name_entry(self, text: impl Into<String>) -> AppModel;
+    fn set_sources_add_fs_path_entry(self, text: impl Into<String>) -> AppModel;
+    fn set_sources_add_fs_extensions_entry(self, text: impl Into<String>) -> AppModel;
+}
+
+impl ViewModelOps for AppModel {
+    fn init_source_sample_count(self, source_uuid: Uuid) -> Result<AppModel, anyhow::Error> {
+        if self
+            .viewvalues
+            .sources_sample_count
+            .contains_key(&source_uuid)
+        {
+            Err(anyhow!("Failed to init source sample count: UUID in use"))
+        } else {
+            Ok(AppModel {
+                viewvalues: ViewValues {
+                    sources_sample_count: self
+                        .viewvalues
+                        .sources_sample_count
+                        .clone_and_insert(source_uuid, 0),
+                    ..self.viewvalues
+                },
+                ..self
+            })
+        }
+    }
+
+    fn reset_source_sample_count(self, source_uuid: Uuid) -> Result<AppModel, anyhow::Error> {
+        if self
+            .viewvalues
+            .sources_sample_count
+            .contains_key(&source_uuid)
+        {
+            Ok(AppModel {
+                viewvalues: ViewValues {
+                    sources_sample_count: self.viewvalues.sources_sample_count.cloned_update_with(
+                        |mut m| {
+                            *(m.get_mut(&source_uuid).unwrap()) = 0;
+                            Ok(m)
+                        },
+                    )?,
+                    ..self.viewvalues
+                },
+                ..self
+            })
+        } else {
+            Err(anyhow!(
+                "Failed to reset source sample count: UUID not present"
+            ))
+        }
+    }
+
+    fn set_is_sources_add_fs_fields_valid(self, valid: bool) -> AppModel {
+        AppModel {
+            viewflags: ViewFlags {
+                sources_add_fs_fields_valid: valid,
+                ..self.viewflags
+            },
+            ..self
+        }
+    }
+
+    fn clear_sources_add_fs_fields(self) -> AppModel {
+        AppModel {
+            viewvalues: ViewValues {
+                sources_add_fs_name_entry: String::from(""),
+                sources_add_fs_path_entry: String::from(""),
+                sources_add_fs_extensions_entry: String::from(""),
+                ..self.viewvalues
+            },
+            ..self
+        }
+    }
+
+    fn set_sources_add_fs_name_entry(self, text: impl Into<String>) -> AppModel {
+        AppModel {
+            viewvalues: ViewValues {
+                sources_add_fs_name_entry: text.into(),
+                ..self.viewvalues
+            },
+            ..self
+        }
+    }
+
+    fn set_sources_add_fs_path_entry(self, text: impl Into<String>) -> AppModel {
+        AppModel {
+            viewvalues: ViewValues {
+                sources_add_fs_path_entry: text.into(),
+                ..self.viewvalues
+            },
+            ..self
+        }
+    }
+
+    fn set_sources_add_fs_extensions_entry(self, text: impl Into<String>) -> AppModel {
+        AppModel {
+            viewvalues: ViewValues {
+                sources_add_fs_extensions_entry: text.into(),
+                ..self.viewvalues
+            },
+            ..self
         }
     }
 }
