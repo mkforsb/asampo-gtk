@@ -985,7 +985,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             }
 
             match &model.drum_machine.render_thread_tx {
-                #[allow(clippy::needless_update)]
                 Some(_) => Ok(AppModel {
                     drum_machine: DrumMachineModel {
                         render_thread_tx: None,
@@ -1024,7 +1023,13 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::DrumMachineSaveSequenceAsClicked => Ok(model),
         AppMessage::DrumMachineSaveSampleSetClicked => Ok(model),
         AppMessage::DrumMachineSaveSampleSetAsClicked => Ok(model),
-        AppMessage::DrumMachinePadClicked(_n) => Ok(model),
+        AppMessage::DrumMachinePadClicked(n) => Ok(AppModel {
+            drum_machine: DrumMachineModel {
+                activated_pad: n,
+                ..model.drum_machine
+            },
+            ..model
+        }),
         AppMessage::DrumMachinePartClicked(_n) => Ok(model),
         AppMessage::DrumMachineStepClicked(_n) => Ok(model),
     }
@@ -1156,7 +1161,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     }
 
     if old.sets_most_recently_used_uuid != new.sets_most_recently_used_uuid {
-        if let Some(ref mru) = new.sets_most_recently_used_uuid {
+        if let Some(mru) = &new.sets_most_recently_used_uuid {
             if let Some((_, set)) = new.sets.iter().find(|(uuid, _set)| *uuid == mru) {
                 view.samples_sidebar_add_to_prev_button
                     .set_label(&format!("Add to '{}'", set.name()));
@@ -1173,7 +1178,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         update_samplesets_detail(model_ptr.clone(), new.clone(), view);
 
         if new.samplelist_selected_sample.is_some() {
-            update_samples_sidebar(model_ptr, new.clone(), view);
+            update_samples_sidebar(model_ptr.clone(), new.clone(), view);
         }
     }
 
@@ -1185,7 +1190,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     if old.sets_export_state != new.sets_export_state {
         match new.sets_export_state {
             Some(model::ExportState::Exporting) => {
-                if let Some(dv) = new.viewvalues.sets_export_dialog_view {
+                if let Some(dv) = &new.viewvalues.sets_export_dialog_view {
                     dv.window.close();
                     view.progress_popup.set_visible(true);
                 }
@@ -1200,12 +1205,12 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     }
 
     if old.sets_export_progress != new.sets_export_progress {
-        if let Some((n, m)) = new.sets_export_progress {
+        if let Some((n, m)) = &new.sets_export_progress {
             view.progress_popup_progress_bar
                 .set_text(Some(format!("Exporting {n}/{m}").as_str()));
 
             view.progress_popup_progress_bar
-                .set_fraction(n as f64 / m as f64);
+                .set_fraction(*n as f64 / *m as f64);
         }
     }
 }

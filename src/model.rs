@@ -106,11 +106,25 @@ impl Default for ViewValues {
 #[derive(Clone, Debug)]
 pub struct DrumMachineModel {
     pub render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
+    pub activated_pad: usize,
+}
+
+impl PartialEq for DrumMachineModel {
+    fn eq(&self, other: &Self) -> bool {
+        if self.activated_pad != other.activated_pad {
+            return false;
+        }
+
+        true
+    }
 }
 
 impl DrumMachineModel {
     pub fn new(render_thread_tx: Option<Sender<drumkit_render_thread::Message>>) -> Self {
-        Self { render_thread_tx }
+        Self {
+            render_thread_tx,
+            activated_pad: 8,
+        }
     }
 }
 
