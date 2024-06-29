@@ -371,7 +371,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             .set_sources_add_fs_extensions_entry(text)
             .validate_sources_add_fs_fields()),
 
-        // TODO: more validation, e.g is the path readable
         AppMessage::AddFilesystemSourceClicked => Ok(model
             .commit_file_system_source()?
             .tap(AppModel::populate_samples_listmodel)),

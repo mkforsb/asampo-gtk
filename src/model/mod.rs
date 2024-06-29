@@ -69,6 +69,7 @@ impl ModelOps for AppModel {
         }
     }
 
+    // TODO: more validation, e.g is the path readable
     fn add_file_system_source(
         self,
         name: String,
