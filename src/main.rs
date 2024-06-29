@@ -44,7 +44,9 @@ use libasampo::{
         export::{Conversion, ExportJob, ExportJobMessage},
         BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
-    sequences::{drumkit_render_thread, DrumkitSequence, NoteLength, TimeSpec},
+    sequences::{
+        drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent, NoteLength, TimeSpec,
+    },
     sources::{file_system_source::FilesystemSource, Source},
 };
 
@@ -162,12 +164,14 @@ enum AppMessage {
     DrumMachinePadClicked(usize),
     DrumMachinePartClicked(usize),
     DrumMachineStepClicked(usize),
+    DrumMachinePlaybackEvent(DrumkitSequenceEvent),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
     match message {
         AppMessage::TimerTick => (),
         AppMessage::SourceLoadingMessage(..) => (),
+        AppMessage::DrumMachinePlaybackEvent(..) => (),
         _ => log::log!(log::Level::Debug, "{message:?}"),
     }
 
@@ -264,16 +268,21 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     ),
                 )));
 
-                let dks_render_thread_tx = if had_dks_render_thread {
+                let (dks_render_thread_tx, dks_event_rx) = if had_dks_render_thread {
                     use drumkit_render_thread as dkr;
 
+                    let (dks_event_rx, dks_event_tx) =
+                        single_value_channel::channel::<DrumkitSequenceEvent>();
                     let (dks_render_thread_tx, dks_render_thread_rx) =
                         mpsc::channel::<dkr::Message>();
-                    let _ = dkr::spawn(audiothread_tx.clone(), dks_render_thread_rx, None);
-
-                    Some(dks_render_thread_tx)
+                    let _ = dkr::spawn(
+                        audiothread_tx.clone(),
+                        dks_render_thread_rx,
+                        Some(dks_event_tx),
+                    );
+                    (Some(dks_render_thread_tx), Some(dks_event_rx))
                 } else {
-                    None
+                    (None, None)
                 };
 
                 let mut empty_seq =
@@ -284,7 +293,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     config_save_timeout: None,
                     audiothread_tx: Some(audiothread_tx),
                     _audiothread_handle,
-                    drum_machine: DrumMachineModel::new(dks_render_thread_tx, empty_seq),
+                    drum_machine: DrumMachineModel::new(
+                        dks_render_thread_tx,
+                        dks_event_rx,
+                        empty_seq,
+                    ),
                     ..model
                 })
             } else {
@@ -1088,6 +1101,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ..model
             })
         }
+
+        AppMessage::DrumMachinePlaybackEvent(event) => Ok(AppModel {
+            drum_machine: DrumMachineModel {
+                event_latest: Some(event),
+                ..model.drum_machine
+            },
+            ..model
+        }),
     }
 }
 
@@ -1450,6 +1471,38 @@ fn main() -> ExitCode {
                             }
                         }
                     };
+                }
+
+                gtk::glib::ControlFlow::Continue
+            }),
+        );
+
+        gtk::glib::timeout_add_local(
+            std::time::Duration::from_millis(4),
+            clone!(@strong model_ptr, @strong view => move || {
+                let model = model_ptr.take().unwrap();
+
+                let mut event: Option<DrumkitSequenceEvent> = None;
+
+                if let Some(event_rx) = &model.drum_machine.event_rx {
+                    match event_rx.borrow_mut().latest() {
+                        Some(ev) if model.drum_machine.event_latest.is_none() ||
+                            ev.step != model.drum_machine.event_latest.as_ref().unwrap().step =>
+                        {
+                            event = Some(ev.clone());
+                        }
+                        _ => (),
+                    }
+                }
+
+                model_ptr.replace(Some(model));
+
+                if let Some(ev) = event {
+                    update(
+                        model_ptr.clone(),
+                        &view,
+                        AppMessage::DrumMachinePlaybackEvent(ev.clone())
+                    );
                 }
 
                 gtk::glib::ControlFlow::Continue

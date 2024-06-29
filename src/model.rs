@@ -16,7 +16,9 @@ use libasampo::{
     prelude::*,
     samples::Sample,
     samplesets::{export::ExportJobMessage, SampleSet},
-    sequences::{drumkit_render_thread, DrumkitSequence, NoteLength, TimeSpec},
+    sequences::{
+        drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent, NoteLength, TimeSpec,
+    },
     sources::Source,
 };
 use uuid::Uuid;
@@ -106,12 +108,24 @@ impl Default for ViewValues {
 #[derive(Clone, Debug)]
 pub struct DrumMachineModel {
     pub render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
+    pub event_rx: Option<Rc<RefCell<single_value_channel::Receiver<Option<DrumkitSequenceEvent>>>>>,
+    pub event_latest: Option<DrumkitSequenceEvent>,
     pub sequence: DrumkitSequence,
     pub activated_pad: usize,
 }
 
 impl PartialEq for DrumMachineModel {
     fn eq(&self, other: &Self) -> bool {
+        match (&self.event_latest, &other.event_latest) {
+            (Some(a), Some(b)) => {
+                if a.step != b.step || a.labels != b.labels {
+                    return false;
+                }
+            }
+            (None, None) => (),
+            _ => return false,
+        }
+
         if self.activated_pad != other.activated_pad || self.sequence != other.sequence {
             return false;
         }
@@ -123,10 +137,13 @@ impl PartialEq for DrumMachineModel {
 impl DrumMachineModel {
     pub fn new(
         render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
+        event_rx: Option<single_value_channel::Receiver<Option<DrumkitSequenceEvent>>>,
         sequence: DrumkitSequence,
     ) -> Self {
         Self {
             render_thread_tx,
+            event_rx: event_rx.map(|x| Rc::new(RefCell::new(x))),
+            event_latest: None,
             sequence,
             activated_pad: 8,
         }
@@ -171,15 +188,21 @@ impl AppModel {
             None => "???".to_string(),
         };
 
-        let dks_render_thread_tx = if let Some(audiothread_tx) = &tx {
+        let (dks_render_thread_tx, dks_event_rx) = if let Some(audiothread_tx) = &tx {
             use drumkit_render_thread as dkr;
 
+            let (dks_event_rx, dks_event_tx) =
+                single_value_channel::channel::<DrumkitSequenceEvent>();
             let (dks_render_thread_tx, dks_render_thread_rx) = mpsc::channel::<dkr::Message>();
-            let _ = dkr::spawn(audiothread_tx.clone(), dks_render_thread_rx, None);
+            let _ = dkr::spawn(
+                audiothread_tx.clone(),
+                dks_render_thread_rx,
+                Some(dks_event_tx),
+            );
 
-            Some(dks_render_thread_tx)
+            (Some(dks_render_thread_tx), Some(dks_event_rx))
         } else {
-            None
+            (None, None)
         };
 
         let mut empty_seq =
@@ -210,7 +233,7 @@ impl AppModel {
             sets_export_state: None,
             sets_export_progress: None,
             export_job_rx: None,
-            drum_machine: DrumMachineModel::new(dks_render_thread_tx, empty_seq),
+            drum_machine: DrumMachineModel::new(dks_render_thread_tx, dks_event_rx, empty_seq),
         }
     }
 
