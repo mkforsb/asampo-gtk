@@ -10,6 +10,25 @@ use libasampo::samplesets::DrumkitLabel;
 
 use crate::{update, AppMessage, AppModelPtr, AsampoView};
 
+pub const LABELS: [DrumkitLabel; 16] = [
+    DrumkitLabel::RimShot,
+    DrumkitLabel::Clap,
+    DrumkitLabel::ClosedHihat,
+    DrumkitLabel::OpenHihat,
+    DrumkitLabel::CrashCymbal,
+    DrumkitLabel::RideCymbal,
+    DrumkitLabel::Shaker,
+    DrumkitLabel::Perc1,
+    DrumkitLabel::BassDrum,
+    DrumkitLabel::SnareDrum,
+    DrumkitLabel::LowTom,
+    DrumkitLabel::MidTom,
+    DrumkitLabel::HighTom,
+    DrumkitLabel::Perc2,
+    DrumkitLabel::Perc3,
+    DrumkitLabel::Perc4,
+];
+
 pub fn setup_sequences_page(model_ptr: AppModelPtr, view: &AsampoView) {
     setup_drum_machine(model_ptr, view);
 }
@@ -57,26 +76,7 @@ fn setup_drum_machine(model_ptr: AppModelPtr, view: &AsampoView) {
     connect!(button "sequences-editor-save-set-as-button",
         AppMessage::DrumMachineSaveSampleSetAsClicked);
 
-    let labels = vec![
-        DrumkitLabel::RimShot,
-        DrumkitLabel::Clap,
-        DrumkitLabel::ClosedHihat,
-        DrumkitLabel::OpenHihat,
-        DrumkitLabel::CrashCymbal,
-        DrumkitLabel::RideCymbal,
-        DrumkitLabel::Shaker,
-        DrumkitLabel::Perc1,
-        DrumkitLabel::BassDrum,
-        DrumkitLabel::SnareDrum,
-        DrumkitLabel::LowTom,
-        DrumkitLabel::MidTom,
-        DrumkitLabel::HighTom,
-        DrumkitLabel::Perc2,
-        DrumkitLabel::Perc3,
-        DrumkitLabel::Perc4,
-    ];
-
-    for (index, label) in labels.into_iter().enumerate() {
+    for (index, label) in LABELS.into_iter().enumerate() {
         connect!(button format!("sequences-editor-pad-{}", index),
             AppMessage::DrumMachinePadClicked(label));
     }
