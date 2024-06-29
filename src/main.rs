@@ -1007,7 +1007,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model)
         }
 
-        AppMessage::DrumMachineSwingChanged(_swing) => Ok(model),
+        AppMessage::DrumMachineSwingChanged(swing) => {
+            if let Some(dks_render_thread_tx) = &model.drum_machine.render_thread_tx {
+                let _ = dks_render_thread_tx.send(drumkit_render_thread::Message::SetSwing(
+                    (swing as f64 / 100.0).try_into()?,
+                ));
+            }
+
+            Ok(model)
+        }
+
         AppMessage::DrumMachinePlayClicked => Ok(model),
         AppMessage::DrumMachineStopClicked => Ok(model),
         AppMessage::DrumMachineBackClicked => Ok(model),
