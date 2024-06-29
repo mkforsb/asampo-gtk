@@ -17,6 +17,7 @@ mod view;
 use std::{
     cell::Cell,
     io::BufReader,
+    path::Path,
     rc::Rc,
     sync::mpsc,
     time::{Duration, Instant},
@@ -344,27 +345,21 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model.signal_sources_add_fs_begin_browse())
         }
 
-        AppMessage::AddFilesystemSourcePathBrowseSubmitted(text) => Ok(AppModel {
-            viewvalues: ViewValues {
-                sources_add_fs_name_entry: if model.viewvalues.sources_add_fs_name_entry.is_empty()
-                {
-                    if let Some(name) = std::path::Path::new(&text)
-                        .file_name()
-                        .and_then(|s| s.to_str())
-                        .map(|s| s.to_string())
-                    {
-                        name
-                    } else {
-                        model.viewvalues.sources_add_fs_name_entry
-                    }
-                } else {
-                    model.viewvalues.sources_add_fs_name_entry
-                },
-                sources_add_fs_path_entry: text,
-                ..model.viewvalues
-            },
-            ..model
-        }),
+        AppMessage::AddFilesystemSourcePathBrowseSubmitted(text) => Ok(match (
+            model.viewvalues.sources_add_fs_name_entry.is_empty(),
+            Path::new(&text).file_name(),
+        ) {
+            (true, Some(filename)) => model
+                .set_sources_add_fs_name_entry(
+                    filename
+                        .to_str()
+                        .ok_or(anyhow!("Path contains invalid UTF-8"))?,
+                )
+                .set_sources_add_fs_path_entry(text),
+
+            _ => model.set_sources_add_fs_path_entry(text),
+        }
+        .validate_sources_add_fs_fields()),
 
         AppMessage::AddFilesystemSourcePathBrowseError(error) => {
             log::log!(log::Level::Debug, "Error browsing for folder: {error:?}");
