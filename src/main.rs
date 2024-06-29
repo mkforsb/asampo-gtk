@@ -9,7 +9,6 @@ mod configfile;
 mod ext;
 
 mod model;
-mod model_util;
 mod savefile;
 mod testutils;
 mod util;
@@ -399,7 +398,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             },
             ..model
         }
-        .map(model_util::check_sources_add_fs_valid)),
+        .map(model::util::check_sources_add_fs_valid)),
 
         AppMessage::AddFilesystemSourcePathChanged(text) => Ok(AppModel {
             viewvalues: ViewValues {
@@ -408,7 +407,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             },
             ..model
         }
-        .map(model_util::check_sources_add_fs_valid)),
+        .map(model::util::check_sources_add_fs_valid)),
 
         AppMessage::AddFilesystemSourcePathBrowseClicked => Ok(AppModel {
             viewflags: ViewFlags {
@@ -453,7 +452,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             },
             ..model
         }
-        .map(model_util::check_sources_add_fs_valid)),
+        .map(model::util::check_sources_add_fs_valid)),
 
         // TODO: more validation, e.g is the path readable
         AppMessage::AddFilesystemSourceClicked => {
@@ -599,7 +598,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 .sets_most_recently_used_uuid
                 .ok_or(anyhow!("No sample set recently added to"))?;
 
-            model_util::add_selected_sample_to_sampleset_by_uuid(model, &mru_uuid)
+            model::util::add_selected_sample_to_sampleset_by_uuid(model, &mru_uuid)
         }
 
         AppMessage::SourceEnabled(uuid) => {
@@ -740,8 +739,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::InputDialogSubmitted(context, text) => match context {
             InputDialogContext::AddToSampleset => {
-                let (model, set_uuid) = model_util::get_or_create_sampleset(model, text)?;
-                model_util::add_selected_sample_to_sampleset_by_uuid(model, &set_uuid)
+                let (model, set_uuid) = model::util::get_or_create_sampleset(model, text)?;
+                model::util::add_selected_sample_to_sampleset_by_uuid(model, &set_uuid)
             }
 
             InputDialogContext::CreateSampleSet => {

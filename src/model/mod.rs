@@ -29,6 +29,8 @@ use crate::{
     view::{dialogs, samples::SampleListEntry, sequences::DrumMachineView},
 };
 
+pub mod util;
+
 #[derive(Debug, Clone)]
 pub struct ViewFlags {
     pub view_sensitive: bool,
