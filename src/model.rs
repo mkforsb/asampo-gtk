@@ -24,7 +24,7 @@ use uuid::Uuid;
 use crate::{
     config::AppConfig,
     ext::{ClonedHashMapExt, ClonedVecExt},
-    view::{dialogs, samples::SampleListEntry},
+    view::{dialogs, samples::SampleListEntry, sequences::DrumMachineView},
 };
 
 #[derive(Debug, Clone)]
@@ -82,6 +82,7 @@ pub struct ViewValues {
     pub sets_export_dialog_view: Option<dialogs::ExportDialogView>,
     pub sets_export_target_dir_entry: String,
     pub sets_export_kind: Option<ExportKind>,
+    pub drum_machine: Option<DrumMachineView>,
 }
 
 impl Default for ViewValues {
@@ -97,6 +98,7 @@ impl Default for ViewValues {
             sets_export_dialog_view: None,
             sets_export_target_dir_entry: String::default(),
             sets_export_kind: None,
+            drum_machine: None,
         }
     }
 }

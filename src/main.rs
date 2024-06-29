@@ -42,7 +42,7 @@ use libasampo::{
     samples::Sample,
     samplesets::{
         export::{Conversion, ExportJob, ExportJobMessage},
-        BaseSampleSet, DrumkitLabel, DrumkitLabelling, SampleSet, SampleSetLabelling,
+        BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
     sequences::drumkit_render_thread,
     sources::{file_system_source::FilesystemSource, Source},
@@ -157,7 +157,7 @@ enum AppMessage {
     DrumMachineSaveSequenceAsClicked,
     DrumMachineSaveSampleSetClicked,
     DrumMachineSaveSampleSetAsClicked,
-    DrumMachinePadClicked(DrumkitLabel),
+    DrumMachinePadClicked(usize),
     DrumMachinePartClicked(usize),
     DrumMachineStepClicked(usize),
 }

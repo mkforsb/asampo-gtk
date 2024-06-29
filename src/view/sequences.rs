@@ -33,10 +33,12 @@ pub fn setup_sequences_page(model_ptr: AppModelPtr, view: &AsampoView) {
     setup_drum_machine_view(model_ptr, view);
 }
 
-// #[derive(Debug, Clone)]
-// pub struct DrumMachineView {
-//
-// }
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DrumMachineView {
+    pad_buttons: [gtk::Button; 16],
+    part_buttons: [gtk::Button; 4],
+    step_buttons: [gtk::Button; 16],
+}
 
 fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
     let objects = gtk::Builder::from_resource("/drum-machine.ui");
@@ -76,20 +78,54 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
     connect!(button "sequences-editor-save-set-as-button",
         AppMessage::DrumMachineSaveSampleSetAsClicked);
 
-    for (index, label) in LABELS.into_iter().enumerate() {
+    let mut pad_buttons: Vec<gtk::Button> = vec![];
+    let mut part_buttons: Vec<gtk::Button> = vec![];
+    let mut step_buttons: Vec<gtk::Button> = vec![];
+
+    for (index, _label) in LABELS.into_iter().enumerate() {
         connect!(button format!("sequences-editor-pad-{}", index),
-            AppMessage::DrumMachinePadClicked(label));
+            AppMessage::DrumMachinePadClicked(index));
+
+        pad_buttons.push(
+            objects
+                .object::<gtk::Button>(format!("sequences-editor-pad-{}", index))
+                .unwrap(),
+        );
     }
 
     for index in 0..4 {
         connect!(button format!("sequences-editor-part-{}", index),
             AppMessage::DrumMachinePartClicked(index));
+
+        part_buttons.push(
+            objects
+                .object::<gtk::Button>(format!("sequences-editor-part-{}", index))
+                .unwrap(),
+        );
     }
 
     for index in 0..16 {
         connect!(button format!("sequences-editor-step-{}", index),
             AppMessage::DrumMachineStepClicked(index));
+
+        step_buttons.push(
+            objects
+                .object::<gtk::Button>(format!("sequences-editor-step-{}", index))
+                .unwrap(),
+        );
     }
+
+    let pad_buttons: [gtk::Button; 16] = pad_buttons.try_into().unwrap();
+    let part_buttons: [gtk::Button; 4] = part_buttons.try_into().unwrap();
+    let step_buttons: [gtk::Button; 16] = step_buttons.try_into().unwrap();
+
+    let mut model = model_ptr.take().unwrap();
+    model.viewvalues.drum_machine = Some(DrumMachineView {
+        pad_buttons,
+        part_buttons,
+        step_buttons,
+    });
+    model_ptr.replace(Some(model));
 
     let root = objects.object::<gtk::Box>("drum-machine-root").unwrap();
 
