@@ -43,9 +43,7 @@ use libasampo::{
         export::{Conversion, ExportJob, ExportJobMessage},
         BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
-    sequences::{
-        drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent, NoteLength, TimeSpec,
-    },
+    sequences::{drumkit_render_thread, DrumkitSequenceEvent},
     sources::{file_system_source::FilesystemSource, Source},
 };
 
@@ -267,36 +265,17 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     ),
                 )));
 
-                let (dks_render_thread_tx, dks_event_rx) = if had_dks_render_thread {
-                    use drumkit_render_thread as dkr;
-
-                    let (dks_event_rx, dks_event_tx) =
-                        single_value_channel::channel::<DrumkitSequenceEvent>();
-                    let (dks_render_thread_tx, dks_render_thread_rx) =
-                        mpsc::channel::<dkr::Message>();
-                    let _ = dkr::spawn(
-                        audiothread_tx.clone(),
-                        dks_render_thread_rx,
-                        Some(dks_event_tx),
-                    );
-                    (Some(dks_render_thread_tx), Some(dks_event_rx))
+                let drum_machine = if had_dks_render_thread {
+                    DrumMachineModel::new_with_render_thread(audiothread_tx.clone())
                 } else {
-                    (None, None)
+                    DrumMachineModel::new(None, None)
                 };
-
-                let mut empty_seq =
-                    DrumkitSequence::new(TimeSpec::new(120, 4, 4).unwrap(), NoteLength::Sixteenth);
-                empty_seq.set_len(16);
 
                 Ok(AppModel {
                     config_save_timeout: None,
-                    audiothread_tx: Some(audiothread_tx),
+                    audiothread_tx: Some(audiothread_tx.clone()),
                     _audiothread_handle,
-                    drum_machine: DrumMachineModel::new(
-                        dks_render_thread_tx,
-                        dks_event_rx,
-                        empty_seq,
-                    ),
+                    drum_machine,
                     ..model
                 })
             } else {
