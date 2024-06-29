@@ -98,6 +98,8 @@ impl ViewValues {
 }
 
 pub trait ViewModelOps {
+    fn set_latency_approx_label(self, text: String) -> AppModel;
+    fn set_latency_approx_label_by_config(self, config: &AppConfig) -> AppModel;
     fn init_source_sample_count(self, source_uuid: Uuid) -> Result<AppModel, anyhow::Error>;
     fn reset_source_sample_count(self, source_uuid: Uuid) -> Result<AppModel, anyhow::Error>;
     fn set_is_sources_add_fs_fields_valid(self, valid: bool) -> AppModel;
@@ -108,6 +110,23 @@ pub trait ViewModelOps {
 }
 
 impl ViewModelOps for AppModel {
+    fn set_latency_approx_label(self, text: String) -> AppModel {
+        AppModel {
+            viewvalues: ViewValues {
+                settings_latency_approx_label: text,
+                ..self.viewvalues
+            },
+            ..self
+        }
+    }
+
+    fn set_latency_approx_label_by_config(self, config: &AppConfig) -> AppModel {
+        self.set_latency_approx_label(format!(
+            "~{:.1} ms",
+            config.buffer_size_frames as f32 / config.output_samplerate_hz as f32 * 1000.0
+        ))
+    }
+
     fn init_source_sample_count(self, source_uuid: Uuid) -> Result<AppModel, anyhow::Error> {
         if self
             .viewvalues

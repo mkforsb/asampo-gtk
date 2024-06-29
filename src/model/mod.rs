@@ -82,14 +82,12 @@ impl ModelOps for AppModel {
             new_source.list_async(loader_tx);
         }));
 
-        Ok(self
-            .init_source_sample_count(uuid)?
+        self.init_source_sample_count(uuid)?
             .add_source(new_source.clone())?
             .enable_source(&uuid)?
             .clear_sources_add_fs_fields()
             .set_is_sources_add_fs_fields_valid(false)
-            .add_source_loader(uuid, loader_rx)?
-            .tap(AppModel::populate_samples_listmodel))
+            .add_source_loader(uuid, loader_rx)
     }
 
     fn tap<F: FnOnce(&AppModel)>(self, f: F) -> AppModel {

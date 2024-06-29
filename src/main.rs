@@ -49,7 +49,7 @@ use libasampo::{
 use crate::{
     config::AppConfig,
     configfile::ConfigFile,
-    ext::{OptionMapExt, WithModel},
+    ext::WithModel,
     model::{AppModel, AppModelOps, AppModelPtr, ViewFlags, ViewModelOps, ViewValues},
     util::gtk_find_child_by_builder_id,
     view::{
@@ -260,7 +260,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                             .with_name("asampo")
                             .with_spec(AudioSpec::new(config.output_samplerate_hz, 2)?)
                             .with_conversion_quality(config.sample_rate_conversion_quality)
-                            .with_buffer_size((config.buffer_size_samples as usize).try_into()?),
+                            .with_buffer_size((config.buffer_size_frames as usize).try_into()?),
                     ),
                 )));
 
@@ -271,103 +271,65 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 };
 
                 Ok(AppModel {
-                    config_save_timeout: None,
                     audiothread_tx: Some(audiothread_tx.clone()),
                     _audiothread_handle,
                     drum_machine,
                     ..model
-                })
+                }.clear_config_save_timeout())
             } else {
                 Ok(model)
             }
         }
 
         AppMessage::SettingsOutputSampleRateChanged(choice) => {
-            let new_config = AppConfig {
-                output_samplerate_hz: match config::OUTPUT_SAMPLE_RATE_OPTIONS.value_for(&choice) {
-                    Some(value) => *value,
-                    None => {
-                        log::log!(
-                            log::Level::Error,
-                            "Unknown output sample rate setting, using default"
-                        );
-                        AppConfig::default().output_samplerate_hz
-                    }
-                },
-                ..model.config.expect("There should be an active config")
-            };
+            let new_config = model
+                .config
+                .clone()
+                .ok_or(anyhow!("There should be an active config"))?
+                .with_samplerate_choice(choice);
 
-            let settings_latency_approx_label = new_config.fmt_latency_approx();
-
-            Ok(AppModel {
-                config: Some(new_config),
-                config_save_timeout: Some(Instant::now() + Duration::from_secs(3)),
-                viewvalues: ViewValues {
-                    settings_latency_approx_label,
-                    ..model.viewvalues
-                },
-                ..model
-            })
+            Ok(model
+                .set_latency_approx_label_by_config(&new_config)
+                .set_config(new_config)
+                .set_config_save_timeout(Instant::now() + Duration::from_secs(3)))
         }
 
         AppMessage::SettingsBufferSizeChanged(samples) => {
-            let new_config = AppConfig {
-                buffer_size_samples: samples,
-                ..model.config.expect("There should be an active config")
-            };
+            let new_config = model
+                .config
+                .clone()
+                .ok_or(anyhow!("There should be an active config"))?
+                .with_buffer_size(samples);
 
-            let settings_latency_approx_label = new_config.fmt_latency_approx();
-
-            Ok(AppModel {
-                config: Some(new_config),
-                config_save_timeout: Some(Instant::now() + Duration::from_secs(3)),
-                viewvalues: ViewValues {
-                    settings_latency_approx_label,
-                    ..model.viewvalues
-                },
-                ..model
-            })
+            Ok(model
+                .set_latency_approx_label_by_config(&new_config)
+                .set_config(new_config)
+                .set_config_save_timeout(Instant::now() + Duration::from_secs(3)))
         }
 
-        AppMessage::SettingsSampleRateConversionQualityChanged(choice) => Ok(AppModel {
-            config: Some(AppConfig {
-                sample_rate_conversion_quality: match config::SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS
-                    .value_for(&choice)
-                {
-                    Some(value) => *value,
-                    None => {
-                        log::log!(
-                            log::Level::Error,
-                            "Unknown sample rate conversion quality setting, using default"
-                        );
-                        AppConfig::default().sample_rate_conversion_quality
-                    }
-                },
-                ..model.config.expect("There should be an active config")
-            }),
-            config_save_timeout: Some(Instant::now() + Duration::from_secs(3)),
-            ..model
-        }),
+        AppMessage::SettingsSampleRateConversionQualityChanged(choice) => {
+            let new_config = model
+                .config
+                .clone()
+                .ok_or(anyhow!("There should be an active config"))?
+                .with_conversion_quality_choice(choice);
 
-        AppMessage::SettingsSamplePlaybackBehaviorChanged(choice) => Ok(AppModel {
-            config: Some(AppConfig {
-                sample_playback_behavior: match config::SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS
-                    .value_for(&choice)
-                {
-                    Some(value) => value.clone(),
-                    None => {
-                        log::log!(
-                            log::Level::Error,
-                            "Unknown sample playback behavior setting, using default"
-                        );
-                        AppConfig::default().sample_playback_behavior
-                    }
-                },
-                ..model.config.expect("There should be an active config")
-            }),
-            config_save_timeout: Some(Instant::now() + Duration::from_secs(3)),
-            ..model
-        }),
+            Ok(model
+                .set_config(new_config)
+                .set_config_save_timeout(Instant::now() + Duration::from_secs(3)))
+        }
+
+        AppMessage::SettingsSamplePlaybackBehaviorChanged(choice) => {
+            let new_config = model
+                .config
+                .clone()
+                .ok_or(anyhow!("There should be an active config"))?
+                .with_sample_playback_behavior_choice(choice);
+
+            Ok(model
+                .set_config(new_config)
+                .set_config_save_timeout(Instant::now() + Duration::from_secs(3)))
+        }
 
         AppMessage::AddFilesystemSourceNameChanged(text) => Ok(model
             .set_sources_add_fs_name_entry(text)
@@ -418,7 +380,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             .validate_sources_add_fs_fields()),
 
         // TODO: more validation, e.g is the path readable
-        AppMessage::AddFilesystemSourceClicked => model.commit_file_system_source(),
+        AppMessage::AddFilesystemSourceClicked => Ok(model
+            .commit_file_system_source()?
+            .tap(AppModel::populate_samples_listmodel)),
 
         AppMessage::SourceLoadingMessage(uuid, messages) => {
             let mut samples = model.samples.borrow_mut();
@@ -1282,7 +1246,7 @@ fn main() -> ExitCode {
                     )
                     .with_conversion_quality(config.sample_rate_conversion_quality)
                     .with_buffer_size(
-                        (config.buffer_size_samples as usize)
+                        (config.buffer_size_frames as usize)
                             .try_into()
                             .unwrap_or_else(|_| {
                                 log::log!(

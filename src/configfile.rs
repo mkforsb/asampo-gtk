@@ -48,7 +48,7 @@ impl ConfigFileV1 {
     pub fn into_appconfig(self) -> AppConfig {
         AppConfig {
             output_samplerate_hz: self.output_samplerate_hz,
-            buffer_size_samples: self.buffer_size_samples,
+            buffer_size_frames: self.buffer_size_samples,
             sample_rate_conversion_quality: self.sample_rate_conversion_quality,
             config_save_path: self.config_save_path,
             sample_playback_behavior: self.sample_playback_behavior,
@@ -59,7 +59,7 @@ impl ConfigFileV1 {
         ConfigFileV1 {
             audio_output: AudioOutput::PulseAudioDefault,
             output_samplerate_hz: config.output_samplerate_hz,
-            buffer_size_samples: config.buffer_size_samples,
+            buffer_size_samples: config.buffer_size_frames,
             sample_rate_conversion_quality: config.sample_rate_conversion_quality,
             config_save_path: config.config_save_path.clone(),
             sample_playback_behavior: config.sample_playback_behavior.clone(),

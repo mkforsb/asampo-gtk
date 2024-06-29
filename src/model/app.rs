@@ -8,6 +8,7 @@ use std::{
     rc::Rc,
     sync::mpsc,
     thread::JoinHandle,
+    time::Instant,
 };
 
 use anyhow::anyhow;
@@ -197,6 +198,10 @@ impl AppModel {
 }
 
 pub trait AppModelOps {
+    fn set_config(self, config: AppConfig) -> AppModel;
+    fn set_config_save_timeout(self, deadline: Instant) -> AppModel;
+    fn clear_config_save_timeout(self) -> AppModel;
+
     fn add_source(self, source: Source) -> Result<AppModel, anyhow::Error>;
 
     fn add_source_loader(
@@ -209,6 +214,27 @@ pub trait AppModelOps {
 }
 
 impl AppModelOps for AppModel {
+    fn set_config(self, config: AppConfig) -> AppModel {
+        AppModel {
+            config: Some(config),
+            ..self
+        }
+    }
+
+    fn set_config_save_timeout(self, deadline: Instant) -> AppModel {
+        AppModel {
+            config_save_timeout: Some(deadline),
+            ..self
+        }
+    }
+
+    fn clear_config_save_timeout(self) -> AppModel {
+        AppModel {
+            config_save_timeout: None,
+            ..self
+        }
+    }
+
     fn add_source(self, source: Source) -> Result<AppModel, anyhow::Error> {
         debug_assert!(self.sources.len() == self.sources_order.len());
         debug_assert!(self

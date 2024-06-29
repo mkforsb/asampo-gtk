@@ -92,7 +92,7 @@ pub fn update_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
         );
 
         view.settings_buffer_size_entry
-            .set_value(config.buffer_size_samples.into());
+            .set_value(config.buffer_size_frames.into());
 
         view.settings_latency_approx_label
             .set_text(&model.viewvalues.settings_latency_approx_label);
