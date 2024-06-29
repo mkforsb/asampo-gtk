@@ -4,11 +4,11 @@
 
 use gtk::{
     glib::clone,
-    prelude::{ButtonExt, FrameExt},
+    prelude::{ButtonExt, FrameExt, WidgetExt},
 };
 use libasampo::samplesets::DrumkitLabel;
 
-use crate::{update, AppMessage, AppModelPtr, AsampoView};
+use crate::{model::AppModel, update, AppMessage, AppModelPtr, AsampoView};
 
 pub const LABELS: [DrumkitLabel; 16] = [
     DrumkitLabel::RimShot,
@@ -131,4 +131,19 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
 
     view.sequences_editor_drum_machine_frame
         .set_child(Some(&root));
+}
+
+pub fn update_drum_machine_view(model: AppModel) {
+    let drum_machine_model = &model.drum_machine;
+    let drum_machine_view = &model.viewvalues.drum_machine.as_ref().unwrap();
+
+    assert!(drum_machine_model.activated_pad < 16);
+
+    for i in 0..16 {
+        if i == drum_machine_model.activated_pad {
+            drum_machine_view.pad_buttons[i].add_css_class("activated");
+        } else {
+            drum_machine_view.pad_buttons[i].remove_css_class("activated");
+        }
+    }
 }

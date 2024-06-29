@@ -58,7 +58,7 @@ use crate::{
         dialogs,
         menus::build_actions,
         samples::{setup_samples_page, update_samples_sidebar, SampleListEntry},
-        sequences::setup_sequences_page,
+        sequences::{setup_sequences_page, update_drum_machine_view},
         sets::{setup_sets_page, update_samplesets_detail, update_samplesets_list, LabellingKind},
         settings::setup_settings_page,
         sources::{setup_sources_page, update_sources_list},
@@ -1212,6 +1212,10 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             view.progress_popup_progress_bar
                 .set_fraction(*n as f64 / *m as f64);
         }
+    }
+
+    if old.drum_machine != new.drum_machine {
+        update_drum_machine_view(new);
     }
 }
 
