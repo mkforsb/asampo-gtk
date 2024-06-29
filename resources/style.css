@@ -318,8 +318,9 @@ overlay#input-dialog {
 }
 
 #sequences-page #sequences-editor-transport-buttons button {
-    margin-left: 2em  border-width: 2px;
-    box-shadow: 0px 4px 4px 0px #777;;
+    margin-left: 1em;
+    border-width: 2px;
+    box-shadow: 0px 4px 4px 0px #777;
     padding-left: 2em;
     padding-right: 2em;
     -gtk-icon-size: 2em;
@@ -342,7 +343,7 @@ overlay#input-dialog {
 
 #sequences-editor-pads button {
     border-width: 2px;
-    box-shadow: 0px 2px 3px 0px #555
+    box-shadow: 0px 2px 3px 0px #555;
 }
 
 #sequences-page #sequences-editor-pads button label {
@@ -372,4 +373,40 @@ overlay#input-dialog {
     min-width: 0em;
     border-width: 2px;
     box-shadow: 0px 2px 3px 0px #555;
+}
+
+#sequences-editor-pads button.activated {
+    background: #faa;
+    transition-duration: 0.1s;
+    transition-property: all;
+}
+
+#sequences-editor-pads button:not(.activated).playing {
+    background: #afa;
+    transition-duration: 0.1s;
+    transition-property: all;
+}
+
+#sequences-editor-pads button.activated.playing {
+    background: #fdc;
+    transition-duration: 0.1s;
+    transition-property: all;
+}
+
+#sequences-editor-steps button.activated {
+    background: #f99;
+    transition-duration: 0.1s;
+    transition-property: all;
+}
+
+#sequences-editor-steps button:not(.activated).playing {
+    background: #0f0;
+    transition-duration: 0.1s;
+    transition-property: all;
+}
+
+#sequences-editor-steps button.activated.playing {
+    background: #fdc;
+    transition-duration: 0.1s;
+    transition-property: all;
 }
