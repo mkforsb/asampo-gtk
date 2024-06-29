@@ -58,7 +58,9 @@ use crate::{
         dialogs,
         menus::build_actions,
         samples::{setup_samples_page, update_samples_sidebar, SampleListEntry},
-        sequences::{setup_sequences_page, update_drum_machine_view},
+        sequences::{
+            setup_sequences_page, update_drum_machine_view, LABELS as DRUM_MACHINE_VIEW_LABELS,
+        },
         sets::{setup_sets_page, update_samplesets_detail, update_samplesets_list, LabellingKind},
         settings::setup_settings_page,
         sources::{setup_sources_page, update_sources_list},
@@ -1031,7 +1033,61 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             ..model
         }),
         AppMessage::DrumMachinePartClicked(_n) => Ok(model),
-        AppMessage::DrumMachineStepClicked(_n) => Ok(model),
+        AppMessage::DrumMachineStepClicked(n) => {
+            let amp = 0.5f32;
+            let mut new_sequence = model.drum_machine.sequence.clone();
+            let label = DRUM_MACHINE_VIEW_LABELS[model.drum_machine.activated_pad];
+
+            if new_sequence
+                .labels_at_step(n)
+                .ok_or(anyhow!("Drum machine sequence has no step {n}"))?
+                .contains(&label)
+            {
+                new_sequence.unset_step_trigger(
+                    n,
+                    DRUM_MACHINE_VIEW_LABELS[model.drum_machine.activated_pad],
+                );
+
+                if let Some(render_thread_tx) = &model.drum_machine.render_thread_tx {
+                    render_thread_tx
+                        .send(
+                            drumkit_render_thread::Message::EditSequenceUnsetStepTrigger {
+                                step: n,
+                                label,
+                            },
+                        )
+                        .map_err(|e| {
+                            anyhow!(
+                                "Failed sending update event to drum sequence render thread: {e}"
+                            )
+                        })?;
+                }
+            } else {
+                new_sequence.set_step_trigger(n, label, amp);
+
+                if let Some(render_thread_tx) = &model.drum_machine.render_thread_tx {
+                    render_thread_tx
+                        .send(drumkit_render_thread::Message::EditSequenceSetStepTrigger {
+                            step: n,
+                            label,
+                            amp,
+                        })
+                        .map_err(|e| {
+                            anyhow!(
+                                "Failed sending update event to drum sequence render thread: {e}"
+                            )
+                        })?;
+                }
+            }
+
+            Ok(AppModel {
+                drum_machine: DrumMachineModel {
+                    sequence: new_sequence,
+                    ..model.drum_machine
+                },
+                ..model
+            })
+        }
     }
 }
 
