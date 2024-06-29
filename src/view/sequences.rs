@@ -30,7 +30,7 @@ pub const LABELS: [DrumkitLabel; 16] = [
 ];
 
 pub fn setup_sequences_page(model_ptr: AppModelPtr, view: &AsampoView) {
-    setup_drum_machine(model_ptr, view);
+    setup_drum_machine_view(model_ptr, view);
 }
 
 // #[derive(Debug, Clone)]
@@ -38,7 +38,7 @@ pub fn setup_sequences_page(model_ptr: AppModelPtr, view: &AsampoView) {
 //
 // }
 
-fn setup_drum_machine(model_ptr: AppModelPtr, view: &AsampoView) {
+fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
     let objects = gtk::Builder::from_resource("/drum-machine.ui");
 
     macro_rules! connect {
