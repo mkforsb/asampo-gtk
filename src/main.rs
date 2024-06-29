@@ -392,19 +392,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             let added = samples.len() - len_before;
             drop(samples);
 
-            Ok(AppModel {
-                viewvalues: ViewValues {
-                    sources_sample_count: model
-                        .viewvalues
-                        .sources_sample_count
-                        .cloned_update_with(|mut m| {
-                            *(m.get_mut(&uuid).unwrap()) += added;
-                            Ok(m)
-                        })?,
-                    ..model.viewvalues
-                },
-                ..model
-            })
+            model.source_sample_count_add(uuid, added)
         }
 
         AppMessage::SourceLoadingDisconnected(uuid) => {
