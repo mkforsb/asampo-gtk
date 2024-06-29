@@ -27,6 +27,8 @@ pub fn sources_add_fs_fields_valid(model: &AppModel) -> bool {
         || model.viewvalues.sources_add_fs_extensions_entry.is_empty())
 }
 
+pub type ModelResult = Result<AppModel, anyhow::Error>;
+
 pub trait ModelOps {
     fn validate_sources_add_fs_fields(self) -> AppModel;
 

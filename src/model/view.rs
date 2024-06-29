@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::{
     config::AppConfig,
     ext::ClonedHashMapExt,
-    model::AppModel,
+    model::{AppModel, ModelResult},
     view::{dialogs, samples::SampleListEntry, sequences::DrumMachineView},
 };
 
@@ -100,8 +100,8 @@ impl ViewValues {
 pub trait ViewModelOps {
     fn set_latency_approx_label(self, text: String) -> AppModel;
     fn set_latency_approx_label_by_config(self, config: &AppConfig) -> AppModel;
-    fn init_source_sample_count(self, source_uuid: Uuid) -> Result<AppModel, anyhow::Error>;
-    fn reset_source_sample_count(self, source_uuid: Uuid) -> Result<AppModel, anyhow::Error>;
+    fn init_source_sample_count(self, source_uuid: Uuid) -> ModelResult;
+    fn reset_source_sample_count(self, source_uuid: Uuid) -> ModelResult;
     fn set_is_sources_add_fs_fields_valid(self, valid: bool) -> AppModel;
     fn clear_sources_add_fs_fields(self) -> AppModel;
     fn set_sources_add_fs_name_entry(self, text: impl Into<String>) -> AppModel;
@@ -129,7 +129,7 @@ impl ViewModelOps for AppModel {
         ))
     }
 
-    fn init_source_sample_count(self, source_uuid: Uuid) -> Result<AppModel, anyhow::Error> {
+    fn init_source_sample_count(self, source_uuid: Uuid) -> ModelResult {
         if self
             .viewvalues
             .sources_sample_count
@@ -150,7 +150,7 @@ impl ViewModelOps for AppModel {
         }
     }
 
-    fn reset_source_sample_count(self, source_uuid: Uuid) -> Result<AppModel, anyhow::Error> {
+    fn reset_source_sample_count(self, source_uuid: Uuid) -> ModelResult {
         if self
             .viewvalues
             .sources_sample_count

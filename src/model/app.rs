@@ -23,7 +23,7 @@ use uuid::Uuid;
 use crate::{
     config::AppConfig,
     ext::{ClonedHashMapExt, ClonedVecExt},
-    model::{DrumMachineModel, ViewFlags, ViewValues},
+    model::{DrumMachineModel, ModelResult, ViewFlags, ViewValues},
     view::samples::SampleListEntry,
 };
 
@@ -99,7 +99,7 @@ impl AppModel {
         }
     }
 
-    pub fn disable_source(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
+    pub fn disable_source(self, uuid: &Uuid) -> ModelResult {
         self.samples
             .borrow_mut()
             .retain(|s| s.source_uuid() != Some(uuid));
@@ -117,7 +117,7 @@ impl AppModel {
         })
     }
 
-    pub fn remove_source(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
+    pub fn remove_source(self, uuid: &Uuid) -> ModelResult {
         let model = self.disable_source(uuid)?;
 
         Ok(AppModel {
@@ -188,7 +188,7 @@ impl AppModel {
     }
 
     #[cfg(test)]
-    pub fn remove_sampleset(self, uuid: &Uuid) -> Result<Self, anyhow::Error> {
+    pub fn remove_sampleset(self, uuid: &Uuid) -> ModelResult {
         Ok(AppModel {
             sets_order: self.sets_order.clone_and_remove(uuid)?,
             sets: self.sets.clone_and_remove(uuid)?,
@@ -202,15 +202,15 @@ pub trait AppModelOps {
     fn set_config_save_timeout(self, deadline: Instant) -> AppModel;
     fn clear_config_save_timeout(self) -> AppModel;
 
-    fn add_source(self, source: Source) -> Result<AppModel, anyhow::Error>;
+    fn add_source(self, source: Source) -> ModelResult;
 
     fn add_source_loader(
         self,
         source_uuid: Uuid,
-        loader: mpsc::Receiver<Result<Sample, libasampo::errors::Error>>,
-    ) -> Result<AppModel, anyhow::Error>;
+        loader_rx: mpsc::Receiver<Result<Sample, libasampo::errors::Error>>,
+    ) -> ModelResult;
 
-    fn enable_source(self, uuid: &Uuid) -> Result<AppModel, anyhow::Error>;
+    fn enable_source(self, uuid: &Uuid) -> ModelResult;
 }
 
 impl AppModelOps for AppModel {
@@ -235,7 +235,7 @@ impl AppModelOps for AppModel {
         }
     }
 
-    fn add_source(self, source: Source) -> Result<AppModel, anyhow::Error> {
+    fn add_source(self, source: Source) -> ModelResult {
         debug_assert!(self.sources.len() == self.sources_order.len());
         debug_assert!(self
             .sources
@@ -257,7 +257,7 @@ impl AppModelOps for AppModel {
         self,
         source_uuid: Uuid,
         loader_rx: mpsc::Receiver<Result<Sample, libasampo::errors::Error>>,
-    ) -> Result<AppModel, anyhow::Error> {
+    ) -> ModelResult {
         if self.sources_loading.contains_key(&source_uuid) {
             Err(anyhow!("Failed to add source loader: UUID in use"))
         } else {
@@ -270,7 +270,7 @@ impl AppModelOps for AppModel {
         }
     }
 
-    fn enable_source(self, uuid: &Uuid) -> Result<AppModel, anyhow::Error> {
+    fn enable_source(self, uuid: &Uuid) -> ModelResult {
         Ok(AppModel {
             sources: self.sources.cloned_update_with(
                 |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
