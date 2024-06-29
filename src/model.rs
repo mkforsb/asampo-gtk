@@ -170,7 +170,7 @@ impl AppModel {
             use drumkit_render_thread as dkr;
 
             let (dks_render_thread_tx, dks_render_thread_rx) = mpsc::channel::<dkr::Message>();
-            let _ = dkr::spawn(audiothread_tx.clone(), dks_render_thread_rx);
+            let _ = dkr::spawn(audiothread_tx.clone(), dks_render_thread_rx, None);
 
             Some(dks_render_thread_tx)
         } else {
