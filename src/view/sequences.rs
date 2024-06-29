@@ -41,7 +41,7 @@ fn setup_drum_machine(model_ptr: AppModelPtr, view: &AsampoView) {
     }
 
     connect!(spinner "sequences-editor-tempo-entry",
-        x => AppMessage::DrumMachineTempoChanged(x.value_as_int() as u32));
+        x => AppMessage::DrumMachineTempoChanged(x.value_as_int() as u16));
 
     connect!(spinner "sequences-editor-swing-entry",
         x => AppMessage::DrumMachineSwingChanged(x.value_as_int() as u32));

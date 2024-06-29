@@ -148,7 +148,7 @@ enum AppMessage {
     ExportJobMessage(libasampo::samplesets::export::ExportJobMessage),
     ExportJobDisconnected,
     StopAllSoundButtonClicked,
-    DrumMachineTempoChanged(u32),
+    DrumMachineTempoChanged(u16),
     DrumMachineSwingChanged(u32),
     DrumMachinePlayClicked,
     DrumMachineStopClicked,
@@ -274,6 +274,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     None
                 };
 
+                #[allow(clippy::needless_update)]
                 Ok(AppModel {
                     config_save_timeout: None,
                     audiothread_tx: Some(audiothread_tx),
@@ -984,6 +985,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             }
 
             match &model.drum_machine.render_thread_tx {
+                #[allow(clippy::needless_update)]
                 Some(_) => Ok(AppModel {
                     drum_machine: DrumMachineModel {
                         render_thread_tx: None,
@@ -996,7 +998,15 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             }
         }
 
-        AppMessage::DrumMachineTempoChanged(_tempo) => Ok(model),
+        AppMessage::DrumMachineTempoChanged(tempo) => {
+            if let Some(dks_render_thread_tx) = &model.drum_machine.render_thread_tx {
+                let _ = dks_render_thread_tx
+                    .send(drumkit_render_thread::Message::SetTempo(tempo.try_into()?));
+            }
+
+            Ok(model)
+        }
+
         AppMessage::DrumMachineSwingChanged(_swing) => Ok(model),
         AppMessage::DrumMachinePlayClicked => Ok(model),
         AppMessage::DrumMachineStopClicked => Ok(model),

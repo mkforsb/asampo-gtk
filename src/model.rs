@@ -108,9 +108,7 @@ pub struct DrumMachineModel {
 
 impl DrumMachineModel {
     pub fn new(render_thread_tx: Option<Sender<drumkit_render_thread::Message>>) -> Self {
-        Self {
-            render_thread_tx,
-        }
+        Self { render_thread_tx }
     }
 }
 
