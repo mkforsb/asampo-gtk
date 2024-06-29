@@ -16,7 +16,7 @@ use libasampo::{
     prelude::*,
     samples::Sample,
     samplesets::{export::ExportJobMessage, SampleSet},
-    sequences::drumkit_render_thread,
+    sequences::{drumkit_render_thread, DrumkitSequence, NoteLength, TimeSpec},
     sources::Source,
 };
 use uuid::Uuid;
@@ -106,12 +106,13 @@ impl Default for ViewValues {
 #[derive(Clone, Debug)]
 pub struct DrumMachineModel {
     pub render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
+    pub sequence: DrumkitSequence,
     pub activated_pad: usize,
 }
 
 impl PartialEq for DrumMachineModel {
     fn eq(&self, other: &Self) -> bool {
-        if self.activated_pad != other.activated_pad {
+        if self.activated_pad != other.activated_pad || self.sequence != other.sequence {
             return false;
         }
 
@@ -120,9 +121,13 @@ impl PartialEq for DrumMachineModel {
 }
 
 impl DrumMachineModel {
-    pub fn new(render_thread_tx: Option<Sender<drumkit_render_thread::Message>>) -> Self {
+    pub fn new(
+        render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
+        sequence: DrumkitSequence,
+    ) -> Self {
         Self {
             render_thread_tx,
+            sequence,
             activated_pad: 8,
         }
     }
@@ -177,6 +182,10 @@ impl AppModel {
             None
         };
 
+        let mut empty_seq =
+            DrumkitSequence::new(TimeSpec::new(120, 4, 4).unwrap(), NoteLength::Sixteenth);
+        empty_seq.set_len(16);
+
         AppModel {
             config,
             config_save_timeout: None,
@@ -201,7 +210,7 @@ impl AppModel {
             sets_export_state: None,
             sets_export_progress: None,
             export_job_rx: None,
-            drum_machine: DrumMachineModel::new(dks_render_thread_tx),
+            drum_machine: DrumMachineModel::new(dks_render_thread_tx, empty_seq),
         }
     }
 

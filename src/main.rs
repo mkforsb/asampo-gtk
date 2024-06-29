@@ -44,7 +44,7 @@ use libasampo::{
         export::{Conversion, ExportJob, ExportJobMessage},
         BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
-    sequences::drumkit_render_thread,
+    sequences::{drumkit_render_thread, DrumkitSequence, NoteLength, TimeSpec},
     sources::{file_system_source::FilesystemSource, Source},
 };
 
@@ -274,15 +274,15 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     None
                 };
 
-                #[allow(clippy::needless_update)]
+                let mut empty_seq =
+                    DrumkitSequence::new(TimeSpec::new(120, 4, 4).unwrap(), NoteLength::Sixteenth);
+                empty_seq.set_len(16);
+
                 Ok(AppModel {
                     config_save_timeout: None,
                     audiothread_tx: Some(audiothread_tx),
                     _audiothread_handle,
-                    drum_machine: DrumMachineModel {
-                        render_thread_tx: dks_render_thread_tx,
-                        ..model.drum_machine
-                    },
+                    drum_machine: DrumMachineModel::new(dks_render_thread_tx, empty_seq),
                     ..model
                 })
             } else {
