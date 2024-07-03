@@ -11,7 +11,7 @@ use libasampo::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::model::AppModel;
+use crate::{config::AppConfig, model::AppModel};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SavefileV1 {
@@ -21,7 +21,7 @@ pub struct SavefileV1 {
 
 impl SavefileV1 {
     pub fn into_appmodel(self) -> Result<AppModel, anyhow::Error> {
-        let mut model = AppModel::new(None, None, None, None);
+        let mut model = AppModel::new(AppConfig::default(), None, None, None);
 
         for src in self.sources {
             let source = src.try_into_domain()?;

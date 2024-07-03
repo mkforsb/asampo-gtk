@@ -208,10 +208,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 .config_save_timeout
                 .is_some_and(|t| t <= Instant::now())
             {
-                let config = model
-                    .config
-                    .as_ref()
-                    .expect("There should be an active config");
+                let config = &model.config;
 
                 log::log!(
                     log::Level::Info,
@@ -284,11 +281,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SettingsOutputSampleRateChanged(choice) => {
-            let new_config = model
-                .config
-                .clone()
-                .ok_or(anyhow!("There should be an active config"))?
-                .with_samplerate_choice(choice);
+            let new_config = model.config.clone().with_samplerate_choice(choice);
 
             Ok(model
                 .set_latency_approx_label_by_config(&new_config)
@@ -297,11 +290,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SettingsBufferSizeChanged(samples) => {
-            let new_config = model
-                .config
-                .clone()
-                .ok_or(anyhow!("There should be an active config"))?
-                .with_buffer_size(samples);
+            let new_config = model.config.clone().with_buffer_size(samples);
 
             Ok(model
                 .set_latency_approx_label_by_config(&new_config)
@@ -310,11 +299,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SettingsSampleRateConversionQualityChanged(choice) => {
-            let new_config = model
-                .config
-                .clone()
-                .ok_or(anyhow!("There should be an active config"))?
-                .with_conversion_quality_choice(choice);
+            let new_config = model.config.clone().with_conversion_quality_choice(choice);
 
             Ok(model
                 .set_config(new_config)
@@ -325,7 +310,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             let new_config = model
                 .config
                 .clone()
-                .ok_or(anyhow!("There should be an active config"))?
                 .with_sample_playback_behavior_choice(choice);
 
             Ok(model
@@ -1237,7 +1221,7 @@ fn main() -> ExitCode {
         let view = AsampoView::new(app);
 
         let model = AppModel::new(
-            Some(config),
+            config,
             None,
             Some(tx.clone()),
             Some(audiothread_handle.clone()),
@@ -1399,7 +1383,7 @@ mod tests {
         let uuid = *src.uuid();
 
         Savefile::save(
-            &AppModel::new(Some(AppConfig::default()), None, None, None)
+            &AppModel::new(AppConfig::default(), None, None, None)
                 .add_source(src)
                 .unwrap(),
             tmpfile

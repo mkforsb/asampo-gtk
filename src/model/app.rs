@@ -35,7 +35,7 @@ pub enum ExportState {
 
 #[derive(Clone, Debug)]
 pub struct AppModel {
-    pub config: Option<AppConfig>,
+    pub config: AppConfig,
     pub config_save_timeout: Option<std::time::Instant>,
     pub savefile: Option<String>,
     pub viewflags: ViewFlags,
@@ -62,12 +62,12 @@ pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
 
 impl AppModel {
     pub fn new(
-        config: Option<AppConfig>,
+        config: AppConfig,
         savefile: Option<String>,
         audiothread_tx: Option<mpsc::Sender<audiothread::Message>>,
         audiothread_handle: Option<Rc<JoinHandle<()>>>,
     ) -> Self {
-        let viewvalues = ViewValues::new(config.as_ref());
+        let viewvalues = ViewValues::new(&config);
 
         let drum_machine = if let Some(tx) = &audiothread_tx {
             DrumMachineModel::new_with_render_thread(tx.clone())
@@ -215,10 +215,7 @@ pub trait AppModelOps {
 
 impl AppModelOps for AppModel {
     fn set_config(self, config: AppConfig) -> AppModel {
-        AppModel {
-            config: Some(config),
-            ..self
-        }
+        AppModel { config, ..self }
     }
 
     fn set_config_save_timeout(self, deadline: Instant) -> AppModel {
@@ -293,7 +290,7 @@ mod tests {
 
     #[test]
     fn test_add_remove_sampleset() {
-        let model = AppModel::new(None, None, None, None);
+        let model = AppModel::new(AppConfig::default(), None, None, None);
         let set = BaseSampleSet::new("Favorites".to_string());
 
         let model = model.add_sampleset(SampleSet::BaseSampleSet(set.clone()));

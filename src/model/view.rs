@@ -86,12 +86,9 @@ impl Default for ViewValues {
 }
 
 impl ViewValues {
-    pub fn new(config: Option<&AppConfig>) -> Self {
+    pub fn new(config: &AppConfig) -> Self {
         Self {
-            settings_latency_approx_label: match &config {
-                Some(conf) => conf.fmt_latency_approx(),
-                None => "???".to_string(),
-            },
+            settings_latency_approx_label: config.fmt_latency_approx(),
             ..Self::default()
         }
     }
