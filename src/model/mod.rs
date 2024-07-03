@@ -12,6 +12,7 @@ use libasampo::{
 };
 
 mod app;
+mod delegate;
 mod drum_machine;
 mod view;
 
