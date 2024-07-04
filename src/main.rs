@@ -339,7 +339,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SampleSidebarAddToMostRecentlyUsedSetClicked => {
             let mru_uuid = model
-                .set_most_recently_added_to()
+                .get_set_most_recently_added_to()
                 .ok_or(anyhow!("No sample set recently added to"))?;
 
             model::util::add_selected_sample_to_sampleset_by_uuid(model, &mru_uuid)

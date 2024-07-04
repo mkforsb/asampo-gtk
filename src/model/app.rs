@@ -385,7 +385,7 @@ impl AppModel {
         }
     }
 
-    pub fn set_most_recently_added_to(&self) -> Option<Uuid> {
+    pub fn get_set_most_recently_added_to(&self) -> Option<Uuid> {
         self.sets_most_recently_used_uuid
     }
 
