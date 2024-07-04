@@ -450,21 +450,18 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SampleSetSampleSelected(sample) => {
             let stream = model
-                .sources
-                .get(
-                    sample
+                .source(
+                    *sample
                         .source_uuid()
-                        .ok_or(anyhow!("Sample missing source uuid"))?,
-                )
-                .ok_or(anyhow!("Failed to get source for sample"))?
+                        .ok_or(anyhow!("Sample missing source UUID"))?,
+                )?
                 .stream(&sample)?;
 
             model
-                .audiothread_tx
-                .send(audiothread::Message::PlaySymphoniaSource(
+                .audiothread_send(audiothread::Message::PlaySymphoniaSource(
                     audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
                 ))
-                .map_err(|_| anyhow!("Send error on audio thread control channel"))?;
+                .map_err(|e| anyhow!("Send error on audio thread control channel: {e}"))?;
 
             Ok(model)
         }
