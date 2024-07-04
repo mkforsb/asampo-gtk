@@ -467,12 +467,12 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SampleSetLabellingKindChanged(kind) => {
-            let uuid = model
+            let set_uuid = model
                 .get_selected_set()
                 .ok_or(anyhow!("No sample set selected"))?;
 
             model.set_labelling(
-                uuid,
+                set_uuid,
                 match kind {
                     LabellingKind::None => None,
                     LabellingKind::Drumkit => {
