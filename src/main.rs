@@ -273,21 +273,18 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model.signal_sources_add_fs_begin_browse())
         }
 
-        AppMessage::AddFilesystemSourcePathBrowseSubmitted(text) => Ok(match (
-            model.viewvalues.sources_add_fs_name_entry.is_empty(),
-            Path::new(&text).file_name(),
-        ) {
-            (true, Some(filename)) => model
-                .set_sources_add_fs_name_entry(
+        AppMessage::AddFilesystemSourcePathBrowseSubmitted(text) => {
+            Ok(match Path::new(&text).file_name() {
+                Some(filename) => model.set_sources_add_fs_name_entry_if_empty(
                     filename
                         .to_str()
                         .ok_or(anyhow!("Path contains invalid UTF-8"))?,
-                )
-                .set_sources_add_fs_path_entry(text),
-
-            _ => model.set_sources_add_fs_path_entry(text),
+                ),
+                None => model,
+            }
+            .set_sources_add_fs_path_entry(text)
+            .validate_sources_add_fs_fields())
         }
-        .validate_sources_add_fs_fields()),
 
         AppMessage::AddFilesystemSourcePathBrowseError(error) => {
             log::log!(log::Level::Debug, "Error browsing for folder: {error:?}");

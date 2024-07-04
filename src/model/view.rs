@@ -196,6 +196,17 @@ impl ViewValues {
         }
     }
 
+    pub fn set_sources_add_fs_name_entry_if_empty(self, text: impl Into<String>) -> ViewValues {
+        if self.sources_add_fs_name_entry.is_empty() {
+            ViewValues {
+                sources_add_fs_name_entry: text.into(),
+                ..self
+            }
+        } else {
+            self
+        }
+    }
+
     pub fn set_sources_add_fs_path_entry(self, text: impl Into<String>) -> ViewValues {
         ViewValues {
             sources_add_fs_path_entry: text.into(),
