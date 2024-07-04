@@ -11,9 +11,10 @@ use uuid::Uuid;
 use crate::{
     config::AppConfig,
     ext::ClonedHashMapExt,
-    model::{AppModel, ModelResult},
     view::{dialogs, samples::SampleListEntry, sequences::DrumMachineView},
 };
+
+type Result<T> = std::result::Result<T, anyhow::Error>;
 
 #[derive(Debug, Clone)]
 pub struct ViewFlags {
@@ -42,6 +43,29 @@ impl Default for ViewFlags {
             sets_export_show_dialog: false,
             sets_export_begin_browse: false,
             sets_export_fields_valid: false,
+        }
+    }
+}
+
+impl ViewFlags {
+    pub fn set_is_sources_add_fs_fields_valid(self, valid: bool) -> ViewFlags {
+        ViewFlags {
+            sources_add_fs_fields_valid: valid,
+            ..self
+        }
+    }
+
+    pub fn signal_sources_add_fs_begin_browse(self) -> ViewFlags {
+        ViewFlags {
+            sources_add_fs_begin_browse: true,
+            ..self
+        }
+    }
+
+    pub fn clear_signal_sources_add_fs_begin_browse(self) -> ViewFlags {
+        ViewFlags {
+            sources_add_fs_begin_browse: false,
+            ..self
         }
     }
 }
@@ -92,95 +116,51 @@ impl ViewValues {
             ..Self::default()
         }
     }
-}
 
-pub trait ViewModelOps {
-    fn set_latency_approx_label(self, text: String) -> AppModel;
-    fn set_latency_approx_label_by_config(self, config: &AppConfig) -> AppModel;
-    fn init_source_sample_count(self, source_uuid: Uuid) -> ModelResult;
-    fn source_sample_count_add(self, source_uuid: Uuid, add: usize) -> ModelResult;
-    fn reset_source_sample_count(self, source_uuid: Uuid) -> ModelResult;
-    fn set_is_sources_add_fs_fields_valid(self, valid: bool) -> AppModel;
-    fn clear_sources_add_fs_fields(self) -> AppModel;
-    fn set_sources_add_fs_name_entry(self, text: impl Into<String>) -> AppModel;
-    fn set_sources_add_fs_path_entry(self, text: impl Into<String>) -> AppModel;
-    fn set_sources_add_fs_extensions_entry(self, text: impl Into<String>) -> AppModel;
-    fn signal_sources_add_fs_begin_browse(self) -> AppModel;
-    fn clear_signal_sources_add_fs_begin_browse(self) -> AppModel;
-}
-
-impl ViewModelOps for AppModel {
-    fn set_latency_approx_label(self, text: String) -> AppModel {
-        AppModel {
-            viewvalues: ViewValues {
-                settings_latency_approx_label: text,
-                ..self.viewvalues
-            },
+    pub fn set_latency_approx_label(self, text: String) -> ViewValues {
+        ViewValues {
+            settings_latency_approx_label: text,
             ..self
         }
     }
 
-    fn set_latency_approx_label_by_config(self, config: &AppConfig) -> AppModel {
+    pub fn set_latency_approx_label_by_config(self, config: &AppConfig) -> ViewValues {
         self.set_latency_approx_label(format!(
             "~{:.1} ms",
             config.buffer_size_frames as f32 / config.output_samplerate_hz as f32 * 1000.0
         ))
     }
 
-    fn init_source_sample_count(self, source_uuid: Uuid) -> ModelResult {
-        if self
-            .viewvalues
-            .sources_sample_count
-            .contains_key(&source_uuid)
-        {
+    pub fn init_source_sample_count(self, source_uuid: Uuid) -> Result<ViewValues> {
+        if self.sources_sample_count.contains_key(&source_uuid) {
             Err(anyhow!("Failed to init source sample count: UUID in use"))
         } else {
-            Ok(AppModel {
-                viewvalues: ViewValues {
-                    sources_sample_count: self
-                        .viewvalues
-                        .sources_sample_count
-                        .clone_and_insert(source_uuid, 0),
-                    ..self.viewvalues
-                },
+            Ok(ViewValues {
+                sources_sample_count: self.sources_sample_count.clone_and_insert(source_uuid, 0),
                 ..self
             })
         }
     }
 
-    fn source_sample_count_add(self, source_uuid: Uuid, add: usize) -> ModelResult {
-        Ok(AppModel {
-            viewvalues: ViewValues {
-                sources_sample_count: self.viewvalues.sources_sample_count.cloned_update_with(
-                    |mut m| {
-                        *(m.get_mut(&source_uuid).ok_or(anyhow!(
-                            "Failed to update source sample count: UUID not present"
-                        )))? += add;
-                        Ok(m)
-                    },
-                )?,
-                ..self.viewvalues
-            },
+    pub fn source_sample_count_add(self, source_uuid: Uuid, add: usize) -> Result<ViewValues> {
+        Ok(ViewValues {
+            sources_sample_count: self.sources_sample_count.cloned_update_with(|mut m| {
+                *(m.get_mut(&source_uuid).ok_or(anyhow!(
+                    "Failed to update source sample count: UUID not present"
+                )))? += add;
+                Ok(m)
+            })?,
             ..self
         })
     }
 
-    fn reset_source_sample_count(self, source_uuid: Uuid) -> ModelResult {
-        if self
-            .viewvalues
-            .sources_sample_count
-            .contains_key(&source_uuid)
-        {
-            Ok(AppModel {
-                viewvalues: ViewValues {
-                    sources_sample_count: self.viewvalues.sources_sample_count.cloned_update_with(
-                        |mut m| {
-                            *(m.get_mut(&source_uuid).unwrap()) = 0;
-                            Ok(m)
-                        },
-                    )?,
-                    ..self.viewvalues
-                },
+    pub fn reset_source_sample_count(self, source_uuid: Uuid) -> Result<ViewValues> {
+        if self.sources_sample_count.contains_key(&source_uuid) {
+            Ok(ViewValues {
+                sources_sample_count: self.sources_sample_count.cloned_update_with(|mut m| {
+                    *(m.get_mut(&source_uuid).unwrap()) = 0;
+                    Ok(m)
+                })?,
                 ..self
             })
         } else {
@@ -190,74 +170,32 @@ impl ViewModelOps for AppModel {
         }
     }
 
-    fn set_is_sources_add_fs_fields_valid(self, valid: bool) -> AppModel {
-        AppModel {
-            viewflags: ViewFlags {
-                sources_add_fs_fields_valid: valid,
-                ..self.viewflags
-            },
+    pub fn clear_sources_add_fs_fields(self) -> ViewValues {
+        ViewValues {
+            sources_add_fs_name_entry: String::from(""),
+            sources_add_fs_path_entry: String::from(""),
+            sources_add_fs_extensions_entry: String::from(""),
             ..self
         }
     }
 
-    fn clear_sources_add_fs_fields(self) -> AppModel {
-        AppModel {
-            viewvalues: ViewValues {
-                sources_add_fs_name_entry: String::from(""),
-                sources_add_fs_path_entry: String::from(""),
-                sources_add_fs_extensions_entry: String::from(""),
-                ..self.viewvalues
-            },
+    pub fn set_sources_add_fs_name_entry(self, text: impl Into<String>) -> ViewValues {
+        ViewValues {
+            sources_add_fs_name_entry: text.into(),
             ..self
         }
     }
 
-    fn set_sources_add_fs_name_entry(self, text: impl Into<String>) -> AppModel {
-        AppModel {
-            viewvalues: ViewValues {
-                sources_add_fs_name_entry: text.into(),
-                ..self.viewvalues
-            },
+    pub fn set_sources_add_fs_path_entry(self, text: impl Into<String>) -> ViewValues {
+        ViewValues {
+            sources_add_fs_path_entry: text.into(),
             ..self
         }
     }
 
-    fn set_sources_add_fs_path_entry(self, text: impl Into<String>) -> AppModel {
-        AppModel {
-            viewvalues: ViewValues {
-                sources_add_fs_path_entry: text.into(),
-                ..self.viewvalues
-            },
-            ..self
-        }
-    }
-
-    fn set_sources_add_fs_extensions_entry(self, text: impl Into<String>) -> AppModel {
-        AppModel {
-            viewvalues: ViewValues {
-                sources_add_fs_extensions_entry: text.into(),
-                ..self.viewvalues
-            },
-            ..self
-        }
-    }
-
-    fn signal_sources_add_fs_begin_browse(self) -> AppModel {
-        AppModel {
-            viewflags: ViewFlags {
-                sources_add_fs_begin_browse: true,
-                ..self.viewflags
-            },
-            ..self
-        }
-    }
-
-    fn clear_signal_sources_add_fs_begin_browse(self) -> AppModel {
-        AppModel {
-            viewflags: ViewFlags {
-                sources_add_fs_begin_browse: false,
-                ..self.viewflags
-            },
+    pub fn set_sources_add_fs_extensions_entry(self, text: impl Into<String>) -> ViewValues {
+        ViewValues {
+            sources_add_fs_extensions_entry: text.into(),
             ..self
         }
     }

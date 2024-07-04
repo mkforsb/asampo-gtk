@@ -23,7 +23,7 @@ use uuid::Uuid;
 use crate::{
     config::AppConfig,
     ext::{ClonedHashMapExt, ClonedVecExt},
-    model::{DrumMachineModel, ModelResult, ViewFlags, ViewValues},
+    model::{delegate::delegate, DrumMachineModel, ModelResult, ViewFlags, ViewValues},
     view::samples::SampleListEntry,
 };
 
@@ -262,6 +262,20 @@ impl AppModel {
             ..self
         })
     }
+
+    delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
+    delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
+    delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
+
+    // delegate!(viewvalues, set_latency_approx_label(text: String) -> Model);
+    delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);
+    delegate!(viewvalues, init_source_sample_count(source_uuid: Uuid) -> Result);
+    delegate!(viewvalues, source_sample_count_add(source_uuid: Uuid, add: usize) -> Result);
+    delegate!(viewvalues, reset_source_sample_count(source_uuid: Uuid) -> Result);
+    delegate!(viewvalues, clear_sources_add_fs_fields() -> Model);
+    delegate!(viewvalues, set_sources_add_fs_name_entry(text: impl Into<String>) -> Model);
+    delegate!(viewvalues, set_sources_add_fs_path_entry(text: impl Into<String>) -> Model);
+    delegate!(viewvalues, set_sources_add_fs_extensions_entry(text: impl Into<String>) -> Model);
 }
 
 #[cfg(test)]

@@ -12,7 +12,7 @@ use libasampo::{
 };
 
 mod app;
-mod delegate;
+pub(in crate::model) mod delegate;
 mod drum_machine;
 mod view;
 
@@ -20,7 +20,7 @@ pub mod util;
 
 pub use app::{AppModel, AppModelPtr, ExportState};
 pub use drum_machine::DrumMachineModel;
-pub use view::{ExportKind, ViewFlags, ViewModelOps, ViewValues};
+pub use view::{ExportKind, ViewFlags, ViewValues};
 
 pub fn sources_add_fs_fields_valid(model: &AppModel) -> bool {
     !(model.viewvalues.sources_add_fs_name_entry.is_empty()
