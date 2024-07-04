@@ -225,7 +225,7 @@ impl ViewValues {
         }
     }
 
-    pub fn get_listed_sample(&self, index: u32) -> std::result::Result<Sample, anyhow::Error> {
+    pub fn get_listed_sample(&self, index: u32) -> Result<Sample> {
         // TODO: is it possible to avoid cloning here?
         Ok(self
             .samples_listview_model
@@ -236,5 +236,12 @@ impl ViewValues {
             .value
             .borrow()
             .clone())
+    }
+
+    pub fn set_samples_list_filter_text(self, text: impl Into<String>) -> ViewValues {
+        ViewValues {
+            samples_list_filter: text.into(),
+            ..self
+        }
     }
 }

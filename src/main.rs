@@ -329,14 +329,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model.set_selected_sample(Some(sample)))
         }
 
-        AppMessage::SamplesFilterChanged(text) => Ok(AppModel {
-            viewvalues: ViewValues {
-                samples_list_filter: text,
-                ..model.viewvalues
-            },
-            ..model
-        }
-        .tap(AppModel::populate_samples_listmodel)),
+        AppMessage::SamplesFilterChanged(text) => Ok(model
+            .set_samples_list_filter_text(text)
+            .tap(AppModel::populate_samples_listmodel)),
 
         AppMessage::SampleSidebarAddToSetClicked => Ok(AppModel {
             viewflags: ViewFlags {

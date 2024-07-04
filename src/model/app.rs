@@ -373,10 +373,9 @@ impl AppModel {
     }
 
     pub fn get_source(&self, uuid: Uuid) -> Result<&Source, anyhow::Error> {
-        Ok(self
-            .sources
+        self.sources
             .get(&uuid)
-            .ok_or(anyhow!("Failed to get source: UUID not present"))?)
+            .ok_or(anyhow!("Failed to get source: UUID not present"))
     }
 
     pub fn set_selected_sample(self, maybe_sample: Option<Sample>) -> AppModel {
@@ -402,6 +401,7 @@ impl AppModel {
     delegate!(viewvalues, set_sources_add_fs_path_entry(text: impl Into<String>) -> Model);
     delegate!(viewvalues, set_sources_add_fs_extensions_entry(text: impl Into<String>) -> Model);
     delegate!(viewvalues, get_listed_sample(index: u32) -> Result<Sample, anyhow::Error>);
+    delegate!(viewvalues, set_samples_list_filter_text(text: impl Into<String>) -> Model);
 
     delegate!(drum_machine, is_render_thread_active()
         as is_drum_machine_render_thread_active -> bool);
