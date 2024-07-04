@@ -14,7 +14,7 @@ use anyhow::anyhow;
 use gtk::{glib::clone, prelude::ListModelExt};
 use libasampo::{
     samples::{Sample, SampleOps},
-    samplesets::{export::ExportJobMessage, SampleSet, SampleSetOps},
+    samplesets::{export::ExportJobMessage, SampleSet, SampleSetLabelling, SampleSetOps},
     sequences::drumkit_render_thread,
     sources::{file_system_source::FilesystemSource, Source, SourceOps},
 };
@@ -570,6 +570,26 @@ impl AppModel {
                 ..self
             })
         }
+    }
+
+    pub fn get_selected_set(&self) -> Option<Uuid> {
+        self.sets_selected_set
+    }
+
+    pub fn set_labelling(
+        self,
+        set_uuid: Uuid,
+        labelling: Option<SampleSetLabelling>,
+    ) -> AnyhowResult<AppModel> {
+        let mut result = self.clone();
+
+        result
+            .sets
+            .get_mut(&set_uuid)
+            .ok_or(anyhow!("Failed to set labelling: UUID not present"))?
+            .set_labelling(labelling);
+
+        Ok(result)
     }
 
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
