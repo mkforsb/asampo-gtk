@@ -398,7 +398,7 @@ impl AppModel {
 
     pub fn validate_sources_add_fs_fields(self) -> AppModel {
         let valid = Self::sources_add_fs_fields_valid(&self);
-        self.set_is_sources_add_fs_fields_valid(valid)
+        self.set_are_sources_add_fs_fields_valid(valid)
     }
 
     pub fn commit_file_system_source(self) -> AnyhowResult<AppModel> {
@@ -440,7 +440,7 @@ impl AppModel {
             .add_source(new_source.clone())?
             .enable_source(&uuid)?
             .clear_sources_add_fs_fields()
-            .set_is_sources_add_fs_fields_valid(false)
+            .set_are_sources_add_fs_fields_valid(false)
             .add_source_loader(uuid, loader_rx)
     }
 
@@ -591,7 +591,7 @@ impl AppModel {
         Ok(result)
     }
 
-    delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
+    delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, signal_add_sample_to_set_show_dialog() -> Model);

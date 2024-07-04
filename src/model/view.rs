@@ -56,7 +56,7 @@ impl Default for ViewFlags {
 }
 
 impl ViewFlags {
-    pub fn set_is_sources_add_fs_fields_valid(self, valid: bool) -> ViewFlags {
+    pub fn set_are_sources_add_fs_fields_valid(self, valid: bool) -> ViewFlags {
         ViewFlags {
             sources_add_fs_fields_valid: valid,
             ..self
