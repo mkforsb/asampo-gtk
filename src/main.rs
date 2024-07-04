@@ -306,11 +306,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SourceLoadingDisconnected(uuid) => {
             model.populate_samples_listmodel();
-
-            Ok(AppModel {
-                sources_loading: model.sources_loading.clone_and_remove(&uuid)?,
-                ..model
-            })
+            model.remove_source_loader(uuid)
         }
 
         AppMessage::SampleListSampleSelected(index) => {

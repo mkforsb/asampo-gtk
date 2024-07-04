@@ -236,6 +236,17 @@ impl AppModel {
         }
     }
 
+    pub fn remove_source_loader(self, source_uuid: Uuid) -> ModelResult {
+        if !self.sources_loading.contains_key(&source_uuid) {
+            Err(anyhow!("Failed to remove source loader: UUID not present"))
+        } else {
+            Ok(AppModel {
+                sources_loading: self.sources_loading.clone_and_remove(&source_uuid)?,
+                ..self
+            })
+        }
+    }
+
     pub fn enable_source(self, uuid: &Uuid) -> ModelResult {
         Ok(AppModel {
             sources: self.sources.cloned_update_with(
