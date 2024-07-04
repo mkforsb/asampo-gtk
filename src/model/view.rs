@@ -389,4 +389,12 @@ impl ViewValues {
             ..self
         }
     }
+
+    pub fn export_target_dir(&self) -> &String {
+        &self.sets_export_target_dir_entry
+    }
+
+    pub fn export_kind(&self) -> &ExportKind {
+        &self.sets_export_kind
+    }
 }

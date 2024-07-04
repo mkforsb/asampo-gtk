@@ -589,6 +589,24 @@ impl AppModel {
         Ok(result)
     }
 
+    pub fn sources(&self) -> &HashMap<Uuid, Source> {
+        &self.sources
+    }
+
+    pub fn set_export_state(self, maybe_state: Option<ExportState>) -> AppModel {
+        AppModel {
+            sets_export_state: maybe_state,
+            ..self
+        }
+    }
+
+    pub fn set_export_job_rx(self, maybe_rx: Option<mpsc::Receiver<ExportJobMessage>>) -> AppModel {
+        AppModel {
+            export_job_rx: maybe_rx.map(Rc::new),
+            ..self
+        }
+    }
+
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
@@ -625,6 +643,8 @@ impl AppModel {
     delegate!(viewvalues, init_export_progress(total_items: usize) -> Model);
     delegate!(viewvalues, set_export_items_completed(completed: usize) -> Result);
     delegate!(viewvalues, reset_export_progress() -> Model);
+    delegate!(viewvalues, export_target_dir() -> &String);
+    delegate!(viewvalues, export_kind() -> &ExportKind);
 
     delegate!(drum_machine, is_render_thread_active()
         as is_drum_machine_render_thread_active -> bool);

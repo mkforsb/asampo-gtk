@@ -508,27 +508,24 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::PerformExportClicked => {
             use libasampo::samplesets::export::{RateConversionQuality, WavSampleFormat, WavSpec};
 
-            let sampleset = model
-                .sets
-                .get(
-                    &model
-                        .sets_selected_set
+            let set = model
+                .get_set(
+                    model
+                        .get_selected_set()
                         .ok_or(anyhow!("No sample set selected"))?,
-                )
-                .ok_or(anyhow!("Broken state, sample set not found"))?
+                )?
                 .clone();
 
-            let num_samples = sampleset.len();
+            let num_samples = set.len();
+            let (export_tx, export_rx) = std::sync::mpsc::channel::<ExportJobMessage>();
+            let sources = model.sources().clone();
+            let target_dir = model.export_target_dir().clone();
+            let export_kind = model.export_kind().clone();
 
-            let (tx, rx) = std::sync::mpsc::channel::<ExportJobMessage>();
-
-            std::thread::spawn(clone!(@strong model => move || {
+            std::thread::spawn(move || {
                 let job = ExportJob::new(
-                    model
-                        .viewvalues
-                        .sets_export_target_dir_entry
-                        .clone(),
-                    match model.viewvalues.sets_export_kind {
+                    target_dir,
+                    match export_kind {
                         model::ExportKind::PlainCopy => None,
                         model::ExportKind::Conversion => Some(Conversion::Wav(
                             WavSpec {
@@ -539,17 +536,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                             },
                             Some(RateConversionQuality::High),
                         )),
-                    });
+                    },
+                );
 
-                job.perform(&sampleset, &model.sources, Some(tx));
-            }));
+                job.perform(&set, &sources, Some(export_tx));
+            });
 
-            Ok(AppModel {
-                sets_export_state: Some(model::ExportState::Exporting),
-                export_job_rx: Some(Rc::new(rx)),
-                ..model
-            }
-            .init_export_progress(num_samples))
+            Ok(model
+                .set_export_state(Some(model::ExportState::Exporting))
+                .set_export_job_rx(Some(export_rx))
+                .init_export_progress(num_samples))
         }
 
         AppMessage::PlainCopyExportSelected => {
