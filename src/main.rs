@@ -326,10 +326,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 ))
                 .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
 
-            Ok(AppModel {
-                samplelist_selected_sample: Some(sample),
-                ..model
-            })
+            Ok(model.set_selected_sample(Some(sample)))
         }
 
         AppMessage::SamplesFilterChanged(text) => Ok(AppModel {

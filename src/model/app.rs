@@ -373,7 +373,17 @@ impl AppModel {
     }
 
     pub fn get_source(&self, uuid: Uuid) -> Result<&Source, anyhow::Error> {
-        Ok(self.sources.get(&uuid).ok_or(anyhow!("Failed to get source: UUID not present"))?)
+        Ok(self
+            .sources
+            .get(&uuid)
+            .ok_or(anyhow!("Failed to get source: UUID not present"))?)
+    }
+
+    pub fn set_selected_sample(self, maybe_sample: Option<Sample>) -> AppModel {
+        AppModel {
+            samplelist_selected_sample: maybe_sample,
+            ..self
+        }
     }
 
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
