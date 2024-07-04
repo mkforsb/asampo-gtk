@@ -86,6 +86,20 @@ impl ViewFlags {
             ..self
         }
     }
+
+    // pub fn enable_set_export(self) -> ViewFlags {
+    //     ViewFlags {
+    //         sets_export_enabled: true,
+    //         ..self
+    //     }
+    // }
+
+    pub fn disable_set_export(self) -> ViewFlags {
+        ViewFlags {
+            sets_export_enabled: false,
+            ..self
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -255,6 +269,13 @@ impl ViewValues {
     pub fn set_samples_list_filter_text(self, text: impl Into<String>) -> ViewValues {
         ViewValues {
             samples_list_filter: text.into(),
+            ..self
+        }
+    }
+
+    pub fn clear_sources_sample_counts(self) -> ViewValues {
+        ViewValues {
+            sources_sample_count: HashMap::new(),
             ..self
         }
     }

@@ -371,48 +371,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             log::log!(log::Level::Info, "Loading from {filename}");
 
             match Savefile::load(&filename) {
-                Ok(loaded_app_model) => {
-                    let model = AppModel {
-                        viewvalues: ViewValues {
-                            sources_sample_count: loaded_app_model
-                                .sources
-                                .keys()
-                                .map(|k| (*k, 0))
-                                .collect(),
-                            ..model.viewvalues
-                        },
-                        sources: loaded_app_model.sources,
-                        sources_order: loaded_app_model.sources_order,
-                        sets: loaded_app_model.sets,
-                        sets_order: loaded_app_model.sets_order,
-                        ..model
-                    };
-
-                    model.samples.borrow_mut().clear();
-                    model.populate_samples_listmodel();
-
-                    Ok(AppModel {
-                        sources_loading: model
-                            .sources
-                            .iter()
-                            .filter_map(|(uuid, source)| match source.is_enabled() {
-                                true => {
-                                    let (tx, rx) = std::sync::mpsc::channel::<
-                                        Result<Sample, libasampo::errors::Error>,
-                                    >();
-                                    std::thread::spawn(clone!(@strong source => move || {
-                                        source.list_async(tx);
-                                    }));
-
-                                    Some((*uuid, Rc::new(rx)))
-                                }
-
-                                false => None,
-                            })
-                            .collect(),
-                        ..model
-                    })
-                }
+                Ok(loaded_savefile) => model
+                    .clear_sources()
+                    .clear_sets()
+                    .load_sources(loaded_savefile.sources_domained()?)?
+                    .load_sets(loaded_savefile.sets_domained()?),
                 Err(e) => Err(anyhow::Error::new(ErrorWithEffect::AlertDialog {
                     text: "Error loading savefile".to_string(),
                     detail: e.to_string(),
@@ -1255,7 +1218,14 @@ mod tests {
     fn test_using_real_savefile_in_test() {
         use libasampo::sources::{file_system_source::FilesystemSource, Source};
 
-        savefile_for_test::LOAD.set(Some(savefile::Savefile::load));
+        savefile_for_test::LOAD.set(Some(|path| match savefile::Savefile::load(path) {
+            Ok(loaded_savefile) => Ok(savefile_for_test::Savefile {
+                sources_domained: loaded_savefile.sources_domained()?,
+                sets_domained: loaded_savefile.sets_domained()?,
+            }),
+            Err(e) => Err(e),
+        }));
+
         savefile_for_test::SAVE.set(Some(savefile::Savefile::save));
 
         let tmpfile = tempfile::NamedTempFile::new()
@@ -1282,7 +1252,7 @@ mod tests {
         )
         .expect("Should be able to Savefile::save to a temporary file");
 
-        let model = Savefile::load(
+        let loaded_savefile = Savefile::load(
             tmpfile
                 .to_str()
                 .expect("Temporary file should have UTF-8 filename"),
@@ -1290,9 +1260,11 @@ mod tests {
         .expect("Should be able to Savefile::load from temporary file");
 
         assert_eq!(
-            model
-                .sources
-                .get(&uuid)
+            loaded_savefile
+                .sources_domained()
+                .unwrap()
+                .iter()
+                .find(|s| *s.uuid() == uuid)
                 .expect("Loaded model should contain the fake source")
                 .name(),
             Some("abc123")

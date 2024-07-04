@@ -401,7 +401,7 @@ impl AppModel {
         self.set_is_sources_add_fs_fields_valid(valid)
     }
 
-    pub fn commit_file_system_source(self) -> Result<AppModel, anyhow::Error> {
+    pub fn commit_file_system_source(self) -> AnyhowResult<AppModel> {
         if Self::sources_add_fs_fields_valid(&self) {
             let name = self.viewvalues.sources_add_fs_name_entry.clone();
             let path = self.viewvalues.sources_add_fs_path_entry.clone();
@@ -426,7 +426,7 @@ impl AppModel {
         name: String,
         path: String,
         exts: Vec<String>,
-    ) -> Result<AppModel, anyhow::Error> {
+    ) -> AnyhowResult<AppModel> {
         let new_source = Source::FilesystemSource(FilesystemSource::new_named(name, path, exts));
         let uuid = *new_source.uuid();
 
@@ -449,11 +449,87 @@ impl AppModel {
         self
     }
 
+    pub fn clear_sources(self) -> AppModel {
+        AppModel {
+            sources: HashMap::new(),
+            sources_order: Vec::new(),
+            sources_loading: HashMap::new(),
+            samples: Rc::new(RefCell::new(Vec::new())),
+            ..self
+        }
+        .clear_sources_sample_counts()
+    }
+
+    pub fn clear_sets(self) -> AppModel {
+        AppModel {
+            sets: HashMap::new(),
+            sets_order: Vec::new(),
+            sets_selected_set: None,
+            sets_most_recently_used_uuid: None,
+            sets_export_state: None,
+            sets_export_progress: None,
+            ..self
+        }
+        .disable_set_export()
+    }
+
+    pub fn load_sources(self, sources: Vec<Source>) -> AnyhowResult<AppModel> {
+        let mut result = self.clone();
+
+        for source in sources {
+            let uuid = *source.uuid();
+            let loader_rx = Self::load_source(source.clone());
+
+            result = result
+                .add_source(source)?
+                .init_source_sample_count(uuid)?
+                .add_source_loader(uuid, loader_rx)?;
+        }
+
+        Ok(result)
+    }
+
+    fn load_source(source: Source) -> mpsc::Receiver<SourceLoaderMessage> {
+        let (tx, rx) = mpsc::channel::<SourceLoaderMessage>();
+
+        std::thread::spawn(move || {
+            source.list_async(tx);
+        });
+
+        rx
+    }
+
+    fn add_set(self, set: SampleSet) -> AnyhowResult<AppModel> {
+        if self.sets.contains_key(set.uuid()) {
+            Err(anyhow!("Failed to add set: UUID in use"))
+        } else {
+            let uuid = *set.uuid();
+
+            Ok(AppModel {
+                sets: self.sets.clone_and_insert(uuid, set),
+                sets_order: self.sets_order.clone_and_push(uuid),
+                ..self
+            })
+        }
+    }
+
+    pub fn load_sets(self, sets: Vec<SampleSet>) -> AnyhowResult<AppModel> {
+        let mut result = self.clone();
+
+        for set in sets {
+            result = result.add_set(set)?
+        }
+
+        Ok(result)
+    }
+
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, signal_add_sample_to_set_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_add_sample_to_set_show_dialog() -> Model);
+    // delegate!(viewflags, enable_set_export() -> Model);
+    delegate!(viewflags, disable_set_export() -> Model);
 
     // delegate!(viewvalues, set_latency_approx_label(text: String) -> Model);
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);
@@ -468,6 +544,7 @@ impl AppModel {
     delegate!(viewvalues, set_sources_add_fs_extensions_entry(text: impl Into<String>) -> Model);
     delegate!(viewvalues, get_listed_sample(index: u32) -> Result<Sample, anyhow::Error>);
     delegate!(viewvalues, set_samples_list_filter_text(text: impl Into<String>) -> Model);
+    delegate!(viewvalues, clear_sources_sample_counts() -> Model);
 
     delegate!(drum_machine, is_render_thread_active()
         as is_drum_machine_render_thread_active -> bool);
