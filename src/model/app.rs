@@ -91,15 +91,15 @@ impl AppModel {
         }
     }
 
-    pub fn disable_source(self, uuid: &Uuid) -> ModelResult {
+    pub fn disable_source(self, uuid: Uuid) -> ModelResult {
         self.samples
             .borrow_mut()
-            .retain(|s| s.source_uuid() != Some(uuid));
+            .retain(|s| s.source_uuid() != Some(&uuid));
 
         Ok(AppModel {
             sources: self.sources.cloned_update_with(
                 |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
-                    s.get_mut(uuid)
+                    s.get_mut(&uuid)
                         .ok_or_else(|| anyhow!("Failed to disable source: uuid not found!"))?
                         .disable();
                     Ok(s)
@@ -109,14 +109,14 @@ impl AppModel {
         })
     }
 
-    pub fn remove_source(self, uuid: &Uuid) -> ModelResult {
+    pub fn remove_source(self, uuid: Uuid) -> ModelResult {
         let model = self
             .disable_source(uuid)?
-            .remove_source_sample_count(*uuid)?;
+            .remove_source_sample_count(uuid)?;
 
         Ok(AppModel {
-            sources_order: model.sources_order.clone_and_remove(uuid)?,
-            sources: model.sources.clone_and_remove(uuid)?,
+            sources_order: model.sources_order.clone_and_remove(&uuid)?,
+            sources: model.sources.clone_and_remove(&uuid)?,
             ..model
         })
     }

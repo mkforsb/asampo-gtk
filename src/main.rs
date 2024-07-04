@@ -360,11 +360,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SourceDisabled(uuid) => Ok(model
-            .disable_source(&uuid)?
+            .disable_source(uuid)?
             .tap(AppModel::populate_samples_listmodel)),
 
         AppMessage::SourceDeleteClicked(uuid) => Ok(model
-            .remove_source(&uuid)?
+            .remove_source(uuid)?
             .tap(AppModel::populate_samples_listmodel)),
 
         AppMessage::LoadFromSavefile(filename) => {
