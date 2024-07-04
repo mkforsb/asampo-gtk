@@ -4,10 +4,7 @@
 
 mod config;
 mod configfile;
-
-#[macro_use]
 mod ext;
-
 mod model;
 mod savefile;
 mod testutils;
