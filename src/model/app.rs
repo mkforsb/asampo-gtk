@@ -23,7 +23,7 @@ use uuid::Uuid;
 use crate::{
     config::AppConfig,
     ext::{ClonedHashMapExt, ClonedVecExt},
-    model::{delegate::delegate, DrumMachineModel, ViewFlags, ViewValues},
+    model::{delegate::delegate, DrumMachineModel, ExportKind, ViewFlags, ViewValues},
     view::{dialogs::ExportDialogView, samples::SampleListEntry},
 };
 
@@ -623,6 +623,7 @@ impl AppModel {
     delegate!(viewvalues, clear_sources_sample_counts() -> Model);
     delegate!(viewvalues, set_export_dialog_view(view: Option<ExportDialogView>) -> Model);
     delegate!(viewvalues, set_export_target_dir_entry_text(text: impl Into<String>) -> Model);
+    delegate!(viewvalues, set_export_kind(kind: ExportKind) -> Model);
 
     delegate!(drum_machine, is_render_thread_active()
         as is_drum_machine_render_thread_active -> bool);

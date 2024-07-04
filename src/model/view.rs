@@ -179,7 +179,7 @@ pub struct ViewValues {
     pub samples_listview_model: ListStore,
     pub sets_export_dialog_view: Option<dialogs::ExportDialogView>,
     pub sets_export_target_dir_entry: String,
-    pub sets_export_kind: Option<ExportKind>,
+    pub sets_export_kind: ExportKind,
     pub drum_machine: Option<DrumMachineView>,
 }
 
@@ -195,7 +195,7 @@ impl Default for ViewValues {
             samples_listview_model: ListStore::new::<SampleListEntry>(),
             sets_export_dialog_view: None,
             sets_export_target_dir_entry: String::default(),
-            sets_export_kind: None,
+            sets_export_kind: ExportKind::PlainCopy,
             drum_machine: None,
         }
     }
@@ -350,6 +350,13 @@ impl ViewValues {
     pub fn set_export_target_dir_entry_text(self, text: impl Into<String>) -> ViewValues {
         ViewValues {
             sets_export_target_dir_entry: text.into(),
+            ..self
+        }
+    }
+
+    pub fn set_export_kind(self, kind: ExportKind) -> ViewValues {
+        ViewValues {
+            sets_export_kind: kind,
             ..self
         }
     }

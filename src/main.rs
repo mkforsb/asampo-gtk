@@ -50,7 +50,7 @@ use crate::{
     config::AppConfig,
     configfile::ConfigFile,
     ext::WithModel,
-    model::{AppModel, AppModelPtr, ViewValues},
+    model::{AppModel, AppModelPtr},
     util::gtk_find_child_by_builder_id,
     view::{
         dialogs,
@@ -529,8 +529,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                         .sets_export_target_dir_entry
                         .clone(),
                     match model.viewvalues.sets_export_kind {
-                        None | Some(model::ExportKind::PlainCopy) => None,
-                        Some(model::ExportKind::Conversion) => Some(Conversion::Wav(
+                        model::ExportKind::PlainCopy => None,
+                        model::ExportKind::Conversion => Some(Conversion::Wav(
                             WavSpec {
                                 channels: 2,
                                 sample_rate: 44100,
@@ -552,21 +552,12 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             })
         }
 
-        AppMessage::PlainCopyExportSelected => Ok(AppModel {
-            viewvalues: ViewValues {
-                sets_export_kind: Some(model::ExportKind::PlainCopy),
-                ..model.viewvalues
-            },
-            ..model
-        }),
-
-        AppMessage::ConversionExportSelected => Ok(AppModel {
-            viewvalues: ViewValues {
-                sets_export_kind: Some(model::ExportKind::Conversion),
-                ..model.viewvalues
-            },
-            ..model
-        }),
+        AppMessage::PlainCopyExportSelected => {
+            Ok(model.set_export_kind(model::ExportKind::PlainCopy))
+        }
+        AppMessage::ConversionExportSelected => {
+            Ok(model.set_export_kind(model::ExportKind::Conversion))
+        }
 
         AppMessage::ExportJobMessage(message) => match message {
             ExportJobMessage::ItemsCompleted(n) => Ok(AppModel {

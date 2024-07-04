@@ -172,17 +172,15 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
     export_button.set_sensitive(target_dir_entry.text_length() > 0);
 
     match model.viewvalues.sets_export_kind {
-        Some(crate::model::ExportKind::PlainCopy) => {
+        crate::model::ExportKind::PlainCopy => {
             plain_copy_radio.set_active(true);
             convert_radio.set_active(false);
         }
 
-        Some(crate::model::ExportKind::Conversion) => {
+        crate::model::ExportKind::Conversion => {
             plain_copy_radio.set_active(false);
             convert_radio.set_active(true);
         }
-
-        None => (),
     }
 
     target_dir_entry.connect_changed(
