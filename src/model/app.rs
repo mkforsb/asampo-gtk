@@ -388,6 +388,8 @@ impl AppModel {
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
+    delegate!(viewflags, signal_add_sample_to_set_show_dialog() -> Model);
+    delegate!(viewflags, clear_signal_add_sample_to_set_show_dialog() -> Model);
 
     // delegate!(viewvalues, set_latency_approx_label(text: String) -> Model);
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);

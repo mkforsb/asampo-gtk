@@ -72,6 +72,20 @@ impl ViewFlags {
             ..self
         }
     }
+
+    pub fn signal_add_sample_to_set_show_dialog(self) -> ViewFlags {
+        ViewFlags {
+            samples_sidebar_add_to_set_show_dialog: true,
+            ..self
+        }
+    }
+
+    pub fn clear_signal_add_sample_to_set_show_dialog(self) -> ViewFlags {
+        ViewFlags {
+            samples_sidebar_add_to_set_show_dialog: false,
+            ..self
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

@@ -333,13 +333,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             .set_samples_list_filter_text(text)
             .tap(AppModel::populate_samples_listmodel)),
 
-        AppMessage::SampleSidebarAddToSetClicked => Ok(AppModel {
-            viewflags: ViewFlags {
-                samples_sidebar_add_to_set_show_dialog: true,
-                ..model.viewflags
-            },
-            ..model
-        }),
+        AppMessage::SampleSidebarAddToSetClicked => {
+            Ok(model.signal_add_sample_to_set_show_dialog())
+        }
 
         AppMessage::SampleSidebarAddToMostRecentlyUsedSetClicked => {
             let mru_uuid = model
@@ -467,13 +463,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }),
 
         AppMessage::InputDialogOpened(context) => match context {
-            InputDialogContext::AddToSampleset => Ok(AppModel {
-                viewflags: ViewFlags {
-                    samples_sidebar_add_to_set_show_dialog: false,
-                    ..model.viewflags
-                },
-                ..model
-            }),
+            InputDialogContext::AddToSampleset => {
+                Ok(model.clear_signal_add_sample_to_set_show_dialog())
+            }
 
             InputDialogContext::CreateSampleSet => Ok(AppModel {
                 viewflags: ViewFlags {
