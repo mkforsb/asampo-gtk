@@ -205,72 +205,17 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             }
 
             if model.reached_config_save_timeout() {
-                let config = model.config();
+                let config = model.config().clone();
 
                 log::log!(
                     log::Level::Info,
                     "Saving config to {:?}",
                     config.config_save_path
                 );
-                ConfigFile::save(config, &config.config_save_path)?;
+                ConfigFile::save(&config, &config.config_save_path)?;
 
                 log::log!(log::Level::Info, "Respawning audiothread with new config");
-
-                let have_dm_render_thread = model.is_drum_machine_render_thread_active();
-
-                if have_dm_render_thread {
-                    match model
-                        .drum_machine_render_thread_send(drumkit_render_thread::Message::Shutdown)
-                    {
-                        Ok(_) => (),
-                        Err(e) => {
-                            log::log!(
-                                log::Level::Error,
-                                "Error shutting down drumkit sequence render thread: {e}"
-                            );
-                        }
-                    }
-                }
-
-                // TODO: sequence the shutdown in some other way to avoid sleeping the main thread
-                // give drum machine thread some time to shut down gracefully
-                std::thread::sleep(Duration::from_millis(250));
-
-                match model.audiothread_tx.send(audiothread::Message::Shutdown) {
-                    Ok(_) => {
-                        // give audiothread some time to shut down gracefully
-                        std::thread::sleep(Duration::from_millis(10))
-                    }
-                    Err(e) => {
-                        log::log!(log::Level::Error, "Error shutting down audiothread: {e}")
-                    }
-                }
-
-                let (audiothread_tx, audiothread_rx) = mpsc::channel::<audiothread::Message>();
-
-                let _audiothread_handle = Some(Rc::new(audiothread::spawn(
-                    audiothread_rx,
-                    Some(
-                        audiothread::Opts::default()
-                            .with_name("asampo")
-                            .with_spec(AudioSpec::new(config.output_samplerate_hz, 2)?)
-                            .with_conversion_quality(config.sample_rate_conversion_quality)
-                            .with_buffer_size((config.buffer_size_frames as usize).try_into()?),
-                    ),
-                )));
-
-                let drum_machine = if have_dm_render_thread {
-                    DrumMachineModel::new_with_render_thread(audiothread_tx.clone())
-                } else {
-                    DrumMachineModel::new(None, None)
-                };
-
-                Ok(AppModel {
-                    audiothread_tx: audiothread_tx.clone(),
-                    drum_machine,
-                    ..model
-                }
-                .clear_config_save_timeout())
+                Ok(model.reconfigure(config)?.clear_config_save_timeout())
             } else {
                 Ok(model)
             }
@@ -1323,13 +1268,21 @@ fn main() -> ExitCode {
                 let mut event: Option<DrumkitSequenceEvent> = None;
 
                 if let Some(event_rx) = &model.drum_machine.event_rx {
-                    match event_rx.borrow_mut().latest() {
-                        Some(ev) if model.drum_machine.event_latest.is_none() ||
-                            ev.step != model.drum_machine.event_latest.as_ref().unwrap().step =>
-                        {
-                            event = Some(ev.clone());
+                    match event_rx.lock() {
+                        Ok(mut rx) => {
+                            match rx.latest() {
+                                Some(ev) if model.drum_machine.event_latest.is_none() ||
+                                    ev.step != model.drum_machine.event_latest
+                                        .as_ref()
+                                        .unwrap()
+                                        .step => {
+                                    event = Some(ev.clone());
+                                }
+                                _ => (),
+                            }
                         }
-                        _ => (),
+                        Err(e) => log::log!(log::Level::Warn,
+                            "Unable to lock drum machine event receiver: {e}"),
                     }
                 }
 

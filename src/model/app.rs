@@ -7,7 +7,7 @@ use std::{
     collections::HashMap,
     rc::Rc,
     sync::mpsc,
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use anyhow::anyhow;
@@ -261,6 +261,79 @@ impl AppModel {
 
     pub fn config(&self) -> &AppConfig {
         &self.config
+    }
+
+    // pub fn audiothread_send(
+    //     &self,
+    //     message: audiothread::Message,
+    // ) -> Result<(), mpsc::SendError<audiothread::Message>> {
+    //     self.audiothread_tx.send(message)
+    // }
+
+    pub fn reconfigure(self, config: AppConfig) -> ModelResult {
+        let mut result = self.clone();
+
+        let new_audiothread_tx = AppModel::spawn_audiothread(&config)?;
+
+        // TODO: retain sequence, samples, tempo etc.
+        let new_drum_machine_model =
+            DrumMachineModel::new_with_render_thread(new_audiothread_tx.clone());
+
+        let old_audiothread_tx = std::mem::replace(&mut result.audiothread_tx, new_audiothread_tx);
+        let old_drum_machine_model =
+            std::mem::replace(&mut result.drum_machine, new_drum_machine_model);
+
+        let (old_drum_machine_tx, old_drum_machine_event_rx) = old_drum_machine_model.take_comms();
+
+        // spawn a thread to allow graceful shutdown of old threads
+        std::thread::spawn(move || {
+            if let Some(tx) = &old_drum_machine_tx {
+                match tx.send(drumkit_render_thread::Message::Shutdown) {
+                    Ok(_) => (),
+                    Err(e) => {
+                        log::log!(
+                            log::Level::Error,
+                            "Error shutting down drumkit sequence render thread: {e}"
+                        );
+                    }
+                }
+            }
+
+            // give drum machine render time some time to disconnect and shut down gracefully
+            std::thread::sleep(Duration::from_millis(250));
+            drop(old_drum_machine_event_rx);
+
+            match old_audiothread_tx.send(audiothread::Message::Shutdown) {
+                Ok(_) => {
+                    // give audiothread some time to shut down gracefully
+                    std::thread::sleep(Duration::from_millis(10))
+                }
+                Err(e) => {
+                    log::log!(log::Level::Error, "Error shutting down audiothread: {e}")
+                }
+            }
+        });
+
+        Ok(result.set_config(config))
+    }
+
+    pub fn spawn_audiothread(
+        config: &AppConfig,
+    ) -> Result<mpsc::Sender<audiothread::Message>, anyhow::Error> {
+        let (audiothread_tx, audiothread_rx) = mpsc::channel::<audiothread::Message>();
+
+        let _ = audiothread::spawn(
+            audiothread_rx,
+            Some(
+                audiothread::Opts::default()
+                    .with_name("asampo")
+                    .with_spec(audiothread::AudioSpec::new(config.output_samplerate_hz, 2)?)
+                    .with_conversion_quality(config.sample_rate_conversion_quality)
+                    .with_buffer_size((config.buffer_size_frames as usize).try_into()?),
+            ),
+        );
+
+        Ok(audiothread_tx)
     }
 
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);

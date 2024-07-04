@@ -2,10 +2,9 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-use std::{
-    cell::RefCell,
-    rc::Rc,
-    sync::mpsc::{self, Sender},
+use std::sync::{
+    mpsc::{self, Sender},
+    Arc, Mutex,
 };
 
 use anyhow::anyhow;
@@ -14,10 +13,13 @@ use libasampo::sequences::{
     TimeSpec,
 };
 
+pub type RenderThreadTx = Sender<drumkit_render_thread::Message>;
+pub type EventRx = Arc<Mutex<single_value_channel::Receiver<Option<DrumkitSequenceEvent>>>>;
+
 #[derive(Clone, Debug)]
 pub struct DrumMachineModel {
-    pub render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
-    pub event_rx: Option<Rc<RefCell<single_value_channel::Receiver<Option<DrumkitSequenceEvent>>>>>,
+    pub render_thread_tx: Option<RenderThreadTx>,
+    pub event_rx: Option<EventRx>,
     pub event_latest: Option<DrumkitSequenceEvent>,
     pub sequence: DrumkitSequence,
     pub activated_pad: usize,
@@ -54,7 +56,7 @@ impl DrumMachineModel {
 
         Self {
             render_thread_tx,
-            event_rx: event_rx.map(|x| Rc::new(RefCell::new(x))),
+            event_rx: event_rx.map(|x| Arc::new(Mutex::new(x))),
             event_latest: None,
             sequence: empty_sequence,
             activated_pad: 8,
@@ -83,5 +85,9 @@ impl DrumMachineModel {
             .as_ref()
             .ok_or(anyhow!("Render thread not active"))?
             .send(message)?)
+    }
+
+    pub fn take_comms(self) -> (Option<RenderThreadTx>, Option<EventRx>) {
+        (self.render_thread_tx, self.event_rx)
     }
 }
