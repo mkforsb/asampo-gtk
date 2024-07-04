@@ -15,7 +15,11 @@ use uuid::Uuid;
 use crate::{
     config::AppConfig,
     ext::ClonedHashMapExt,
-    view::{dialogs, samples::SampleListEntry, sequences::DrumMachineView},
+    view::{
+        dialogs::{self, ExportDialogView},
+        samples::SampleListEntry,
+        sequences::DrumMachineView,
+    },
 };
 
 type Result<T> = std::result::Result<T, anyhow::Error>;
@@ -125,6 +129,27 @@ impl ViewFlags {
     pub fn clear_signal_export_begin_browse(self) -> ViewFlags {
         ViewFlags {
             sets_export_begin_browse: false,
+            ..self
+        }
+    }
+
+    pub fn signal_export_show_dialog(self) -> ViewFlags {
+        ViewFlags {
+            sets_export_show_dialog: true,
+            ..self
+        }
+    }
+
+    pub fn clear_signal_export_show_dialog(self) -> ViewFlags {
+        ViewFlags {
+            sets_export_show_dialog: false,
+            ..self
+        }
+    }
+
+    pub fn set_main_view_sensitive(self, sensitive: bool) -> ViewFlags {
+        ViewFlags {
+            view_sensitive: sensitive,
             ..self
         }
     }
@@ -304,6 +329,13 @@ impl ViewValues {
     pub fn clear_sources_sample_counts(self) -> ViewValues {
         ViewValues {
             sources_sample_count: HashMap::new(),
+            ..self
+        }
+    }
+
+    pub fn set_export_dialog_view(self, maybe_view: Option<ExportDialogView>) -> ViewValues {
+        ViewValues {
+            sets_export_dialog_view: maybe_view,
             ..self
         }
     }

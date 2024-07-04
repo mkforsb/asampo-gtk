@@ -482,38 +482,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             )
         }
 
-        AppMessage::SampleSetDetailsExportClicked => Ok(AppModel {
-            viewflags: ViewFlags {
-                sets_export_show_dialog: true,
-                ..model.viewflags
-            },
-            ..model
-        }),
+        AppMessage::SampleSetDetailsExportClicked => Ok(model.signal_export_show_dialog()),
 
-        AppMessage::ExportDialogOpened(dialogview) => Ok(AppModel {
-            viewflags: ViewFlags {
-                view_sensitive: false,
-                sets_export_show_dialog: false,
-                ..model.viewflags
-            },
-            viewvalues: ViewValues {
-                sets_export_dialog_view: Some(dialogview),
-                ..model.viewvalues
-            },
-            ..model
-        }),
+        AppMessage::ExportDialogOpened(dialogview) => Ok(model
+            .clear_signal_export_show_dialog()
+            .set_main_view_sensitive(false)
+            .set_export_dialog_view(Some(dialogview))),
 
-        AppMessage::ExportDialogClosed => Ok(AppModel {
-            viewflags: ViewFlags {
-                view_sensitive: true,
-                ..model.viewflags
-            },
-            viewvalues: ViewValues {
-                sets_export_dialog_view: None,
-                ..model.viewvalues
-            },
-            ..model
-        }),
+        AppMessage::ExportDialogClosed => Ok(model
+            .set_export_dialog_view(None)
+            .set_main_view_sensitive(true)),
 
         AppMessage::ExportTargetDirectoryChanged(text) => Ok(AppModel {
             viewflags: ViewFlags {

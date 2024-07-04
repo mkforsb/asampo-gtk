@@ -24,7 +24,7 @@ use crate::{
     config::AppConfig,
     ext::{ClonedHashMapExt, ClonedVecExt},
     model::{delegate::delegate, DrumMachineModel, ViewFlags, ViewValues},
-    view::samples::SampleListEntry,
+    view::{dialogs::ExportDialogView, samples::SampleListEntry},
 };
 
 type AnyhowResult<T> = Result<T, anyhow::Error>;
@@ -602,6 +602,9 @@ impl AppModel {
     delegate!(viewflags, clear_signal_add_set_show_dialog() -> Model);
     delegate!(viewflags, signal_export_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_export_begin_browse() -> Model);
+    delegate!(viewflags, signal_export_show_dialog() -> Model);
+    delegate!(viewflags, clear_signal_export_show_dialog() -> Model);
+    delegate!(viewflags, set_main_view_sensitive(sensitive: bool) -> Model);
 
     // delegate!(viewvalues, set_latency_approx_label(text: String) -> Model);
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);
@@ -617,6 +620,7 @@ impl AppModel {
     delegate!(viewvalues, get_listed_sample(index: u32) -> Result<Sample, anyhow::Error>);
     delegate!(viewvalues, set_samples_list_filter_text(text: impl Into<String>) -> Model);
     delegate!(viewvalues, clear_sources_sample_counts() -> Model);
+    delegate!(viewvalues, set_export_dialog_view(view: Option<ExportDialogView>) -> Model);
 
     delegate!(drum_machine, is_render_thread_active()
         as is_drum_machine_render_thread_active -> bool);
