@@ -558,22 +558,13 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::ExportJobMessage(message) => match message {
             ExportJobMessage::ItemsCompleted(n) => model.set_export_items_completed(n),
             ExportJobMessage::Error(e) => Err(e.into()),
-            ExportJobMessage::Finished => Ok(AppModel {
-                sets_export_state: Some(ExportState::Finished),
-                export_job_rx: None,
-                ..model
-            }
-            .reset_export_progress()),
+            ExportJobMessage::Finished => Ok(model
+                .set_export_state(Some(ExportState::Finished))
+                .set_export_job_rx(None)
+                .reset_export_progress()),
         },
 
-        AppMessage::ExportJobDisconnected => {
-            log::log!(log::Level::Debug, "Export job disconnected");
-
-            Ok(AppModel {
-                export_job_rx: None,
-                ..model
-            })
-        }
+        AppMessage::ExportJobDisconnected => Ok(model.set_export_job_rx(None)),
 
         AppMessage::StopAllSoundButtonClicked => {
             if model.is_drum_machine_render_thread_active() {
