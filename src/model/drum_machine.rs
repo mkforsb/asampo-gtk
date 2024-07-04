@@ -8,6 +8,7 @@ use std::{
     sync::mpsc::{self, Sender},
 };
 
+use anyhow::anyhow;
 use libasampo::sequences::{
     drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent, NoteLength, StepSequenceOps,
     TimeSpec,
@@ -67,5 +68,20 @@ impl DrumMachineModel {
         let _ = drumkit_render_thread::spawn(audiothread_tx.clone(), render_rx, Some(event_tx));
 
         Self::new(Some(render_tx), Some(event_rx))
+    }
+
+    pub fn is_render_thread_active(&self) -> bool {
+        self.render_thread_tx.is_some()
+    }
+
+    pub fn render_thread_send(
+        &self,
+        message: drumkit_render_thread::Message,
+    ) -> Result<(), anyhow::Error> {
+        Ok(self
+            .render_thread_tx
+            .as_ref()
+            .ok_or(anyhow!("Render thread not active"))?
+            .send(message)?)
     }
 }

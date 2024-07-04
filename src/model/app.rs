@@ -16,6 +16,7 @@ use gtk::prelude::ListModelExt;
 use libasampo::{
     samples::{Sample, SampleOps},
     samplesets::{export::ExportJobMessage, SampleSet, SampleSetOps},
+    sequences::drumkit_render_thread,
     sources::{Source, SourceOps},
 };
 use uuid::Uuid;
@@ -285,6 +286,10 @@ impl AppModel {
     delegate!(viewvalues, set_sources_add_fs_name_entry(text: impl Into<String>) -> Model);
     delegate!(viewvalues, set_sources_add_fs_path_entry(text: impl Into<String>) -> Model);
     delegate!(viewvalues, set_sources_add_fs_extensions_entry(text: impl Into<String>) -> Model);
+
+    delegate!(drum_machine, is_render_thread_active() as is_drum_machine_render_thread_active -> bool);
+    delegate!(drum_machine, render_thread_send(message: drumkit_render_thread::Message)
+        as drum_machine_render_thread_send -> Result<(), anyhow::Error>);
 }
 
 #[cfg(test)]

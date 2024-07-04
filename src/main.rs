@@ -216,10 +216,12 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
                 log::log!(log::Level::Info, "Respawning audiothread with new config");
 
-                let had_dks_render_thread = model.drum_machine.render_thread_tx.is_some();
+                let have_dm_render_thread = model.is_drum_machine_render_thread_active();
 
-                if let Some(control_tx) = &model.drum_machine.render_thread_tx {
-                    match control_tx.send(drumkit_render_thread::Message::Shutdown) {
+                if have_dm_render_thread {
+                    match model
+                        .drum_machine_render_thread_send(drumkit_render_thread::Message::Shutdown)
+                    {
                         Ok(_) => (),
                         Err(e) => {
                             log::log!(
@@ -259,7 +261,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     ),
                 )));
 
-                let drum_machine = if had_dks_render_thread {
+                let drum_machine = if have_dm_render_thread {
                     DrumMachineModel::new_with_render_thread(audiothread_tx.clone())
                 } else {
                     DrumMachineModel::new(None, None)
@@ -826,8 +828,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::StopAllSoundButtonClicked => {
-            if let Some(dks_render_thread_tx) = &model.drum_machine.render_thread_tx {
-                match dks_render_thread_tx.send(drumkit_render_thread::Message::Shutdown) {
+            if model.is_drum_machine_render_thread_active() {
+                match model
+                    .drum_machine_render_thread_send(drumkit_render_thread::Message::Shutdown)
+                {
                     Ok(_) => (),
                     Err(e) => log::log!(log::Level::Error, "Stop all sounds error: {e}"),
                 }
@@ -844,33 +848,34 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 }
             }
 
-            match &model.drum_machine.render_thread_tx {
-                Some(_) => Ok(AppModel {
+            if model.is_drum_machine_render_thread_active() {
+                Ok(AppModel {
                     drum_machine: DrumMachineModel {
                         render_thread_tx: None,
                         ..model.drum_machine
                     },
                     ..model
-                }),
-
-                None => Ok(model),
+                })
+            } else {
+                Ok(model)
             }
         }
 
         AppMessage::DrumMachineTempoChanged(tempo) => {
-            if let Some(dks_render_thread_tx) = &model.drum_machine.render_thread_tx {
-                let _ = dks_render_thread_tx
-                    .send(drumkit_render_thread::Message::SetTempo(tempo.try_into()?));
+            if model.is_drum_machine_render_thread_active() {
+                let _ = model.drum_machine_render_thread_send(
+                    drumkit_render_thread::Message::SetTempo(tempo.try_into()?),
+                );
             }
 
             Ok(model)
         }
 
         AppMessage::DrumMachineSwingChanged(swing) => {
-            if let Some(dks_render_thread_tx) = &model.drum_machine.render_thread_tx {
-                let _ = dks_render_thread_tx.send(drumkit_render_thread::Message::SetSwing(
-                    (swing as f64 / 100.0).try_into()?,
-                ));
+            if model.is_drum_machine_render_thread_active() {
+                let _ = model.drum_machine_render_thread_send(
+                    drumkit_render_thread::Message::SetSwing((swing as f64 / 100.0).try_into()?),
+                );
             }
 
             Ok(model)
@@ -923,13 +928,15 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             } else {
                 new_sequence.set_step_trigger(n, label, amp);
 
-                if let Some(render_thread_tx) = &model.drum_machine.render_thread_tx {
-                    render_thread_tx
-                        .send(drumkit_render_thread::Message::EditSequenceSetStepTrigger {
-                            step: n,
-                            label,
-                            amp,
-                        })
+                if model.is_drum_machine_render_thread_active() {
+                    model
+                        .drum_machine_render_thread_send(
+                            drumkit_render_thread::Message::EditSequenceSetStepTrigger {
+                                step: n,
+                                label,
+                                amp,
+                            },
+                        )
                         .map_err(|e| {
                             anyhow!(
                                 "Failed sending update event to drum sequence render thread: {e}"
