@@ -620,13 +620,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::DrumMachineSaveSequenceAsClicked => Ok(model),
         AppMessage::DrumMachineSaveSampleSetClicked => Ok(model),
         AppMessage::DrumMachineSaveSampleSetAsClicked => Ok(model),
-        AppMessage::DrumMachinePadClicked(n) => Ok(AppModel {
-            drum_machine: DrumMachineModel {
-                activated_pad: n,
-                ..model.drum_machine
-            },
-            ..model
-        }),
+        AppMessage::DrumMachinePadClicked(n) => Ok(model.activate_drum_machine_pad(n)?),
         AppMessage::DrumMachinePartClicked(_n) => Ok(model),
         AppMessage::DrumMachineStepClicked(n) => {
             let amp = 0.5f32;

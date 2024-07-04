@@ -13,6 +13,8 @@ use libasampo::sequences::{
     TimeSpec,
 };
 
+type AnyhowResult<T> = Result<T, anyhow::Error>;
+
 pub type RenderThreadTx = Sender<drumkit_render_thread::Message>;
 pub type EventRx = Arc<Mutex<single_value_channel::Receiver<Option<DrumkitSequenceEvent>>>>;
 
@@ -89,5 +91,16 @@ impl DrumMachineModel {
 
     pub fn take_comms(self) -> (Option<RenderThreadTx>, Option<EventRx>) {
         (self.render_thread_tx, self.event_rx)
+    }
+
+    pub fn activate_pad(self, pad: usize) -> AnyhowResult<DrumMachineModel> {
+        if pad < 16 {
+            Ok(DrumMachineModel {
+                activated_pad: pad,
+                ..self
+            })
+        } else {
+            Err(anyhow!("Value out of range [0,15]"))
+        }
     }
 }
