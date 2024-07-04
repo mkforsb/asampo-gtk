@@ -406,26 +406,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model)
         }
 
-        AppMessage::AddSampleSetClicked => Ok(AppModel {
-            viewflags: ViewFlags {
-                sets_add_set_show_dialog: true,
-                ..model.viewflags
-            },
-            ..model
-        }),
+        AppMessage::AddSampleSetClicked => Ok(model.signal_add_set_show_dialog()),
 
         AppMessage::InputDialogOpened(context) => match context {
             InputDialogContext::AddToSampleset => {
                 Ok(model.clear_signal_add_sample_to_set_show_dialog())
             }
 
-            InputDialogContext::CreateSampleSet => Ok(AppModel {
-                viewflags: ViewFlags {
-                    sets_add_set_show_dialog: false,
-                    ..model.viewflags
-                },
-                ..model
-            }),
+            InputDialogContext::CreateSampleSet => Ok(model.clear_signal_add_set_show_dialog()),
         },
 
         AppMessage::InputDialogCanceled(_context) => Ok(model),

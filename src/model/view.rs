@@ -100,6 +100,20 @@ impl ViewFlags {
             ..self
         }
     }
+
+    pub fn signal_add_set_show_dialog(self) -> ViewFlags {
+        ViewFlags {
+            sets_add_set_show_dialog: true,
+            ..self
+        }
+    }
+
+    pub fn clear_signal_add_set_show_dialog(self) -> ViewFlags {
+        ViewFlags {
+            sets_add_set_show_dialog: false,
+            ..self
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
