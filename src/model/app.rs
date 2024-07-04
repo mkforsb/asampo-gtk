@@ -523,6 +523,13 @@ impl AppModel {
         Ok(result)
     }
 
+    pub fn set_savefile_path(self, maybe_path: Option<String>) -> AppModel {
+        AppModel {
+            savefile: maybe_path,
+            ..self
+        }
+    }
+
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);

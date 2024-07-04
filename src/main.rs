@@ -387,11 +387,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             log::log!(log::Level::Info, "Saving to {filename}");
 
             match Savefile::save(&model, &filename) {
-                Ok(_) => Ok(AppModel {
-                    savefile: Some(filename),
-                    ..model
-                }),
-
+                Ok(_) => Ok(model.set_savefile_path(Some(filename))),
                 Err(e) => Err(e),
             }
         }
