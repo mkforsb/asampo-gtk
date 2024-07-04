@@ -200,7 +200,7 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
 fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow::Error> {
     match message {
         AppMessage::TimerTick => {
-            if !model.sources_loading.is_empty() {
+            if model.has_sources_loading() {
                 model.populate_samples_listmodel();
             }
 

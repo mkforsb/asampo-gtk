@@ -258,6 +258,10 @@ impl AppModel {
         })
     }
 
+    pub fn has_sources_loading(&self) -> bool {
+        !self.sources_loading.is_empty()
+    }
+
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
