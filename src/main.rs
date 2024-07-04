@@ -546,10 +546,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             Ok(AppModel {
                 sets_export_state: Some(model::ExportState::Exporting),
-                sets_export_progress: Some((0, num_samples)),
                 export_job_rx: Some(Rc::new(rx)),
                 ..model
-            })
+            }
+            .init_export_progress(num_samples))
         }
 
         AppMessage::PlainCopyExportSelected => {
@@ -560,17 +560,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::ExportJobMessage(message) => match message {
-            ExportJobMessage::ItemsCompleted(n) => Ok(AppModel {
-                sets_export_progress: model.sets_export_progress.map(|(_, m)| (n, m)),
-                ..model
-            }),
+            ExportJobMessage::ItemsCompleted(n) => model.set_export_items_completed(n),
             ExportJobMessage::Error(e) => Err(e.into()),
             ExportJobMessage::Finished => Ok(AppModel {
                 sets_export_state: Some(ExportState::Finished),
-                sets_export_progress: None,
                 export_job_rx: None,
                 ..model
-            }),
+            }
+            .reset_export_progress()),
         },
 
         AppMessage::ExportJobDisconnected => {
@@ -886,8 +883,8 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         }
     }
 
-    if old.sets_export_progress != new.sets_export_progress {
-        if let Some((n, m)) = &new.sets_export_progress {
+    if old.viewvalues.sets_export_progress != new.viewvalues.sets_export_progress {
+        if let Some((n, m)) = &new.viewvalues.sets_export_progress {
             view.progress_popup_progress_bar
                 .set_text(Some(format!("Exporting {n}/{m}").as_str()));
 

@@ -54,7 +54,6 @@ pub struct AppModel {
     pub sets_selected_set: Option<Uuid>,
     pub sets_most_recently_used_uuid: Option<Uuid>,
     pub sets_export_state: Option<ExportState>,
-    pub sets_export_progress: Option<(usize, usize)>,
     pub export_job_rx: Option<Rc<mpsc::Receiver<ExportJobMessage>>>,
     pub drum_machine: DrumMachineModel,
 }
@@ -87,7 +86,6 @@ impl AppModel {
             sets_selected_set: None,
             sets_most_recently_used_uuid: None,
             sets_export_state: None,
-            sets_export_progress: None,
             export_job_rx: None,
             drum_machine,
         }
@@ -491,10 +489,10 @@ impl AppModel {
             sets_selected_set: None,
             sets_most_recently_used_uuid: None,
             sets_export_state: None,
-            sets_export_progress: None,
             ..self
         }
         .disable_set_export()
+        .reset_export_progress()
     }
 
     pub fn load_sources(self, sources: Vec<Source>) -> AnyhowResult<AppModel> {
@@ -624,6 +622,9 @@ impl AppModel {
     delegate!(viewvalues, set_export_dialog_view(view: Option<ExportDialogView>) -> Model);
     delegate!(viewvalues, set_export_target_dir_entry_text(text: impl Into<String>) -> Model);
     delegate!(viewvalues, set_export_kind(kind: ExportKind) -> Model);
+    delegate!(viewvalues, init_export_progress(total_items: usize) -> Model);
+    delegate!(viewvalues, set_export_items_completed(completed: usize) -> Result);
+    delegate!(viewvalues, reset_export_progress() -> Model);
 
     delegate!(drum_machine, is_render_thread_active()
         as is_drum_machine_render_thread_active -> bool);

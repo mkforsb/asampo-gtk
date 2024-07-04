@@ -180,6 +180,7 @@ pub struct ViewValues {
     pub sets_export_dialog_view: Option<dialogs::ExportDialogView>,
     pub sets_export_target_dir_entry: String,
     pub sets_export_kind: ExportKind,
+    pub sets_export_progress: Option<(usize, usize)>,
     pub drum_machine: Option<DrumMachineView>,
 }
 
@@ -196,6 +197,7 @@ impl Default for ViewValues {
             sets_export_dialog_view: None,
             sets_export_target_dir_entry: String::default(),
             sets_export_kind: ExportKind::PlainCopy,
+            sets_export_progress: None,
             drum_machine: None,
         }
     }
@@ -357,6 +359,33 @@ impl ViewValues {
     pub fn set_export_kind(self, kind: ExportKind) -> ViewValues {
         ViewValues {
             sets_export_kind: kind,
+            ..self
+        }
+    }
+
+    pub fn init_export_progress(self, total_items: usize) -> ViewValues {
+        ViewValues {
+            sets_export_progress: Some((0, total_items)),
+            ..self
+        }
+    }
+
+    pub fn set_export_items_completed(self, completed: usize) -> Result<ViewValues> {
+        let sets_export_progress = Some(
+            self.sets_export_progress
+                .map(|(_prev_completed, total)| (completed, total))
+                .ok_or(anyhow!("Export progress not initialized"))?,
+        );
+
+        Ok(ViewValues {
+            sets_export_progress,
+            ..self
+        })
+    }
+
+    pub fn reset_export_progress(self) -> ViewValues {
+        ViewValues {
+            sets_export_progress: None,
             ..self
         }
     }
