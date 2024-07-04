@@ -441,19 +441,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         },
 
         AppMessage::SampleSetSelected(uuid) => {
-            let set = model
-                .sets
-                .get(&uuid)
-                .ok_or(anyhow!("Sample set not found (by uuid)"))?;
+            let len = model.get_set(uuid)?.len();
 
-            Ok(AppModel {
-                viewflags: ViewFlags {
-                    sets_export_enabled: set.len() > 0,
-                    ..model.viewflags
-                },
-                sets_selected_set: Some(uuid),
-                ..model
-            })
+            model
+                .cond(|| len > 0, AppModel::enable_set_export)
+                .set_selected_set(Some(uuid))
         }
 
         AppMessage::SampleSetSampleSelected(sample) => {

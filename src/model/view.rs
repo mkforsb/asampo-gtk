@@ -87,12 +87,12 @@ impl ViewFlags {
         }
     }
 
-    // pub fn enable_set_export(self) -> ViewFlags {
-    //     ViewFlags {
-    //         sets_export_enabled: true,
-    //         ..self
-    //     }
-    // }
+    pub fn enable_set_export(self) -> ViewFlags {
+        ViewFlags {
+            sets_export_enabled: true,
+            ..self
+        }
+    }
 
     pub fn disable_set_export(self) -> ViewFlags {
         ViewFlags {

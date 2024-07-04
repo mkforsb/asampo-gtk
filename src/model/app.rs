@@ -444,6 +444,30 @@ impl AppModel {
             .add_source_loader(uuid, loader_rx)
     }
 
+    pub fn cond<P, F>(self, cond: P, op: F) -> AppModel
+    where
+        P: FnOnce() -> bool,
+        F: FnOnce(AppModel) -> AppModel,
+    {
+        if cond() {
+            op(self)
+        } else {
+            self
+        }
+    }
+
+    // pub fn condf<P, F, T>(self, cond: P, op: F) -> AnyhowResult<AppModel>
+    // where
+    //     P: FnOnce() -> bool,
+    //     F: FnOnce(AppModel) -> AnyhowResult<AppModel>,
+    // {
+    //     if cond() {
+    //         op(self)
+    //     } else {
+    //         Ok(self)
+    //     }
+    // }
+
     pub fn tap<F: FnOnce(&AppModel)>(self, f: F) -> AppModel {
         f(&self);
         self
@@ -530,12 +554,30 @@ impl AppModel {
         }
     }
 
+    pub fn get_set(&self, uuid: Uuid) -> AnyhowResult<&SampleSet> {
+        Ok(self
+            .sets
+            .get(&uuid)
+            .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))?)
+    }
+
+    pub fn set_selected_set(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<AppModel> {
+        if let Some(false) = maybe_uuid.map(|uuid| self.sets.contains_key(&uuid)) {
+            Err(anyhow!("Failed to set selected set: UUID not present"))
+        } else {
+            Ok(AppModel {
+                sets_selected_set: maybe_uuid,
+                ..self
+            })
+        }
+    }
+
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, signal_add_sample_to_set_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_add_sample_to_set_show_dialog() -> Model);
-    // delegate!(viewflags, enable_set_export() -> Model);
+    delegate!(viewflags, enable_set_export() -> Model);
     delegate!(viewflags, disable_set_export() -> Model);
     delegate!(viewflags, signal_add_set_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_add_set_show_dialog() -> Model);
