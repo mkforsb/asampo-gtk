@@ -566,6 +566,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::ExportJobDisconnected => Ok(model.set_export_job_rx(None)),
 
+        // TODO: "stop" the drum machine instead of shutting it down
         AppMessage::StopAllSoundButtonClicked => {
             if model.is_drum_machine_render_thread_active() {
                 match model
@@ -580,19 +581,13 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 std::thread::sleep(std::time::Duration::from_millis(250));
             }
 
-            match model.audiothread_tx.send(audiothread::Message::DropAll) {
+            match model.audiothread_send(audiothread::Message::DropAll) {
                 Ok(_) => (),
                 Err(e) => log::log!(log::Level::Error, "Stop all sounds error: {e}"),
             }
 
             if model.is_drum_machine_render_thread_active() {
-                Ok(AppModel {
-                    drum_machine: DrumMachineModel {
-                        render_thread_tx: None,
-                        ..model.drum_machine
-                    },
-                    ..model
-                })
+                Ok(model.set_drum_machine(DrumMachineModel::new(None, None)))
             } else {
                 Ok(model)
             }

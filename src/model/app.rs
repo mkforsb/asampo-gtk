@@ -607,6 +607,14 @@ impl AppModel {
         }
     }
 
+    // TODO: replace this with something more abstract
+    pub fn set_drum_machine(self, drum_machine: DrumMachineModel) -> AppModel {
+        AppModel {
+            drum_machine,
+            ..self
+        }
+    }
+
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
