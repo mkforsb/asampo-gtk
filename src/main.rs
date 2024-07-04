@@ -236,15 +236,13 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 // give drum machine thread some time to shut down gracefully
                 std::thread::sleep(Duration::from_millis(250));
 
-                if let Some(prev_tx) = &model.audiothread_tx {
-                    match prev_tx.send(audiothread::Message::Shutdown) {
-                        Ok(_) => {
-                            // give audiothread some time to shut down gracefully
-                            std::thread::sleep(Duration::from_millis(10))
-                        }
-                        Err(e) => {
-                            log::log!(log::Level::Error, "Error shutting down audiothread: {e}")
-                        }
+                match model.audiothread_tx.send(audiothread::Message::Shutdown) {
+                    Ok(_) => {
+                        // give audiothread some time to shut down gracefully
+                        std::thread::sleep(Duration::from_millis(10))
+                    }
+                    Err(e) => {
+                        log::log!(log::Level::Error, "Error shutting down audiothread: {e}")
                     }
                 }
 
@@ -268,8 +266,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 };
 
                 Ok(AppModel {
-                    audiothread_tx: Some(audiothread_tx.clone()),
-                    _audiothread_handle,
+                    audiothread_tx: audiothread_tx.clone(),
                     drum_machine,
                     ..model
                 }
@@ -411,8 +408,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
                     model
                         .audiothread_tx
-                        .as_ref()
-                        .unwrap()
                         .send(audiothread::Message::PlaySymphoniaSource(
                             audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
                         ))
@@ -644,8 +639,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             model
                 .audiothread_tx
-                .as_ref()
-                .unwrap()
                 .send(audiothread::Message::PlaySymphoniaSource(
                     audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
                 ))
@@ -841,11 +834,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 std::thread::sleep(std::time::Duration::from_millis(250));
             }
 
-            if let Some(audiothread_tx) = &model.audiothread_tx {
-                match audiothread_tx.send(audiothread::Message::DropAll) {
-                    Ok(_) => (),
-                    Err(e) => log::log!(log::Level::Error, "Stop all sounds error: {e}"),
-                }
+            match model.audiothread_tx.send(audiothread::Message::DropAll) {
+                Ok(_) => (),
+                Err(e) => log::log!(log::Level::Error, "Stop all sounds error: {e}"),
             }
 
             if model.is_drum_machine_render_thread_active() {
@@ -1196,7 +1187,7 @@ fn main() -> ExitCode {
 
         // init audio
         let (tx, rx) = mpsc::channel();
-        let audiothread_handle = Rc::new(audiothread::spawn(
+        let _ = Rc::new(audiothread::spawn(
             rx,
             Some(
                 audiothread::Opts::default()
@@ -1227,12 +1218,7 @@ fn main() -> ExitCode {
 
         let view = AsampoView::new(app);
 
-        let model = AppModel::new(
-            config,
-            None,
-            Some(tx.clone()),
-            Some(audiothread_handle.clone()),
-        );
+        let model = AppModel::new(config, None, tx.clone());
         let model_ptr = Rc::new(Cell::new(Some(model.clone())));
 
         setup_settings_page(model_ptr.clone(), &view);
@@ -1389,8 +1375,10 @@ mod tests {
 
         let uuid = *src.uuid();
 
+        let (dummy_tx, _) = mpsc::channel::<audiothread::Message>();
+
         Savefile::save(
-            &AppModel::new(AppConfig::default(), None, None, None)
+            &AppModel::new(AppConfig::default(), None, dummy_tx)
                 .add_source(src)
                 .unwrap(),
             tmpfile

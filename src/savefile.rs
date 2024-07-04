@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-use std::{io::Write, path::Path};
+use std::{io::Write, path::Path, sync::mpsc};
 
 use libasampo::{
     self as la,
@@ -21,7 +21,8 @@ pub struct SavefileV1 {
 
 impl SavefileV1 {
     pub fn into_appmodel(self) -> Result<AppModel, anyhow::Error> {
-        let mut model = AppModel::new(AppConfig::default(), None, None, None);
+        let (dummy_tx, _) = mpsc::channel::<audiothread::Message>();
+        let mut model = AppModel::new(AppConfig::default(), None, dummy_tx);
 
         for src in self.sources {
             let source = src.try_into_domain()?;

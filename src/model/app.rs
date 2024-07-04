@@ -7,7 +7,6 @@ use std::{
     collections::HashMap,
     rc::Rc,
     sync::mpsc,
-    thread::JoinHandle,
     time::Instant,
 };
 
@@ -41,8 +40,7 @@ pub struct AppModel {
     pub savefile: Option<String>,
     pub viewflags: ViewFlags,
     pub viewvalues: ViewValues,
-    pub audiothread_tx: Option<mpsc::Sender<audiothread::Message>>,
-    pub _audiothread_handle: Option<Rc<JoinHandle<()>>>,
+    pub audiothread_tx: mpsc::Sender<audiothread::Message>,
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
     pub sources_loading:
@@ -65,16 +63,10 @@ impl AppModel {
     pub fn new(
         config: AppConfig,
         savefile: Option<String>,
-        audiothread_tx: Option<mpsc::Sender<audiothread::Message>>,
-        audiothread_handle: Option<Rc<JoinHandle<()>>>,
+        audiothread_tx: mpsc::Sender<audiothread::Message>,
     ) -> Self {
         let viewvalues = ViewValues::new(&config);
-
-        let drum_machine = if let Some(tx) = &audiothread_tx {
-            DrumMachineModel::new_with_render_thread(tx.clone())
-        } else {
-            DrumMachineModel::new(None, None)
-        };
+        let drum_machine = DrumMachineModel::new_with_render_thread(audiothread_tx.clone());
 
         AppModel {
             config,
@@ -83,7 +75,6 @@ impl AppModel {
             viewflags: ViewFlags::default(),
             viewvalues,
             audiothread_tx,
-            _audiothread_handle: audiothread_handle,
             sources: HashMap::new(),
             sources_order: Vec::new(),
             sources_loading: HashMap::new(),
@@ -300,7 +291,8 @@ mod tests {
 
     #[test]
     fn test_add_remove_sampleset() {
-        let model = AppModel::new(AppConfig::default(), None, None, None);
+        let (dummy_tx, _) = mpsc::channel::<audiothread::Message>();
+        let model = AppModel::new(AppConfig::default(), None, dummy_tx);
         let set = BaseSampleSet::new("Favorites".to_string());
 
         let model = model.add_sampleset(SampleSet::BaseSampleSet(set.clone()));
