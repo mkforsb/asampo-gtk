@@ -385,6 +385,10 @@ impl AppModel {
         }
     }
 
+    pub fn set_most_recently_added_to(&self) -> Option<Uuid> {
+        self.sets_most_recently_used_uuid
+    }
+
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
