@@ -313,7 +313,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             let sample = model.get_listed_sample(index)?;
 
             let stream = model
-                .get_source(
+                .source(
                     *sample
                         .source_uuid()
                         .ok_or(anyhow!("Sample missing source UUID"))?,
@@ -346,11 +346,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SourceEnabled(uuid) => {
-            let source = model
-                .sources
-                .get(&uuid)
-                .ok_or(anyhow!("Source not found"))?;
-
+            let source = model.source(uuid)?;
             let (tx, rx) = std::sync::mpsc::channel::<Result<Sample, libasampo::errors::Error>>();
 
             std::thread::spawn(clone!(@strong source => move || {

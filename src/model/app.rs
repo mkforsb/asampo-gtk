@@ -372,7 +372,7 @@ impl AppModel {
         self.source_sample_count_add(source_uuid, added)
     }
 
-    pub fn get_source(&self, uuid: Uuid) -> Result<&Source, anyhow::Error> {
+    pub fn source(&self, uuid: Uuid) -> Result<&Source, anyhow::Error> {
         self.sources
             .get(&uuid)
             .ok_or(anyhow!("Failed to get source: UUID not present"))
