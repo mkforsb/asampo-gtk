@@ -56,7 +56,7 @@ use crate::{
     view::{
         dialogs,
         menus::build_actions,
-        samples::{setup_samples_page, update_samples_sidebar, SampleListEntry},
+        samples::{setup_samples_page, update_samples_sidebar},
         sequences::{
             setup_sequences_page, update_drum_machine_view, LABELS as DRUM_MACHINE_VIEW_LABELS,
         },
@@ -310,38 +310,28 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SampleListSampleSelected(index) => {
-            let item = model.viewvalues.samples_listview_model.item(index);
+            let sample = model.get_listed_sample(index)?;
 
-            match item
-                .and_dynamic_cast_ref::<SampleListEntry>()
-                .map(|x| &x.value)
-            {
-                Some(sample) => {
-                    let stream = model
-                        .sources
-                        .get(
-                            sample
-                                .borrow()
-                                .source_uuid()
-                                .ok_or(anyhow!("Sample missing source uuid"))?,
-                        )
-                        .ok_or(anyhow!("Failed to get source for sample"))?
-                        .stream(&sample.borrow())?;
+            let stream = model
+                .sources
+                .get(
+                    sample
+                        .source_uuid()
+                        .ok_or(anyhow!("Sample missing source uuid"))?,
+                )
+                .ok_or(anyhow!("Failed to get source for sample"))?
+                .stream(&sample)?;
 
-                    model
-                        .audiothread_tx
-                        .send(audiothread::Message::PlaySymphoniaSource(
-                            audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
-                        ))
-                        .map_err(|_| anyhow!("Send error on audio thread control channel"))?;
+            model
+                .audiothread_send(audiothread::Message::PlaySymphoniaSource(
+                    audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
+                ))
+                .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
 
-                    Ok(AppModel {
-                        samplelist_selected_sample: Some(sample.borrow().clone()),
-                        ..model
-                    })
-                }
-                None => Err(anyhow!("Could not obtain clicked sample (this is a bug)")),
-            }
+            Ok(AppModel {
+                samplelist_selected_sample: Some(sample),
+                ..model
+            })
         }
 
         AppMessage::SamplesFilterChanged(text) => Ok(AppModel {

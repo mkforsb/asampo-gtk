@@ -5,7 +5,11 @@
 use std::collections::HashMap;
 
 use anyhow::anyhow;
-use gtk::gio::ListStore;
+use gtk::{
+    gio::ListStore,
+    prelude::{Cast, ListModelExt},
+};
+use libasampo::samples::Sample;
 use uuid::Uuid;
 
 use crate::{
@@ -219,5 +223,18 @@ impl ViewValues {
             sources_add_fs_extensions_entry: text.into(),
             ..self
         }
+    }
+
+    pub fn get_listed_sample(&self, index: u32) -> std::result::Result<Sample, anyhow::Error> {
+        // TODO: is it possible to avoid cloning here?
+        Ok(self
+            .samples_listview_model
+            .item(index)
+            .ok_or(anyhow!("Failed to fetch sample: index not populated"))?
+            .dynamic_cast_ref::<SampleListEntry>()
+            .ok_or(anyhow!("Failed to fetch sample: GLib type cast failure"))?
+            .value
+            .borrow()
+            .clone())
     }
 }

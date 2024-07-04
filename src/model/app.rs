@@ -274,12 +274,12 @@ impl AppModel {
         &self.config
     }
 
-    // pub fn audiothread_send(
-    //     &self,
-    //     message: audiothread::Message,
-    // ) -> Result<(), mpsc::SendError<audiothread::Message>> {
-    //     self.audiothread_tx.send(message)
-    // }
+    pub fn audiothread_send(
+        &self,
+        message: audiothread::Message,
+    ) -> Result<(), mpsc::SendError<audiothread::Message>> {
+        self.audiothread_tx.send(message)
+    }
 
     pub fn reconfigure(self, config: AppConfig) -> ModelResult {
         let mut result = self.clone();
@@ -387,6 +387,7 @@ impl AppModel {
     delegate!(viewvalues, set_sources_add_fs_name_entry_if_empty(text: impl Into<String>) -> Model);
     delegate!(viewvalues, set_sources_add_fs_path_entry(text: impl Into<String>) -> Model);
     delegate!(viewvalues, set_sources_add_fs_extensions_entry(text: impl Into<String>) -> Model);
+    delegate!(viewvalues, get_listed_sample(index: u32) -> Result<Sample, anyhow::Error>);
 
     delegate!(drum_machine, is_render_thread_active()
         as is_drum_machine_render_thread_active -> bool);
