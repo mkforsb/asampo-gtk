@@ -18,7 +18,7 @@ mod view;
 
 pub mod util;
 
-pub use app::{AppModel, AppModelOps, AppModelPtr, ExportState};
+pub use app::{AppModel, AppModelPtr, ExportState};
 pub use drum_machine::DrumMachineModel;
 pub use view::{ExportKind, ViewFlags, ViewModelOps, ViewValues};
 

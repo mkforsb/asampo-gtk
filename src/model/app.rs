@@ -195,44 +195,26 @@ impl AppModel {
             ..self
         })
     }
-}
 
-pub trait AppModelOps {
-    fn set_config(self, config: AppConfig) -> AppModel;
-    fn set_config_save_timeout(self, deadline: Instant) -> AppModel;
-    fn clear_config_save_timeout(self) -> AppModel;
-
-    fn add_source(self, source: Source) -> ModelResult;
-
-    fn add_source_loader(
-        self,
-        source_uuid: Uuid,
-        loader_rx: mpsc::Receiver<Result<Sample, libasampo::errors::Error>>,
-    ) -> ModelResult;
-
-    fn enable_source(self, uuid: &Uuid) -> ModelResult;
-}
-
-impl AppModelOps for AppModel {
-    fn set_config(self, config: AppConfig) -> AppModel {
+    pub fn set_config(self, config: AppConfig) -> AppModel {
         AppModel { config, ..self }
     }
 
-    fn set_config_save_timeout(self, deadline: Instant) -> AppModel {
+    pub fn set_config_save_timeout(self, deadline: Instant) -> AppModel {
         AppModel {
             config_save_timeout: Some(deadline),
             ..self
         }
     }
 
-    fn clear_config_save_timeout(self) -> AppModel {
+    pub fn clear_config_save_timeout(self) -> AppModel {
         AppModel {
             config_save_timeout: None,
             ..self
         }
     }
 
-    fn add_source(self, source: Source) -> ModelResult {
+    pub fn add_source(self, source: Source) -> ModelResult {
         debug_assert!(self.sources.len() == self.sources_order.len());
         debug_assert!(self
             .sources
@@ -250,7 +232,7 @@ impl AppModelOps for AppModel {
         }
     }
 
-    fn add_source_loader(
+    pub fn add_source_loader(
         self,
         source_uuid: Uuid,
         loader_rx: mpsc::Receiver<Result<Sample, libasampo::errors::Error>>,
@@ -267,7 +249,7 @@ impl AppModelOps for AppModel {
         }
     }
 
-    fn enable_source(self, uuid: &Uuid) -> ModelResult {
+    pub fn enable_source(self, uuid: &Uuid) -> ModelResult {
         Ok(AppModel {
             sources: self.sources.cloned_update_with(
                 |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {

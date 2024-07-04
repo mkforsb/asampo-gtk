@@ -51,7 +51,7 @@ use crate::{
     config::AppConfig,
     configfile::ConfigFile,
     ext::WithModel,
-    model::{AppModel, AppModelOps, AppModelPtr, ViewFlags, ViewModelOps, ViewValues},
+    model::{AppModel, AppModelPtr, ViewFlags, ViewModelOps, ViewValues},
     util::gtk_find_child_by_builder_id,
     view::{
         dialogs,
