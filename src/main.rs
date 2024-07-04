@@ -499,13 +499,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::ExportTargetDirectoryBrowseClicked => Ok(model.signal_export_begin_browse()),
 
-        AppMessage::ExportTargetDirectoryBrowseSubmitted(text) => Ok(AppModel {
-            viewvalues: ViewValues {
-                sets_export_target_dir_entry: text,
-                ..model.viewvalues
-            },
-            ..model
-        }),
+        AppMessage::ExportTargetDirectoryBrowseSubmitted(text) => {
+            Ok(model.set_export_target_dir_entry_text(text))
+        }
 
         AppMessage::ExportTargetDirectoryBrowseError(_e) => Ok(model),
 
