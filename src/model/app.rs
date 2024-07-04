@@ -555,10 +555,9 @@ impl AppModel {
     }
 
     pub fn get_set(&self, uuid: Uuid) -> AnyhowResult<&SampleSet> {
-        Ok(self
-            .sets
+        self.sets
             .get(&uuid)
-            .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))?)
+            .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))
     }
 
     pub fn set_selected_set(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<AppModel> {
