@@ -115,4 +115,15 @@ impl DrumMachineModel {
     pub fn set_sequence(self, sequence: DrumkitSequence) -> DrumMachineModel {
         DrumMachineModel { sequence, ..self }
     }
+
+    pub fn set_latest_event(self, event: Option<DrumkitSequenceEvent>) -> DrumMachineModel {
+        DrumMachineModel {
+            event_latest: event,
+            ..self
+        }
+    }
+
+    // pub fn latest_event(&self) -> Option<&DrumkitSequenceEvent> {
+    //     self.event_latest.as_ref()
+    // }
 }

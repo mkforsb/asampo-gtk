@@ -674,13 +674,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model.set_drum_machine_sequence(new_sequence))
         }
 
-        AppMessage::DrumMachinePlaybackEvent(event) => Ok(AppModel {
-            drum_machine: DrumMachineModel {
-                event_latest: Some(event),
-                ..model.drum_machine
-            },
-            ..model
-        }),
+        AppMessage::DrumMachinePlaybackEvent(event) => {
+            Ok(model.set_latest_drum_machine_event(Some(event)))
+        }
     }
 }
 

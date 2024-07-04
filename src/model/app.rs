@@ -15,7 +15,7 @@ use gtk::{glib::clone, prelude::ListModelExt};
 use libasampo::{
     samples::{Sample, SampleOps},
     samplesets::{export::ExportJobMessage, SampleSet, SampleSetLabelling, SampleSetOps},
-    sequences::{drumkit_render_thread, DrumkitSequence},
+    sequences::{drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent},
     sources::{file_system_source::FilesystemSource, Source, SourceOps},
 };
 use uuid::Uuid;
@@ -668,6 +668,12 @@ impl AppModel {
 
     delegate!(drum_machine, set_sequence(sequence: DrumkitSequence)
         as set_drum_machine_sequence -> Model);
+
+    delegate!(drum_machine, set_latest_event(event: Option<DrumkitSequenceEvent>)
+        as set_latest_drum_machine_event -> Model);
+
+    // delegate!(drum_machine, latest_event()
+    //     as latest_drum_machine_event -> Option<&DrumkitSequenceEvent>);
 }
 
 #[cfg(test)]
