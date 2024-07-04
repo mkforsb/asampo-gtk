@@ -93,7 +93,7 @@ impl DrumMachineModel {
         (self.render_thread_tx, self.event_rx)
     }
 
-    pub fn activate_pad(self, pad: usize) -> AnyhowResult<DrumMachineModel> {
+    pub fn set_activated_pad(self, pad: usize) -> AnyhowResult<DrumMachineModel> {
         if pad < 16 {
             Ok(DrumMachineModel {
                 activated_pad: pad,

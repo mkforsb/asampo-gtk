@@ -660,7 +660,9 @@ impl AppModel {
     delegate!(drum_machine, render_thread_send(message: drumkit_render_thread::Message)
         as drum_machine_render_thread_send -> Result<(), anyhow::Error>);
 
-    delegate!(drum_machine, activate_pad(n: usize) as activate_drum_machine_pad -> Result);
+    delegate!(drum_machine, set_activated_pad(n: usize)
+        as set_activated_drum_machine_pad -> Result);
+
     delegate!(drum_machine, sequence() as drum_machine_sequence -> &DrumkitSequence);
 }
 
