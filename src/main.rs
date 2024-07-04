@@ -204,10 +204,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 model.populate_samples_listmodel();
             }
 
-            if model
-                .config_save_timeout
-                .is_some_and(|t| t <= Instant::now())
-            {
+            if model.reached_config_save_timeout() {
                 let config = &model.config;
 
                 log::log!(

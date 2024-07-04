@@ -262,6 +262,10 @@ impl AppModel {
         !self.sources_loading.is_empty()
     }
 
+    pub fn reached_config_save_timeout(&self) -> bool {
+        self.config_save_timeout.is_some_and(|t| t <= Instant::now())
+    }
+
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
