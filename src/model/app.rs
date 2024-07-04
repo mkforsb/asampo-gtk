@@ -372,6 +372,10 @@ impl AppModel {
         self.source_sample_count_add(source_uuid, added)
     }
 
+    pub fn get_source(&self, uuid: Uuid) -> Result<&Source, anyhow::Error> {
+        Ok(self.sources.get(&uuid).ok_or(anyhow!("Failed to get source: UUID not present"))?)
+    }
+
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);

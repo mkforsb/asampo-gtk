@@ -313,13 +313,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             let sample = model.get_listed_sample(index)?;
 
             let stream = model
-                .sources
-                .get(
-                    sample
+                .get_source(
+                    *sample
                         .source_uuid()
-                        .ok_or(anyhow!("Sample missing source uuid"))?,
-                )
-                .ok_or(anyhow!("Failed to get source for sample"))?
+                        .ok_or(anyhow!("Sample missing source UUID"))?,
+                )?
                 .stream(&sample)?;
 
             model
