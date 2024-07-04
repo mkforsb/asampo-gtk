@@ -25,7 +25,6 @@ use std::{
 
 use anyhow::anyhow;
 use audiothread::{AudioSpec, NonZeroNumFrames};
-use ext::ClonedHashMapExt;
 use model::{DrumMachineModel, ExportState, ModelOps};
 use uuid::Uuid;
 
@@ -353,13 +352,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 source.list_async(tx);
             }));
 
-            Ok(AppModel {
-                sources_loading: model.sources_loading.clone_and_insert(uuid, Rc::new(rx)),
-                ..model
-            }
-            .reset_source_sample_count(uuid)?
-            .enable_source(&uuid)?
-            .tap(AppModel::populate_samples_listmodel))
+            Ok(model
+                .add_source_loader(uuid, rx)?
+                .reset_source_sample_count(uuid)?
+                .enable_source(&uuid)?
+                .tap(AppModel::populate_samples_listmodel))
         }
 
         AppMessage::SourceDisabled(uuid) => Ok(model
