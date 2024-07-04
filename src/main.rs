@@ -625,7 +625,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::DrumMachineStepClicked(n) => {
             let amp = 0.5f32;
             let mut new_sequence = model.drum_machine_sequence().clone();
-            let label = DRUM_MACHINE_VIEW_LABELS[model.drum_machine.activated_pad];
+            let label = DRUM_MACHINE_VIEW_LABELS[model.activated_drum_machine_pad()];
 
             if new_sequence
                 .labels_at_step(n)
@@ -634,12 +634,12 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             {
                 new_sequence.unset_step_trigger(
                     n,
-                    DRUM_MACHINE_VIEW_LABELS[model.drum_machine.activated_pad],
+                    DRUM_MACHINE_VIEW_LABELS[model.activated_drum_machine_pad()],
                 );
 
-                if let Some(render_thread_tx) = &model.drum_machine.render_thread_tx {
-                    render_thread_tx
-                        .send(
+                if model.is_drum_machine_render_thread_active() {
+                    model
+                        .drum_machine_render_thread_send(
                             drumkit_render_thread::Message::EditSequenceUnsetStepTrigger {
                                 step: n,
                                 label,
@@ -671,13 +671,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 }
             }
 
-            Ok(AppModel {
-                drum_machine: DrumMachineModel {
-                    sequence: new_sequence,
-                    ..model.drum_machine
-                },
-                ..model
-            })
+            Ok(model.set_drum_machine_sequence(new_sequence))
         }
 
         AppMessage::DrumMachinePlaybackEvent(event) => Ok(AppModel {

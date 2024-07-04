@@ -104,7 +104,15 @@ impl DrumMachineModel {
         }
     }
 
+    pub fn activated_pad(&self) -> usize {
+        self.activated_pad
+    }
+
     pub fn sequence(&self) -> &DrumkitSequence {
         &self.sequence
+    }
+
+    pub fn set_sequence(self, sequence: DrumkitSequence) -> DrumMachineModel {
+        DrumMachineModel { sequence, ..self }
     }
 }
