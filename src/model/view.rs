@@ -160,6 +160,10 @@ impl ViewFlags {
             ..self
         }
     }
+
+    pub fn is_main_view_sensitive(&self) -> bool {
+        self.view_sensitive
+    }
 }
 
 #[derive(Debug, Clone)]

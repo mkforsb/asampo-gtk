@@ -699,8 +699,8 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         };
     }
 
-    if old.viewflags.view_sensitive != new.viewflags.view_sensitive {
-        view.set_sensitive(new.viewflags.view_sensitive);
+    if old.is_main_view_sensitive() != new.is_main_view_sensitive() {
+        view.set_sensitive(new.is_main_view_sensitive());
     }
 
     maybe_update_text!(old, new, view, settings_latency_approx_label);

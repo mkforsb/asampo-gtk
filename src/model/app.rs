@@ -630,6 +630,7 @@ impl AppModel {
     delegate!(viewflags, clear_signal_export_show_dialog() -> Model);
     delegate!(viewflags, set_main_view_sensitive(sensitive: bool) -> Model);
     delegate!(viewflags, set_are_export_fields_valid(valid: bool) -> Model);
+    delegate!(viewflags, is_main_view_sensitive() -> bool);
 
     // delegate!(viewvalues, set_latency_approx_label(text: String) -> Model);
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);
