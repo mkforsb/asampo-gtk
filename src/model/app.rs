@@ -11,21 +11,24 @@ use std::{
 };
 
 use anyhow::anyhow;
-use gtk::prelude::ListModelExt;
+use gtk::{glib::clone, prelude::ListModelExt};
 use libasampo::{
     samples::{Sample, SampleOps},
     samplesets::{export::ExportJobMessage, SampleSet, SampleSetOps},
     sequences::drumkit_render_thread,
-    sources::{Source, SourceOps},
+    sources::{file_system_source::FilesystemSource, Source, SourceOps},
 };
 use uuid::Uuid;
 
 use crate::{
     config::AppConfig,
     ext::{ClonedHashMapExt, ClonedVecExt},
-    model::{delegate::delegate, DrumMachineModel, ModelResult, ViewFlags, ViewValues},
+    model::{delegate::delegate, DrumMachineModel, ViewFlags, ViewValues},
     view::samples::SampleListEntry,
 };
+
+type AnyhowResult<T> = Result<T, anyhow::Error>;
+type SourceLoaderMessage = Result<Sample, libasampo::errors::Error>;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ExportState {
@@ -43,8 +46,7 @@ pub struct AppModel {
     pub audiothread_tx: mpsc::Sender<audiothread::Message>,
     pub sources: HashMap<Uuid, Source>,
     pub sources_order: Vec<Uuid>,
-    pub sources_loading:
-        HashMap<Uuid, Rc<mpsc::Receiver<Result<Sample, libasampo::errors::Error>>>>,
+    pub sources_loading: HashMap<Uuid, Rc<mpsc::Receiver<SourceLoaderMessage>>>,
     pub samples: Rc<RefCell<Vec<Sample>>>,
     pub samplelist_selected_sample: Option<Sample>,
     pub sets: HashMap<Uuid, SampleSet>,
@@ -91,25 +93,25 @@ impl AppModel {
         }
     }
 
-    pub fn disable_source(self, uuid: Uuid) -> ModelResult {
+    pub fn disable_source(self, uuid: Uuid) -> AnyhowResult<AppModel> {
         self.samples
             .borrow_mut()
             .retain(|s| s.source_uuid() != Some(&uuid));
 
         Ok(AppModel {
-            sources: self.sources.cloned_update_with(
-                |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
+            sources: self
+                .sources
+                .cloned_update_with(|mut s: HashMap<Uuid, Source>| {
                     s.get_mut(&uuid)
                         .ok_or_else(|| anyhow!("Failed to disable source: uuid not found!"))?
                         .disable();
                     Ok(s)
-                },
-            )?,
+                })?,
             ..self
         })
     }
 
-    pub fn remove_source(self, uuid: Uuid) -> ModelResult {
+    pub fn remove_source(self, uuid: Uuid) -> AnyhowResult<AppModel> {
         let model = self
             .disable_source(uuid)?
             .remove_source_sample_count(uuid)?;
@@ -166,7 +168,7 @@ impl AppModel {
         );
     }
 
-    pub fn add_sampleset(self, set: SampleSet) -> Self {
+    pub fn add_sampleset(self, set: SampleSet) -> AppModel {
         AppModel {
             sets_order: self.sets_order.clone_and_push(*set.uuid()),
             sets: self.sets.clone_and_insert(*set.uuid(), set),
@@ -175,7 +177,7 @@ impl AppModel {
     }
 
     #[cfg(test)]
-    pub fn remove_sampleset(self, uuid: &Uuid) -> ModelResult {
+    pub fn remove_sampleset(self, uuid: &Uuid) -> AnyhowResult<AppModel> {
         Ok(AppModel {
             sets_order: self.sets_order.clone_and_remove(uuid)?,
             sets: self.sets.clone_and_remove(uuid)?,
@@ -201,7 +203,7 @@ impl AppModel {
         }
     }
 
-    pub fn add_source(self, source: Source) -> ModelResult {
+    pub fn add_source(self, source: Source) -> AnyhowResult<AppModel> {
         debug_assert!(self.sources.len() == self.sources_order.len());
         debug_assert!(self
             .sources
@@ -222,8 +224,8 @@ impl AppModel {
     pub fn add_source_loader(
         self,
         source_uuid: Uuid,
-        loader_rx: mpsc::Receiver<Result<Sample, libasampo::errors::Error>>,
-    ) -> ModelResult {
+        loader_rx: mpsc::Receiver<SourceLoaderMessage>,
+    ) -> AnyhowResult<AppModel> {
         if self.sources_loading.contains_key(&source_uuid) {
             Err(anyhow!("Failed to add source loader: UUID in use"))
         } else {
@@ -236,7 +238,7 @@ impl AppModel {
         }
     }
 
-    pub fn remove_source_loader(self, source_uuid: Uuid) -> ModelResult {
+    pub fn remove_source_loader(self, source_uuid: Uuid) -> AnyhowResult<AppModel> {
         if !self.sources_loading.contains_key(&source_uuid) {
             Err(anyhow!("Failed to remove source loader: UUID not present"))
         } else {
@@ -247,16 +249,16 @@ impl AppModel {
         }
     }
 
-    pub fn enable_source(self, uuid: &Uuid) -> ModelResult {
+    pub fn enable_source(self, uuid: &Uuid) -> AnyhowResult<AppModel> {
         Ok(AppModel {
-            sources: self.sources.cloned_update_with(
-                |mut s: HashMap<Uuid, Source>| -> Result<HashMap<Uuid, Source>, anyhow::Error> {
+            sources: self
+                .sources
+                .cloned_update_with(|mut s: HashMap<Uuid, Source>| {
                     s.get_mut(uuid)
                         .ok_or_else(|| anyhow!("Failed to enable source: UUID not present"))?
                         .enable();
                     Ok(s)
-                },
-            )?,
+                })?,
             ..self
         })
     }
@@ -274,14 +276,13 @@ impl AppModel {
         &self.config
     }
 
-    pub fn audiothread_send(
-        &self,
-        message: audiothread::Message,
-    ) -> Result<(), mpsc::SendError<audiothread::Message>> {
-        self.audiothread_tx.send(message)
+    pub fn audiothread_send(&self, message: audiothread::Message) -> AnyhowResult<()> {
+        self.audiothread_tx
+            .send(message)
+            .map_err(|e| anyhow!("Audiothread send error: {e}"))
     }
 
-    pub fn reconfigure(self, config: AppConfig) -> ModelResult {
+    pub fn reconfigure(self, config: AppConfig) -> AnyhowResult<AppModel> {
         let mut result = self.clone();
 
         let new_audiothread_tx = AppModel::spawn_audiothread(&config)?;
@@ -330,7 +331,7 @@ impl AppModel {
 
     pub fn spawn_audiothread(
         config: &AppConfig,
-    ) -> Result<mpsc::Sender<audiothread::Message>, anyhow::Error> {
+    ) -> AnyhowResult<mpsc::Sender<audiothread::Message>> {
         let (audiothread_tx, audiothread_rx) = mpsc::channel::<audiothread::Message>();
 
         let _ = audiothread::spawn(
@@ -350,8 +351,8 @@ impl AppModel {
     pub fn handle_source_loader(
         self,
         source_uuid: Uuid,
-        messages: Vec<Result<Sample, libasampo::errors::Error>>,
-    ) -> ModelResult {
+        messages: Vec<SourceLoaderMessage>,
+    ) -> AnyhowResult<AppModel> {
         let mut samples = self.samples.borrow_mut();
         let len_before = samples.len();
 
@@ -372,7 +373,7 @@ impl AppModel {
         self.source_sample_count_add(source_uuid, added)
     }
 
-    pub fn source(&self, uuid: Uuid) -> Result<&Source, anyhow::Error> {
+    pub fn source(&self, uuid: Uuid) -> AnyhowResult<&Source> {
         self.sources
             .get(&uuid)
             .ok_or(anyhow!("Failed to get source: UUID not present"))
@@ -387,6 +388,65 @@ impl AppModel {
 
     pub fn get_set_most_recently_added_to(&self) -> Option<Uuid> {
         self.sets_most_recently_used_uuid
+    }
+
+    fn sources_add_fs_fields_valid(model: &AppModel) -> bool {
+        !(model.viewvalues.sources_add_fs_name_entry.is_empty()
+            || model.viewvalues.sources_add_fs_path_entry.is_empty()
+            || model.viewvalues.sources_add_fs_extensions_entry.is_empty())
+    }
+
+    pub fn validate_sources_add_fs_fields(self) -> AppModel {
+        let valid = Self::sources_add_fs_fields_valid(&self);
+        self.set_is_sources_add_fs_fields_valid(valid)
+    }
+
+    pub fn commit_file_system_source(self) -> Result<AppModel, anyhow::Error> {
+        if Self::sources_add_fs_fields_valid(&self) {
+            let name = self.viewvalues.sources_add_fs_name_entry.clone();
+            let path = self.viewvalues.sources_add_fs_path_entry.clone();
+            let exts = self
+                .viewvalues
+                .sources_add_fs_extensions_entry
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .collect();
+
+            self.add_file_system_source(name, path, exts)
+        } else {
+            Err(anyhow!(
+                "Failed to commit file system source: invalid field(s)"
+            ))
+        }
+    }
+
+    // TODO: more validation, e.g is the path readable
+    pub fn add_file_system_source(
+        self,
+        name: String,
+        path: String,
+        exts: Vec<String>,
+    ) -> Result<AppModel, anyhow::Error> {
+        let new_source = Source::FilesystemSource(FilesystemSource::new_named(name, path, exts));
+        let uuid = *new_source.uuid();
+
+        let (loader_tx, loader_rx) = mpsc::channel::<Result<Sample, libasampo::errors::Error>>();
+
+        std::thread::spawn(clone!(@strong new_source => move || {
+            new_source.list_async(loader_tx);
+        }));
+
+        self.init_source_sample_count(uuid)?
+            .add_source(new_source.clone())?
+            .enable_source(&uuid)?
+            .clear_sources_add_fs_fields()
+            .set_is_sources_add_fs_fields_valid(false)
+            .add_source_loader(uuid, loader_rx)
+    }
+
+    pub fn tap<F: FnOnce(&AppModel)>(self, f: F) -> AppModel {
+        f(&self);
+        self
     }
 
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);

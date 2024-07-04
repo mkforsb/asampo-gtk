@@ -25,7 +25,7 @@ use std::{
 
 use anyhow::anyhow;
 use audiothread::{AudioSpec, NonZeroNumFrames};
-use model::{DrumMachineModel, ExportState, ModelOps};
+use model::{DrumMachineModel, ExportState};
 use uuid::Uuid;
 
 use gtk::{
