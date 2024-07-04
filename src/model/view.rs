@@ -114,6 +114,20 @@ impl ViewFlags {
             ..self
         }
     }
+
+    pub fn signal_export_begin_browse(self) -> ViewFlags {
+        ViewFlags {
+            sets_export_begin_browse: true,
+            ..self
+        }
+    }
+
+    pub fn clear_signal_export_begin_browse(self) -> ViewFlags {
+        ViewFlags {
+            sets_export_begin_browse: false,
+            ..self
+        }
+    }
 }
 
 #[derive(Debug, Clone)]

@@ -539,6 +539,8 @@ impl AppModel {
     delegate!(viewflags, disable_set_export() -> Model);
     delegate!(viewflags, signal_add_set_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_add_set_show_dialog() -> Model);
+    delegate!(viewflags, signal_export_begin_browse() -> Model);
+    delegate!(viewflags, clear_signal_export_begin_browse() -> Model);
 
     // delegate!(viewvalues, set_latency_approx_label(text: String) -> Model);
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);

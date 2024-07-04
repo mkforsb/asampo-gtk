@@ -435,13 +435,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 Ok(model.clear_signal_sources_add_fs_begin_browse())
             }
 
-            SelectFolderDialogContext::BrowseForExportTargetDirectory => Ok(AppModel {
-                viewflags: ViewFlags {
-                    sets_export_begin_browse: false,
-                    ..model.viewflags
-                },
-                ..model
-            }),
+            SelectFolderDialogContext::BrowseForExportTargetDirectory => {
+                Ok(model.clear_signal_export_begin_browse())
+            }
         },
 
         AppMessage::SampleSetSelected(uuid) => {
@@ -550,13 +546,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             ..model
         }),
 
-        AppMessage::ExportTargetDirectoryBrowseClicked => Ok(AppModel {
-            viewflags: ViewFlags {
-                sets_export_begin_browse: true,
-                ..model.viewflags
-            },
-            ..model
-        }),
+        AppMessage::ExportTargetDirectoryBrowseClicked => Ok(model.signal_export_begin_browse()),
 
         AppMessage::ExportTargetDirectoryBrowseSubmitted(text) => Ok(AppModel {
             viewvalues: ViewValues {
