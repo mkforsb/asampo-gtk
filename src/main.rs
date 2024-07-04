@@ -480,23 +480,6 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     }
                 },
             )
-            // let mut result = model.clone();
-            //
-            // let set = result
-            //     .sets
-            //     .get_mut(&set_uuid)
-            //     .ok_or(anyhow!("Sample set not found (by uuid)"))?;
-            //
-            // match set {
-            //     SampleSet::BaseSampleSet(ref mut set) => match kind {
-            //         LabellingKind::None => set.set_labelling(None),
-            //         LabellingKind::Drumkit => set.set_labelling(Some(
-            //             SampleSetLabelling::DrumkitLabelling(DrumkitLabelling::new()),
-            //         )),
-            //     },
-            // };
-            //
-            // Ok(result)
         }
 
         AppMessage::SampleSetDetailsExportClicked => Ok(AppModel {
