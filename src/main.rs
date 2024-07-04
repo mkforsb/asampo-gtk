@@ -50,7 +50,7 @@ use crate::{
     config::AppConfig,
     configfile::ConfigFile,
     ext::WithModel,
-    model::{AppModel, AppModelPtr, ViewFlags, ViewValues},
+    model::{AppModel, AppModelPtr, ViewValues},
     util::gtk_find_child_by_builder_id,
     view::{
         dialogs,
@@ -493,17 +493,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             .set_export_dialog_view(None)
             .set_main_view_sensitive(true)),
 
-        AppMessage::ExportTargetDirectoryChanged(text) => Ok(AppModel {
-            viewflags: ViewFlags {
-                sets_export_fields_valid: !text.is_empty(),
-                ..model.viewflags
-            },
-            viewvalues: ViewValues {
-                sets_export_target_dir_entry: text,
-                ..model.viewvalues
-            },
-            ..model
-        }),
+        AppMessage::ExportTargetDirectoryChanged(text) => Ok(model
+            .set_are_export_fields_valid(!text.is_empty())
+            .set_export_target_dir_entry_text(text)),
 
         AppMessage::ExportTargetDirectoryBrowseClicked => Ok(model.signal_export_begin_browse()),
 

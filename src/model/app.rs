@@ -605,6 +605,7 @@ impl AppModel {
     delegate!(viewflags, signal_export_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_export_show_dialog() -> Model);
     delegate!(viewflags, set_main_view_sensitive(sensitive: bool) -> Model);
+    delegate!(viewflags, set_are_export_fields_valid(valid: bool) -> Model);
 
     // delegate!(viewvalues, set_latency_approx_label(text: String) -> Model);
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);
@@ -621,6 +622,7 @@ impl AppModel {
     delegate!(viewvalues, set_samples_list_filter_text(text: impl Into<String>) -> Model);
     delegate!(viewvalues, clear_sources_sample_counts() -> Model);
     delegate!(viewvalues, set_export_dialog_view(view: Option<ExportDialogView>) -> Model);
+    delegate!(viewvalues, set_export_target_dir_entry_text(text: impl Into<String>) -> Model);
 
     delegate!(drum_machine, is_render_thread_active()
         as is_drum_machine_render_thread_active -> bool);

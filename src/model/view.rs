@@ -153,6 +153,13 @@ impl ViewFlags {
             ..self
         }
     }
+
+    pub fn set_are_export_fields_valid(self, valid: bool) -> ViewFlags {
+        ViewFlags {
+            sets_export_fields_valid: valid,
+            ..self
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -336,6 +343,13 @@ impl ViewValues {
     pub fn set_export_dialog_view(self, maybe_view: Option<ExportDialogView>) -> ViewValues {
         ViewValues {
             sets_export_dialog_view: maybe_view,
+            ..self
+        }
+    }
+
+    pub fn set_export_target_dir_entry_text(self, text: impl Into<String>) -> ViewValues {
+        ViewValues {
+            sets_export_target_dir_entry: text.into(),
             ..self
         }
     }
