@@ -615,6 +615,10 @@ impl AppModel {
         }
     }
 
+    pub fn selected_sample(&self) -> Option<&Sample> {
+        self.samplelist_selected_sample.as_ref()
+    }
+
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
@@ -631,6 +635,13 @@ impl AppModel {
     delegate!(viewflags, set_main_view_sensitive(sensitive: bool) -> Model);
     delegate!(viewflags, set_are_export_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, is_main_view_sensitive() -> bool);
+    delegate!(viewflags, are_export_fields_valid() -> bool);
+    delegate!(viewflags, is_signalling_add_fs_source_begin_browse() -> bool);
+    delegate!(viewflags, is_signalling_add_sample_to_set_show_dialog() -> bool);
+    delegate!(viewflags, is_signalling_add_set_show_dialog() -> bool);
+    delegate!(viewflags, is_signalling_export_show_dialog() -> bool);
+    delegate!(viewflags, is_signalling_export_begin_browse() -> bool);
+    delegate!(viewflags, are_add_fs_source_fields_valid() -> bool);
 
     // delegate!(viewvalues, set_latency_approx_label(text: String) -> Model);
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);
@@ -654,6 +665,12 @@ impl AppModel {
     delegate!(viewvalues, reset_export_progress() -> Model);
     delegate!(viewvalues, export_target_dir() -> &String);
     delegate!(viewvalues, export_kind() -> &ExportKind);
+    delegate!(viewvalues, latency_approx_label_text() -> &String);
+    delegate!(viewvalues, add_fs_source_name_entry_text() -> &String);
+    delegate!(viewvalues, add_fs_source_path_entry_text() -> &String);
+    delegate!(viewvalues, add_fs_source_extensions_entry_text() -> &String);
+    delegate!(viewvalues, export_dialog_view() -> Option<&ExportDialogView>);
+    delegate!(viewvalues, sources_sample_count() -> &HashMap<Uuid, usize>);
 
     delegate!(drum_machine, is_render_thread_active()
         as is_drum_machine_render_thread_active -> bool);

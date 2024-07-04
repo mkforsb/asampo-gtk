@@ -443,8 +443,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::SampleSetSelected(uuid) => {
             let len = model.get_set(uuid)?.len();
 
+            // TODO: replace these `conditionally` with some `set_export_enabled(bool)`
             model
                 .conditionally(|| len > 0, AppModel::enable_set_export)
+                .conditionally(|| len == 0, AppModel::disable_set_export)
                 .set_selected_set(Some(uuid))
         }
 
@@ -682,19 +684,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
 fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &AsampoView) {
     macro_rules! maybe_update_text {
-        ($old:ident, $new:ident, $view:ident, $entry:ident) => {
-            if $old.viewvalues.$entry != $new.viewvalues.$entry
-                && $view.$entry.text() != $new.viewvalues.$entry
-            {
-                $view.$entry.set_text(&$new.viewvalues.$entry);
-            }
-        };
-
-        ($old:ident, $new:ident, expr $viewexpr: expr, $entry:ident) => {
-            if $old.viewvalues.$entry != $new.viewvalues.$entry
-                && ($viewexpr).text() != $new.viewvalues.$entry
-            {
-                ($viewexpr).set_text(&$new.viewvalues.$entry);
+        ($viewexpr:expr, $fname:ident) => {
+            if old.$fname() != new.$fname() && ($viewexpr).text() != *new.$fname() {
+                ($viewexpr).set_text(&new.$fname());
             }
         };
     }
@@ -703,27 +695,34 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         view.set_sensitive(new.is_main_view_sensitive());
     }
 
-    maybe_update_text!(old, new, view, settings_latency_approx_label);
-    maybe_update_text!(old, new, view, sources_add_fs_name_entry);
-    maybe_update_text!(old, new, view, sources_add_fs_path_entry);
-    maybe_update_text!(old, new, view, sources_add_fs_extensions_entry);
+    maybe_update_text!(
+        view.settings_latency_approx_label,
+        latency_approx_label_text
+    );
+    maybe_update_text!(
+        view.sources_add_fs_name_entry,
+        add_fs_source_name_entry_text
+    );
+    maybe_update_text!(
+        view.sources_add_fs_path_entry,
+        add_fs_source_path_entry_text
+    );
+    maybe_update_text!(
+        view.sources_add_fs_extensions_entry,
+        add_fs_source_extensions_entry_text
+    );
 
-    if let Some(dialogview) = &new.viewvalues.sets_export_dialog_view {
-        maybe_update_text!(
-            old,
-            new,
-            expr dialogview.target_dir_entry,
-            sets_export_target_dir_entry
-        );
+    if let Some(dialogview) = new.export_dialog_view() {
+        maybe_update_text!(dialogview.target_dir_entry, export_target_dir);
 
-        if old.viewflags.sets_export_fields_valid != new.viewflags.sets_export_fields_valid {
+        if old.are_export_fields_valid() != new.are_export_fields_valid() {
             dialogview
                 .export_button
-                .set_sensitive(new.viewflags.sets_export_fields_valid);
+                .set_sensitive(new.are_export_fields_valid());
         }
     }
 
-    if new.viewflags.sources_add_fs_begin_browse {
+    if new.is_signalling_add_fs_source_begin_browse() {
         dialogs::choose_folder(
             model_ptr.clone(),
             view,
@@ -733,7 +732,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         );
     }
 
-    if new.viewflags.samples_sidebar_add_to_set_show_dialog {
+    if new.is_signalling_add_sample_to_set_show_dialog() {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -745,7 +744,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         );
     }
 
-    if new.viewflags.sets_add_set_show_dialog {
+    if new.is_signalling_add_set_show_dialog() {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -757,11 +756,11 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         );
     }
 
-    if new.viewflags.sets_export_show_dialog {
+    if new.is_signalling_export_show_dialog() {
         dialogs::sampleset_export(model_ptr.clone(), view, new.clone());
     }
 
-    if new.viewflags.sets_export_begin_browse {
+    if new.is_signalling_export_begin_browse() {
         dialogs::choose_folder(
             model_ptr.clone(),
             view,
@@ -771,30 +770,30 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         );
     }
 
-    if old.viewflags.sources_add_fs_fields_valid != new.viewflags.sources_add_fs_fields_valid {
+    if old.are_add_fs_source_fields_valid() != new.are_add_fs_source_fields_valid() {
         view.sources_add_fs_add_button
-            .set_sensitive(new.viewflags.sources_add_fs_fields_valid);
+            .set_sensitive(new.are_add_fs_source_fields_valid());
     }
 
-    if old.sources != new.sources {
+    if old.sources() != new.sources() {
         update_sources_list(model_ptr.clone(), new.clone(), view);
     }
 
-    if old.viewvalues.sources_sample_count != new.viewvalues.sources_sample_count {
-        for uuid in new.viewvalues.sources_sample_count.keys() {
+    if old.sources_sample_count() != new.sources_sample_count() {
+        for uuid in new.sources_sample_count().keys() {
             if let Some(count_label) = gtk_find_child_by_builder_id::<gtk::Label>(
                 &view.sources_list.get(),
                 &format!("{uuid}-count-label"),
             ) {
                 count_label.set_text(&format!(
                     "({} samples)",
-                    new.viewvalues.sources_sample_count.get(uuid).unwrap()
+                    new.sources_sample_count().get(uuid).unwrap()
                 ));
             }
         }
     }
 
-    if old.samplelist_selected_sample != new.samplelist_selected_sample {
+    if old.selected_sample() != new.selected_sample() {
         update_samples_sidebar(model_ptr.clone(), new.clone(), view);
     }
 
@@ -805,16 +804,16 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             .set_visible(new.viewflags.samples_sidebar_add_to_prev_enabled);
     }
 
-    if old.sets_most_recently_used_uuid != new.sets_most_recently_used_uuid {
-        if let Some(mru) = &new.sets_most_recently_used_uuid {
-            if let Some((_, set)) = new.sets.iter().find(|(uuid, _set)| *uuid == mru) {
+    if old.get_set_most_recently_added_to() != new.get_set_most_recently_added_to() {
+        if let Some(mru) = &new.get_set_most_recently_added_to() {
+            if let Ok(set) = new.get_set(*mru) {
                 view.samples_sidebar_add_to_prev_button
                     .set_label(&format!("Add to '{}'", set.name()));
             }
         }
     }
 
-    if old.sets_selected_set != new.sets_selected_set {
+    if old.get_selected_set() != new.get_selected_set() {
         update_samplesets_detail(model_ptr.clone(), new.clone(), view);
     }
 

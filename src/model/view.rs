@@ -164,6 +164,34 @@ impl ViewFlags {
     pub fn is_main_view_sensitive(&self) -> bool {
         self.view_sensitive
     }
+
+    pub fn are_export_fields_valid(&self) -> bool {
+        self.sets_export_fields_valid
+    }
+
+    pub fn is_signalling_add_fs_source_begin_browse(&self) -> bool {
+        self.sources_add_fs_begin_browse
+    }
+
+    pub fn is_signalling_add_sample_to_set_show_dialog(&self) -> bool {
+        self.samples_sidebar_add_to_set_show_dialog
+    }
+
+    pub fn is_signalling_add_set_show_dialog(&self) -> bool {
+        self.sets_add_set_show_dialog
+    }
+
+    pub fn is_signalling_export_show_dialog(&self) -> bool {
+        self.sets_export_show_dialog
+    }
+
+    pub fn is_signalling_export_begin_browse(&self) -> bool {
+        self.sets_export_begin_browse
+    }
+
+    pub fn are_add_fs_source_fields_valid(&self) -> bool {
+        self.sources_add_fs_fields_valid
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -400,5 +428,29 @@ impl ViewValues {
 
     pub fn export_kind(&self) -> &ExportKind {
         &self.sets_export_kind
+    }
+
+    pub fn latency_approx_label_text(&self) -> &String {
+        &self.settings_latency_approx_label
+    }
+
+    pub fn add_fs_source_name_entry_text(&self) -> &String {
+        &self.sources_add_fs_name_entry
+    }
+
+    pub fn add_fs_source_path_entry_text(&self) -> &String {
+        &self.sources_add_fs_path_entry
+    }
+
+    pub fn add_fs_source_extensions_entry_text(&self) -> &String {
+        &self.sources_add_fs_extensions_entry
+    }
+
+    pub fn export_dialog_view(&self) -> Option<&ExportDialogView> {
+        self.sets_export_dialog_view.as_ref()
+    }
+
+    pub fn sources_sample_count(&self) -> &HashMap<Uuid, usize> {
+        &self.sources_sample_count
     }
 }
