@@ -444,7 +444,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             let len = model.get_set(uuid)?.len();
 
             model
-                .cond(|| len > 0, AppModel::enable_set_export)
+                .conditionally(|| len > 0, AppModel::enable_set_export)
                 .set_selected_set(Some(uuid))
         }
 

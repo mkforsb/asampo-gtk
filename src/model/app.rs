@@ -444,7 +444,7 @@ impl AppModel {
             .add_source_loader(uuid, loader_rx)
     }
 
-    pub fn cond<P, F>(self, cond: P, op: F) -> AppModel
+    pub fn conditionally<P, F>(self, cond: P, op: F) -> AppModel
     where
         P: FnOnce() -> bool,
         F: FnOnce(AppModel) -> AppModel,
@@ -456,7 +456,7 @@ impl AppModel {
         }
     }
 
-    // pub fn condf<P, F, T>(self, cond: P, op: F) -> AnyhowResult<AppModel>
+    // pub fn conditionally_fallible<P, F, T>(self, cond: P, op: F) -> AnyhowResult<AppModel>
     // where
     //     P: FnOnce() -> bool,
     //     F: FnOnce(AppModel) -> AnyhowResult<AppModel>,
