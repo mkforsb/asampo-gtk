@@ -336,6 +336,31 @@ impl AppModel {
         Ok(audiothread_tx)
     }
 
+    pub fn handle_source_loader(
+        self,
+        source_uuid: Uuid,
+        messages: Vec<Result<Sample, libasampo::errors::Error>>,
+    ) -> ModelResult {
+        let mut samples = self.samples.borrow_mut();
+        let len_before = samples.len();
+
+        for message in messages {
+            match message {
+                Ok(sample) => {
+                    samples.push(sample);
+                }
+
+                Err(e) => log::log!(log::Level::Error, "Error loading source: {e}"),
+            }
+        }
+
+        let added = samples.len() - len_before;
+        drop(samples);
+
+        // TODO: this goes in AppModel while the above goes in CoreModel
+        self.source_sample_count_add(source_uuid, added)
+    }
+
     delegate!(viewflags, set_is_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);

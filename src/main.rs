@@ -301,23 +301,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             .tap(AppModel::populate_samples_listmodel)),
 
         AppMessage::SourceLoadingMessage(uuid, messages) => {
-            let mut samples = model.samples.borrow_mut();
-            let len_before = samples.len();
-
-            for message in messages {
-                match message {
-                    Ok(sample) => {
-                        samples.push(sample);
-                    }
-
-                    Err(e) => log::log!(log::Level::Error, "Error loading source: {e}"),
-                }
-            }
-
-            let added = samples.len() - len_before;
-            drop(samples);
-
-            model.source_sample_count_add(uuid, added)
+            model.handle_source_loader(uuid, messages)
         }
 
         AppMessage::SourceLoadingDisconnected(uuid) => {
