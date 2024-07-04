@@ -103,4 +103,8 @@ impl DrumMachineModel {
             Err(anyhow!("Value out of range [0,15]"))
         }
     }
+
+    pub fn sequence(&self) -> &DrumkitSequence {
+        &self.sequence
+    }
 }

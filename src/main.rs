@@ -624,7 +624,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::DrumMachinePartClicked(_n) => Ok(model),
         AppMessage::DrumMachineStepClicked(n) => {
             let amp = 0.5f32;
-            let mut new_sequence = model.drum_machine.sequence.clone();
+            let mut new_sequence = model.drum_machine_sequence().clone();
             let label = DRUM_MACHINE_VIEW_LABELS[model.drum_machine.activated_pad];
 
             if new_sequence
