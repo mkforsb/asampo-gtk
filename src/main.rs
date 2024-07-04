@@ -205,7 +205,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             }
 
             if model.reached_config_save_timeout() {
-                let config = &model.config;
+                let config = model.config();
 
                 log::log!(
                     log::Level::Info,
@@ -234,7 +234,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 // give drum machine thread some time to shut down gracefully
                 std::thread::sleep(Duration::from_millis(250));
 
-                if let Some(prev_tx) = model.audiothread_tx {
+                if let Some(prev_tx) = &model.audiothread_tx {
                     match prev_tx.send(audiothread::Message::Shutdown) {
                         Ok(_) => {
                             // give audiothread some time to shut down gracefully
@@ -278,7 +278,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SettingsOutputSampleRateChanged(choice) => {
-            let new_config = model.config.clone().with_samplerate_choice(choice);
+            let new_config = model.config().clone().with_samplerate_choice(choice);
 
             Ok(model
                 .set_latency_approx_label_by_config(&new_config)
@@ -287,7 +287,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SettingsBufferSizeChanged(samples) => {
-            let new_config = model.config.clone().with_buffer_size(samples);
+            let new_config = model.config().clone().with_buffer_size(samples);
 
             Ok(model
                 .set_latency_approx_label_by_config(&new_config)
@@ -296,7 +296,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SettingsSampleRateConversionQualityChanged(choice) => {
-            let new_config = model.config.clone().with_conversion_quality_choice(choice);
+            let new_config = model.config().clone().with_conversion_quality_choice(choice);
 
             Ok(model
                 .set_config(new_config)
@@ -305,7 +305,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SettingsSamplePlaybackBehaviorChanged(choice) => {
             let new_config = model
-                .config
+                .config()
                 .clone()
                 .with_sample_playback_behavior_choice(choice);
 
