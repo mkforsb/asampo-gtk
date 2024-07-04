@@ -296,7 +296,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SettingsSampleRateConversionQualityChanged(choice) => {
-            let new_config = model.config().clone().with_conversion_quality_choice(choice);
+            let new_config = model
+                .config()
+                .clone()
+                .with_conversion_quality_choice(choice);
 
             Ok(model
                 .set_config(new_config)

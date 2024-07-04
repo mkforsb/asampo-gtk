@@ -263,7 +263,8 @@ impl AppModel {
     }
 
     pub fn reached_config_save_timeout(&self) -> bool {
-        self.config_save_timeout.is_some_and(|t| t <= Instant::now())
+        self.config_save_timeout
+            .is_some_and(|t| t <= Instant::now())
     }
 
     pub fn config(&self) -> &AppConfig {
