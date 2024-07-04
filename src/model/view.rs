@@ -170,6 +170,16 @@ impl ViewValues {
         }
     }
 
+    pub fn remove_source_sample_count(self, source_uuid: Uuid) -> Result<ViewValues> {
+        Ok(ViewValues {
+            sources_sample_count: self
+                .sources_sample_count
+                .clone_and_remove(&source_uuid)
+                .map_err(|_| anyhow!("Failed to remove source sample count: UUID not present"))?,
+            ..self
+        })
+    }
+
     pub fn clear_sources_add_fs_fields(self) -> ViewValues {
         ViewValues {
             sources_add_fs_name_entry: String::from(""),

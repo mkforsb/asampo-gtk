@@ -118,16 +118,11 @@ impl AppModel {
     }
 
     pub fn remove_source(self, uuid: &Uuid) -> ModelResult {
-        let model = self.disable_source(uuid)?;
+        let model = self
+            .disable_source(uuid)?
+            .remove_source_sample_count(*uuid)?;
 
         Ok(AppModel {
-            viewvalues: ViewValues {
-                sources_sample_count: model
-                    .viewvalues
-                    .sources_sample_count
-                    .clone_and_remove(uuid)?,
-                ..model.viewvalues
-            },
             sources_order: model.sources_order.clone_and_remove(uuid)?,
             sources: model.sources.clone_and_remove(uuid)?,
             ..model
@@ -272,6 +267,7 @@ impl AppModel {
     delegate!(viewvalues, init_source_sample_count(source_uuid: Uuid) -> Result);
     delegate!(viewvalues, source_sample_count_add(source_uuid: Uuid, add: usize) -> Result);
     delegate!(viewvalues, reset_source_sample_count(source_uuid: Uuid) -> Result);
+    delegate!(viewvalues, remove_source_sample_count(source_uuid: Uuid) -> Result);
     delegate!(viewvalues, clear_sources_add_fs_fields() -> Model);
     delegate!(viewvalues, set_sources_add_fs_name_entry(text: impl Into<String>) -> Model);
     delegate!(viewvalues, set_sources_add_fs_path_entry(text: impl Into<String>) -> Model);
