@@ -168,10 +168,10 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
         .object::<gtk::CheckButton>("convert-radio-button")
         .unwrap();
 
-    target_dir_entry.set_text(&model.viewvalues.sets_export_target_dir_entry);
+    target_dir_entry.set_text(model.export_target_dir());
     export_button.set_sensitive(target_dir_entry.text_length() > 0);
 
-    match model.viewvalues.sets_export_kind {
+    match model.export_kind() {
         crate::model::ExportKind::PlainCopy => {
             plain_copy_radio.set_active(true);
             convert_radio.set_active(false);

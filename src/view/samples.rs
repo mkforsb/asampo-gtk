@@ -102,7 +102,7 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
     let selectmodel = gtk::SingleSelection::new(None::<gtk::gio::ListStore>);
 
     model_ptr.with_model(|model| {
-        selectmodel.set_model(Some(&model.viewvalues.samples_listview_model.clone()));
+        selectmodel.set_model(Some(model.samples_listmodel()));
         model
     });
 

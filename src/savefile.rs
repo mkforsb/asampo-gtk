@@ -27,15 +27,15 @@ impl SavefileV1 {
     pub fn from_appmodel(model: &AppModel) -> AnyhowResult<SavefileV1> {
         Ok(SavefileV1 {
             sources: model
-                .sources_order
+                .sources_list()
                 .iter()
-                .map(|uuid| SerSource::try_from_domain(model.sources.get(uuid).unwrap()))
+                .map(|source| SerSource::try_from_domain(source))
                 .collect::<Result<Vec<SerSource>, LaError>>()?,
 
             samplesets: model
-                .sets_order
+                .sets_list()
                 .iter()
-                .map(|uuid| SerSampleSet::try_from_domain(model.sets.get(uuid).unwrap()))
+                .map(|set| SerSampleSet::try_from_domain(set))
                 .collect::<Result<Vec<SerSampleSet>, LaError>>()?,
         })
     }

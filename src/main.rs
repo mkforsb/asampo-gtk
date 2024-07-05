@@ -527,7 +527,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             let num_samples = set.len();
             let (export_tx, export_rx) = std::sync::mpsc::channel::<ExportJobMessage>();
-            let sources = model.sources().clone();
+            let sources = model.sources_map().clone();
             let target_dir = model.export_target_dir().clone();
             let export_kind = model.export_kind().clone();
 
@@ -782,7 +782,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             .set_sensitive(new.are_add_fs_source_fields_valid());
     }
 
-    if old.sources() != new.sources() {
+    if old.sources_map() != new.sources_map() {
         update_sources_list(model_ptr.clone(), new.clone(), view);
     }
 

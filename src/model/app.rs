@@ -11,7 +11,7 @@ use std::{
 };
 
 use anyhow::anyhow;
-use gtk::{glib::clone, prelude::ListModelExt};
+use gtk::glib::clone;
 use libasampo::{
     samples::{Sample, SampleOps},
     samplesets::{
@@ -26,7 +26,7 @@ use crate::{
     config::AppConfig,
     ext::{ClonedHashMapExt, ClonedVecExt},
     model::{delegate::delegate, DrumMachineModel, ExportKind, ViewFlags, ViewValues},
-    view::{dialogs::ExportDialogView, samples::SampleListEntry},
+    view::{dialogs::ExportDialogView, sequences::DrumMachineView},
 };
 
 type AnyhowResult<T> = Result<T, anyhow::Error>;
@@ -121,51 +121,6 @@ impl AppModel {
             sources: model.sources.clone_and_remove(&uuid)?,
             ..model
         })
-    }
-
-    pub fn populate_samples_listmodel(&self) {
-        let filter = &self.viewvalues.samples_list_filter;
-        self.viewvalues.samples_listview_model.remove_all();
-
-        if filter.is_empty() {
-            let samples = self
-                .samples
-                .borrow()
-                .iter()
-                .map(|s| SampleListEntry::new(s.clone()))
-                .collect::<Vec<_>>();
-
-            self.viewvalues
-                .samples_listview_model
-                .extend_from_slice(samples.as_slice());
-        } else {
-            let fragments = filter
-                .split(' ')
-                .map(|s| s.to_string().to_lowercase())
-                .collect::<Vec<_>>();
-
-            let mut samples = self.samples.borrow().clone();
-
-            samples.retain(|x| {
-                fragments
-                    .iter()
-                    .all(|frag| x.uri().as_str().to_lowercase().contains(frag))
-            });
-
-            self.viewvalues.samples_listview_model.extend_from_slice(
-                samples
-                    .iter()
-                    .map(|s| SampleListEntry::new(s.clone()))
-                    .collect::<Vec<_>>()
-                    .as_slice(),
-            );
-        }
-
-        log::log!(
-            log::Level::Debug,
-            "Showing {} samples",
-            self.viewvalues.samples_listview_model.n_items()
-        );
     }
 
     pub fn add_sampleset(self, set: SampleSet) -> AppModel {
@@ -391,9 +346,9 @@ impl AppModel {
     }
 
     fn sources_add_fs_fields_valid(model: &AppModel) -> bool {
-        !(model.viewvalues.sources_add_fs_name_entry.is_empty()
-            || model.viewvalues.sources_add_fs_path_entry.is_empty()
-            || model.viewvalues.sources_add_fs_extensions_entry.is_empty())
+        !(model.add_fs_source_name_entry_text().is_empty()
+            || model.add_fs_source_path_entry_text().is_empty()
+            || model.add_fs_source_extensions_entry_text().is_empty())
     }
 
     pub fn validate_sources_add_fs_fields(self) -> AppModel {
@@ -403,11 +358,10 @@ impl AppModel {
 
     pub fn commit_file_system_source(self) -> AnyhowResult<AppModel> {
         if Self::sources_add_fs_fields_valid(&self) {
-            let name = self.viewvalues.sources_add_fs_name_entry.clone();
-            let path = self.viewvalues.sources_add_fs_path_entry.clone();
+            let name = self.add_fs_source_name_entry_text().clone();
+            let path = self.add_fs_source_path_entry_text().clone();
             let exts = self
-                .viewvalues
-                .sources_add_fs_extensions_entry
+                .add_fs_source_extensions_entry_text()
                 .split(',')
                 .map(|s| s.trim().to_string())
                 .collect();
@@ -598,8 +552,15 @@ impl AppModel {
         Ok(result)
     }
 
-    pub fn sources(&self) -> &HashMap<Uuid, Source> {
+    pub fn sources_map(&self) -> &HashMap<Uuid, Source> {
         &self.sources
+    }
+
+    pub fn sources_list(&self) -> Vec<&Source> {
+        self.sources_order
+            .iter()
+            .map(|uuid| self.source(*uuid).unwrap())
+            .collect()
     }
 
     pub fn set_export_state(self, maybe_state: Option<ExportState>) -> AppModel {
@@ -690,6 +651,22 @@ impl AppModel {
         &self.sources_loading
     }
 
+    pub fn sets_list(&self) -> Vec<&SampleSet> {
+        self.sets_order
+            .iter()
+            .map(|uuid| self.sets.get(uuid).unwrap())
+            .collect()
+    }
+
+    // pub fn sets_map(&self) -> &HashMap<Uuid, SampleSet> {
+    //     &self.sets
+    // }
+
+    pub fn populate_samples_listmodel(&self) {
+        self.viewvalues
+            .populate_samples_listmodel(&self.samples.borrow());
+    }
+
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
@@ -747,6 +724,11 @@ impl AppModel {
     delegate!(viewvalues, export_dialog_view() -> Option<&ExportDialogView>);
     delegate!(viewvalues, sources_sample_count() -> &HashMap<Uuid, usize>);
     delegate!(viewvalues, export_progress() -> Option<(usize, usize)>);
+    // delegate!(viewvalues, samples_filter_text() -> &str);
+    delegate!(viewvalues, samples_listmodel() -> &gtk::gio::ListStore);
+    delegate!(viewvalues, set_drum_machine_view(view: Option<DrumMachineView>)
+        -> Model);
+    delegate!(viewvalues, drum_machine_view() -> Option<&DrumMachineView>);
 
     delegate!(drum_machine, is_render_thread_active()
         as is_drum_machine_render_thread_active -> bool);

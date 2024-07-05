@@ -120,11 +120,11 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
     let step_buttons: [gtk::Button; 16] = step_buttons.try_into().unwrap();
 
     let mut model = model_ptr.take().unwrap();
-    model.viewvalues.drum_machine = Some(DrumMachineView {
+    model = model.set_drum_machine_view(Some(DrumMachineView {
         pad_buttons,
         part_buttons,
         step_buttons,
-    });
+    }));
     model_ptr.replace(Some(model));
 
     let root = objects.object::<gtk::Box>("drum-machine-root").unwrap();
@@ -135,7 +135,7 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
 
 pub fn update_drum_machine_view(model: AppModel) {
     let drum_machine_model = &model.drum_machine;
-    let drum_machine_view = &model.viewvalues.drum_machine.as_ref().unwrap();
+    let drum_machine_view = &model.drum_machine_view().unwrap();
 
     assert!(drum_machine_model.activated_pad < 16);
 

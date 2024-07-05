@@ -9,7 +9,7 @@ use gtk::{
     gio::ListStore,
     prelude::{Cast, ListModelExt},
 };
-use libasampo::samples::Sample;
+use libasampo::samples::{Sample, SampleOps};
 use uuid::Uuid;
 
 use crate::{
@@ -26,16 +26,16 @@ type Result<T> = std::result::Result<T, anyhow::Error>;
 
 #[derive(Debug, Clone)]
 pub struct ViewFlags {
-    pub view_sensitive: bool,
-    pub sources_add_fs_fields_valid: bool,
-    pub sources_add_fs_begin_browse: bool,
-    pub samples_sidebar_add_to_set_show_dialog: bool,
-    pub samples_sidebar_add_to_prev_enabled: bool,
-    pub sets_add_set_show_dialog: bool,
-    pub sets_export_enabled: bool,
-    pub sets_export_show_dialog: bool,
-    pub sets_export_begin_browse: bool,
-    pub sets_export_fields_valid: bool,
+    view_sensitive: bool,
+    sources_add_fs_fields_valid: bool,
+    sources_add_fs_begin_browse: bool,
+    samples_sidebar_add_to_set_show_dialog: bool,
+    samples_sidebar_add_to_prev_enabled: bool,
+    sets_add_set_show_dialog: bool,
+    sets_export_enabled: bool,
+    sets_export_show_dialog: bool,
+    sets_export_begin_browse: bool,
+    sets_export_fields_valid: bool,
 }
 
 impl Default for ViewFlags {
@@ -224,18 +224,18 @@ pub enum ExportKind {
 
 #[derive(Debug, Clone)]
 pub struct ViewValues {
-    pub sources_add_fs_name_entry: String,
-    pub sources_add_fs_path_entry: String,
-    pub sources_add_fs_extensions_entry: String,
-    pub sources_sample_count: HashMap<Uuid, usize>,
-    pub samples_list_filter: String,
-    pub settings_latency_approx_label: String,
-    pub samples_listview_model: ListStore,
-    pub sets_export_dialog_view: Option<dialogs::ExportDialogView>,
-    pub sets_export_target_dir_entry: String,
-    pub sets_export_kind: ExportKind,
-    pub sets_export_progress: Option<(usize, usize)>,
-    pub drum_machine: Option<DrumMachineView>,
+    sources_add_fs_name_entry: String,
+    sources_add_fs_path_entry: String,
+    sources_add_fs_extensions_entry: String,
+    sources_sample_count: HashMap<Uuid, usize>,
+    samples_list_filter: String,
+    settings_latency_approx_label: String,
+    samples_listview_model: ListStore,
+    sets_export_dialog_view: Option<dialogs::ExportDialogView>,
+    sets_export_target_dir_entry: String,
+    sets_export_kind: ExportKind,
+    sets_export_progress: Option<(usize, usize)>,
+    drum_machine: Option<DrumMachineView>,
 }
 
 impl Default for ViewValues {
@@ -478,5 +478,67 @@ impl ViewValues {
 
     pub fn export_progress(&self) -> Option<(usize, usize)> {
         self.sets_export_progress
+    }
+
+    // pub fn samples_filter_text(&self) -> &str {
+    //     &self.samples_list_filter
+    // }
+
+    pub fn populate_samples_listmodel(&self, samples: &[Sample]) {
+        let filter = &self.samples_list_filter;
+        self.samples_listview_model.remove_all();
+
+        if filter.is_empty() {
+            self.samples_listview_model.extend_from_slice(
+                samples
+                    .iter()
+                    .map(|s| SampleListEntry::new(s.clone()))
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+            );
+        } else {
+            let fragments = filter
+                .split(' ')
+                .map(|s| s.to_string().to_lowercase())
+                .collect::<Vec<_>>();
+
+            self.samples_listview_model.extend_from_slice(
+                samples
+                    .iter()
+                    .filter_map(|sample| {
+                        if fragments
+                            .iter()
+                            .all(|frag| sample.uri().as_str().to_lowercase().contains(frag))
+                        {
+                            Some(SampleListEntry::new(sample.clone()))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+            )
+        }
+
+        log::log!(
+            log::Level::Debug,
+            "Showing {} samples",
+            self.samples_listview_model.n_items()
+        );
+    }
+
+    pub fn samples_listmodel(&self) -> &gtk::gio::ListStore {
+        &self.samples_listview_model
+    }
+
+    pub fn set_drum_machine_view(self, maybe_view: Option<DrumMachineView>) -> ViewValues {
+        ViewValues {
+            drum_machine: maybe_view,
+            ..self
+        }
+    }
+
+    pub fn drum_machine_view(&self) -> Option<&DrumMachineView> {
+        self.drum_machine.as_ref()
     }
 }
