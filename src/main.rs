@@ -334,11 +334,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SampleSidebarAddToMostRecentlyUsedSetClicked => {
-            let mru_uuid = model
+            let sample = model
+                .selected_sample()
+                .ok_or(anyhow!("No sample selected"))?
+                .clone();
+
+            let set_uuid = model
                 .get_set_most_recently_added_to()
                 .ok_or(anyhow!("No sample set recently added to"))?;
 
-            model::util::add_selected_sample_to_sampleset_by_uuid(model, &mru_uuid)
+            model.add_to_set(sample, set_uuid)
         }
 
         AppMessage::SourceEnabled(uuid) => {
@@ -417,8 +422,13 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::InputDialogSubmitted(context, text) => match context {
             InputDialogContext::AddToSampleset => {
-                let (model, set_uuid) = model::util::get_or_create_sampleset(model, text)?;
-                model::util::add_selected_sample_to_sampleset_by_uuid(model, &set_uuid)
+                let (model, set_uuid) = AppModel::get_or_create_sampleset(model, text)?;
+                let sample = model
+                    .selected_sample()
+                    .ok_or(anyhow!("No sample selected"))?
+                    .clone();
+
+                Ok(model.add_to_set(sample, set_uuid)?.enable_add_to_prev_set())
             }
 
             InputDialogContext::CreateSampleSet => {
@@ -794,11 +804,9 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         update_samples_sidebar(model_ptr.clone(), new.clone(), view);
     }
 
-    if old.viewflags.samples_sidebar_add_to_prev_enabled
-        != new.viewflags.samples_sidebar_add_to_prev_enabled
-    {
+    if old.is_add_to_prev_set_enabled() != new.is_add_to_prev_set_enabled() {
         view.samples_sidebar_add_to_prev_button
-            .set_visible(new.viewflags.samples_sidebar_add_to_prev_enabled);
+            .set_visible(new.is_add_to_prev_set_enabled());
     }
 
     if old.get_set_most_recently_added_to() != new.get_set_most_recently_added_to() {

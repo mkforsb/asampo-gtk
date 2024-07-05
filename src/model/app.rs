@@ -14,7 +14,9 @@ use anyhow::anyhow;
 use gtk::{glib::clone, prelude::ListModelExt};
 use libasampo::{
     samples::{Sample, SampleOps},
-    samplesets::{export::ExportJobMessage, SampleSet, SampleSetLabelling, SampleSetOps},
+    samplesets::{
+        export::ExportJobMessage, BaseSampleSet, SampleSet, SampleSetLabelling, SampleSetOps,
+    },
     sequences::{drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent},
     sources::{file_system_source::FilesystemSource, Source, SourceOps},
 };
@@ -491,6 +493,7 @@ impl AppModel {
             sets_export_state: None,
             ..self
         }
+        .disable_add_to_prev_set()
         .disable_set_export()
         .reset_export_progress()
     }
@@ -558,6 +561,12 @@ impl AppModel {
             .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))
     }
 
+    pub fn get_set_mut(&mut self, uuid: Uuid) -> AnyhowResult<&mut SampleSet> {
+        self.sets
+            .get_mut(&uuid)
+            .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))
+    }
+
     pub fn set_selected_set(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<AppModel> {
         if let Some(false) = maybe_uuid.map(|uuid| self.sets.contains_key(&uuid)) {
             Err(anyhow!("Failed to set selected set: UUID not present"))
@@ -619,6 +628,54 @@ impl AppModel {
         self.samplelist_selected_sample.as_ref()
     }
 
+    pub fn get_or_create_sampleset(
+        model: AppModel,
+        name: String,
+    ) -> Result<(AppModel, Uuid), anyhow::Error> {
+        match model
+            .sets
+            .iter()
+            .find(|(_, set)| set.name() == name)
+            .map(|(uuid, _)| *uuid)
+        {
+            Some(uuid) => Ok((model, uuid)),
+            None => {
+                let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new(name));
+                let new_uuid = *new_set.uuid();
+
+                Ok((model.add_sampleset(new_set), new_uuid))
+            }
+        }
+    }
+
+    pub fn add_to_set(self, sample: Sample, set_uuid: Uuid) -> AnyhowResult<AppModel> {
+        let mut result = self.clone();
+
+        result.get_set_mut(set_uuid)?.add(
+            self.source(
+                *sample
+                    .source_uuid()
+                    .ok_or(anyhow!("Sample missing source UUID"))?,
+            )?,
+            sample,
+        )?;
+
+        result.set_set_most_recently_added_to(Some(set_uuid))
+    }
+
+    pub fn set_set_most_recently_added_to(
+        self,
+        maybe_uuid: Option<Uuid>,
+    ) -> AnyhowResult<AppModel> {
+        match maybe_uuid.and_then(|uuid| self.get_set(uuid).err()) {
+            Some(err) => Err(err),
+            None => Ok(AppModel {
+                sets_most_recently_used_uuid: maybe_uuid,
+                ..self
+            }),
+        }
+    }
+
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
@@ -642,6 +699,9 @@ impl AppModel {
     delegate!(viewflags, is_signalling_export_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_export_begin_browse() -> bool);
     delegate!(viewflags, are_add_fs_source_fields_valid() -> bool);
+    delegate!(viewflags, enable_add_to_prev_set() -> Model);
+    delegate!(viewflags, disable_add_to_prev_set() -> Model);
+    delegate!(viewflags, is_add_to_prev_set_enabled() -> bool);
 
     // delegate!(viewvalues, set_latency_approx_label(text: String) -> Model);
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);

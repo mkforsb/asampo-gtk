@@ -192,6 +192,24 @@ impl ViewFlags {
     pub fn are_add_fs_source_fields_valid(&self) -> bool {
         self.sources_add_fs_fields_valid
     }
+
+    pub fn enable_add_to_prev_set(self) -> ViewFlags {
+        ViewFlags {
+            samples_sidebar_add_to_prev_enabled: true,
+            ..self
+        }
+    }
+    
+    pub fn disable_add_to_prev_set(self) -> ViewFlags {
+        ViewFlags {
+            samples_sidebar_add_to_prev_enabled: false,
+            ..self
+        }
+    }
+
+    pub fn is_add_to_prev_set_enabled(&self) -> bool {
+        self.samples_sidebar_add_to_prev_enabled
+    }
 }
 
 #[derive(Debug, Clone)]
