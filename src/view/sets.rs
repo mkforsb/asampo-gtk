@@ -68,9 +68,11 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
     view.sets_list.remove_all();
 
     view.sets_list_frame
-        .set_label(Some(&format!("Sets ({})", model.sets.len())));
+        .set_label(Some(&format!("Sets ({})", model.sets_map().len())));
 
-    for uuid in model.sets_order.iter() {
+    for set in model.sets_list().iter() {
+        let uuid = set.uuid();
+
         let objects = gtk::Builder::from_string(&uuidize_builder_template(
             &resource_as_string("/sets-list-row.ui").unwrap(),
             *uuid,
@@ -84,7 +86,7 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
             .object::<gtk::Label>(format!("{uuid}-name-label"))
             .unwrap();
 
-        name_label.set_text(model.sets.get(uuid).unwrap().name());
+        name_label.set_text(model.get_set(*uuid).unwrap().name());
 
         let clicked = GestureClick::new();
 
@@ -118,8 +120,8 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
     view.sets_details_sample_list.remove_all();
 
     match model
-        .sets_selected_set
-        .and_then(|uuid| model.sets.get(&uuid))
+        .selected_set()
+        .and_then(|uuid| model.get_set(uuid).ok())
     {
         Some(set) => {
             view.sets_details_name_label.set_text(set.name());

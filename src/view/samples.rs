@@ -180,7 +180,7 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
 }
 
 pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
-    match &model.samplelist_selected_sample {
+    match model.selected_sample() {
         Some(sample) => {
             view.samples_sidebar_name_label.set_text(sample.name());
 
@@ -199,8 +199,7 @@ pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &A
             match sample.source_uuid() {
                 Some(uuid) => view.samples_sidebar_source_label.set_text(
                     model
-                        .sources
-                        .get(uuid)
+                        .source(*uuid)
                         .map_or("???", |src| src.name().unwrap_or("Unnamed")),
                 ),
                 None => view.samples_sidebar_source_label.set_text("-"),
@@ -209,7 +208,7 @@ pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &A
             view.samples_sidebar_sets_list.remove_all();
 
             let mut containing_sets = model
-                .sets
+                .sets_map()
                 .iter()
                 .filter_map(|(uuid, set)| {
                     if set.contains(sample) {

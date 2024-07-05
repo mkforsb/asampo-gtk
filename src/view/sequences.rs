@@ -134,12 +134,12 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
 }
 
 pub fn update_drum_machine_view(model: AppModel) {
-    let drum_machine_model = &model.drum_machine;
-    let drum_machine_view = &model.drum_machine_view().unwrap();
+    let drum_machine_model = model.drum_machine_model();
+    let drum_machine_view = model.drum_machine_view().unwrap();
 
-    assert!(drum_machine_model.activated_pad < 16);
+    assert!(drum_machine_model.activated_pad() < 16);
 
-    if let Some(event) = &drum_machine_model.event_latest {
+    if let Some(event) = drum_machine_model.latest_event() {
         for (i, label) in LABELS.iter().enumerate() {
             if i == event.step {
                 drum_machine_view.step_buttons[i].add_css_class("playing");
@@ -156,7 +156,7 @@ pub fn update_drum_machine_view(model: AppModel) {
     }
 
     for i in 0..16 {
-        if i == drum_machine_model.activated_pad {
+        if i == drum_machine_model.activated_pad() {
             drum_machine_view.pad_buttons[i].add_css_class("activated");
         } else {
             drum_machine_view.pad_buttons[i].remove_css_class("activated");
@@ -164,8 +164,8 @@ pub fn update_drum_machine_view(model: AppModel) {
     }
 
     for i in 0..16 {
-        if let Some(labels) = model.drum_machine.sequence.labels_at_step(i) {
-            if labels.contains(&LABELS[drum_machine_model.activated_pad]) {
+        if let Some(labels) = drum_machine_model.sequence().labels_at_step(i) {
+            if labels.contains(&LABELS[drum_machine_model.activated_pad()]) {
                 drum_machine_view.step_buttons[i].add_css_class("activated");
             } else {
                 drum_machine_view.step_buttons[i].remove_css_class("activated");

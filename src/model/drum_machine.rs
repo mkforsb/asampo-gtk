@@ -20,11 +20,11 @@ pub type EventRx = Arc<Mutex<single_value_channel::Receiver<Option<DrumkitSequen
 
 #[derive(Clone, Debug)]
 pub struct DrumMachineModel {
-    pub render_thread_tx: Option<RenderThreadTx>,
-    pub event_rx: Option<EventRx>,
-    pub event_latest: Option<DrumkitSequenceEvent>,
-    pub sequence: DrumkitSequence,
-    pub activated_pad: usize,
+    render_thread_tx: Option<RenderThreadTx>,
+    event_rx: Option<EventRx>,
+    event_latest: Option<DrumkitSequenceEvent>,
+    sequence: DrumkitSequence,
+    activated_pad: usize,
 }
 
 impl PartialEq for DrumMachineModel {
@@ -121,6 +121,10 @@ impl DrumMachineModel {
             event_latest: event,
             ..self
         }
+    }
+
+    pub fn latest_event(&self) -> Option<&DrumkitSequenceEvent> {
+        self.event_latest.as_ref()
     }
 
     pub fn poll_event(&self) -> Option<DrumkitSequenceEvent> {

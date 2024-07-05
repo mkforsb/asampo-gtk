@@ -40,24 +40,24 @@ pub enum ExportState {
 
 #[derive(Clone, Debug)]
 pub struct AppModel {
-    pub config: AppConfig,
-    pub config_save_timeout: Option<std::time::Instant>,
-    pub savefile: Option<String>,
-    pub viewflags: ViewFlags,
-    pub viewvalues: ViewValues,
-    pub audiothread_tx: mpsc::Sender<audiothread::Message>,
-    pub sources: HashMap<Uuid, Source>,
-    pub sources_order: Vec<Uuid>,
-    pub sources_loading: HashMap<Uuid, Rc<mpsc::Receiver<SourceLoaderMessage>>>,
-    pub samples: Rc<RefCell<Vec<Sample>>>,
-    pub samplelist_selected_sample: Option<Sample>,
-    pub sets: HashMap<Uuid, SampleSet>,
-    pub sets_order: Vec<Uuid>,
-    pub sets_selected_set: Option<Uuid>,
-    pub sets_most_recently_used_uuid: Option<Uuid>,
-    pub sets_export_state: Option<ExportState>,
-    pub export_job_rx: Option<Rc<mpsc::Receiver<ExportJobMessage>>>,
-    pub drum_machine: DrumMachineModel,
+    config: AppConfig,
+    config_save_timeout: Option<std::time::Instant>,
+    savefile: Option<String>,
+    viewflags: ViewFlags,
+    viewvalues: ViewValues,
+    audiothread_tx: mpsc::Sender<audiothread::Message>,
+    sources: HashMap<Uuid, Source>,
+    sources_order: Vec<Uuid>,
+    sources_loading: HashMap<Uuid, Rc<mpsc::Receiver<SourceLoaderMessage>>>,
+    samples: Rc<RefCell<Vec<Sample>>>,
+    samplelist_selected_sample: Option<Sample>,
+    sets: HashMap<Uuid, SampleSet>,
+    sets_order: Vec<Uuid>,
+    sets_selected_set: Option<Uuid>,
+    sets_most_recently_used_uuid: Option<Uuid>,
+    sets_export_state: Option<ExportState>,
+    export_job_rx: Option<Rc<mpsc::Receiver<ExportJobMessage>>>,
+    drum_machine: DrumMachineModel,
 }
 
 pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
@@ -509,6 +509,10 @@ impl AppModel {
         }
     }
 
+    pub fn savefile_path(&self) -> Option<&String> {
+        self.savefile.as_ref()
+    }
+
     pub fn get_set(&self, uuid: Uuid) -> AnyhowResult<&SampleSet> {
         self.sets
             .get(&uuid)
@@ -658,13 +662,21 @@ impl AppModel {
             .collect()
     }
 
-    // pub fn sets_map(&self) -> &HashMap<Uuid, SampleSet> {
-    //     &self.sets
-    // }
+    pub fn sets_map(&self) -> &HashMap<Uuid, SampleSet> {
+        &self.sets
+    }
 
     pub fn populate_samples_listmodel(&self) {
         self.viewvalues
             .populate_samples_listmodel(&self.samples.borrow());
+    }
+
+    pub fn drum_machine_model(&self) -> &DrumMachineModel {
+        &self.drum_machine
+    }
+
+    pub fn selected_set(&self) -> Option<Uuid> {
+        self.sets_selected_set
     }
 
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
@@ -724,7 +736,7 @@ impl AppModel {
     delegate!(viewvalues, export_dialog_view() -> Option<&ExportDialogView>);
     delegate!(viewvalues, sources_sample_count() -> &HashMap<Uuid, usize>);
     delegate!(viewvalues, export_progress() -> Option<(usize, usize)>);
-    // delegate!(viewvalues, samples_filter_text() -> &str);
+    // delegate!(viewvalues, samples_filter_text() -> &String);
     delegate!(viewvalues, samples_listmodel() -> &gtk::gio::ListStore);
     delegate!(viewvalues, set_drum_machine_view(view: Option<DrumMachineView>)
         -> Model);

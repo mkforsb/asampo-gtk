@@ -54,13 +54,13 @@ pub fn build_actions(app: &Application, model_ptr: AppModelPtr, view: &AsampoVie
                 filters.append(&filter_json);
 
                 let model = model_ptr.take().unwrap();
-                let initial_name = model.savefile.clone();
+                let maybe_initial_name = model.savefile_path().cloned();
                 model_ptr.set(Some(model));
 
                 let mut dialog = gtk::FileDialog::builder().modal(true).filters(&filters);
 
                 // TODO: separate path and basename
-                if let Some(filename) = initial_name {
+                if let Some(filename) = maybe_initial_name {
                     dialog = dialog.initial_name(filename);
                 }
 

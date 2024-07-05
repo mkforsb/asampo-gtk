@@ -59,7 +59,9 @@ pub fn setup_sources_page(model_ptr: AppModelPtr, view: &AsampoView) {
 pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
     view.sources_list.remove_all();
 
-    for uuid in model.sources_order.iter() {
+    for source in model.sources_list().iter() {
+        let uuid = source.uuid();
+
         let objects = gtk::Builder::from_string(&uuidize_builder_template(
             &resource_as_string("/sources-list-row.ui").unwrap(),
             *uuid,
@@ -81,7 +83,7 @@ pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &Asamp
             .object::<gtk::Button>(&format!("{uuid}-delete-button"))
             .unwrap();
 
-        if model.sources.get(uuid).unwrap().is_enabled() {
+        if model.source(*uuid).unwrap().is_enabled() {
             enable_checkbutton.activate();
         }
 
@@ -95,7 +97,7 @@ pub fn update_sources_list(model_ptr: AppModelPtr, model: AppModel, view: &Asamp
             }),
         );
 
-        name_label.set_label(model.sources.get(uuid).unwrap().name().unwrap_or("Unnamed"));
+        name_label.set_label(model.source(*uuid).unwrap().name().unwrap_or("Unnamed"));
 
         delete_button.connect_clicked(
             clone!(@strong model_ptr, @strong view, @strong uuid => move |_: &gtk::Button| {

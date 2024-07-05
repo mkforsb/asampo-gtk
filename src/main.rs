@@ -822,11 +822,11 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         update_samplesets_detail(model_ptr.clone(), new.clone(), view);
     }
 
-    if old.sets != new.sets {
+    if old.sets_map() != new.sets_map() {
         update_samplesets_list(model_ptr.clone(), new.clone(), view);
         update_samplesets_detail(model_ptr.clone(), new.clone(), view);
 
-        if new.samplelist_selected_sample.is_some() {
+        if new.selected_sample().is_some() {
             update_samples_sidebar(model_ptr.clone(), new.clone(), view);
         }
     }
@@ -863,7 +863,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         }
     }
 
-    if old.drum_machine != new.drum_machine {
+    if old.drum_machine_model() != new.drum_machine_model() {
         update_drum_machine_view(new);
     }
 }

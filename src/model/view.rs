@@ -480,7 +480,7 @@ impl ViewValues {
         self.sets_export_progress
     }
 
-    // pub fn samples_filter_text(&self) -> &str {
+    // pub fn samples_filter_text(&self) -> &String {
     //     &self.samples_list_filter
     // }
 

@@ -83,7 +83,7 @@ pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
 
 pub fn update_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
     model_ptr.with_model(|model| {
-        let config = &model.config;
+        let config = model.config();
 
         set_dropdown_choice(
             &view.settings_output_sample_rate_entry,
