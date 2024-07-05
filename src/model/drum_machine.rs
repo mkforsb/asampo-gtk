@@ -123,7 +123,26 @@ impl DrumMachineModel {
         }
     }
 
-    // pub fn latest_event(&self) -> Option<&DrumkitSequenceEvent> {
-    //     self.event_latest.as_ref()
-    // }
+    pub fn poll_event(&self) -> Option<DrumkitSequenceEvent> {
+        if let Some(rx) = &self.event_rx {
+            match rx.lock() {
+                Ok(mut rx) => match rx.latest() {
+                    Some(ev)
+                        if self.event_latest.is_none()
+                            || ev.step != self.event_latest.as_ref().unwrap().step =>
+                    {
+                        Some(ev.clone())
+                    }
+                    _ => None,
+                },
+
+                Err(e) => {
+                    log::log!(log::Level::Warn, "Unable to lock event receiver: {e}");
+                    None
+                }
+            }
+        } else {
+            None
+        }
+    }
 }

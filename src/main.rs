@@ -831,15 +831,15 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         }
     }
 
-    if old.viewflags.sets_export_enabled != new.viewflags.sets_export_enabled {
+    if old.is_set_export_enabled() != new.is_set_export_enabled() {
         view.sets_details_export_button
-            .set_sensitive(new.viewflags.sets_export_enabled);
+            .set_sensitive(new.is_set_export_enabled());
     }
 
-    if old.sets_export_state != new.sets_export_state {
-        match new.sets_export_state {
+    if old.export_state() != new.export_state() {
+        match new.export_state() {
             Some(model::ExportState::Exporting) => {
-                if let Some(dv) = &new.viewvalues.sets_export_dialog_view {
+                if let Some(dv) = &new.export_dialog_view() {
                     dv.window.close();
                     view.progress_popup.set_visible(true);
                 }
@@ -853,8 +853,8 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         }
     }
 
-    if old.viewvalues.sets_export_progress != new.viewvalues.sets_export_progress {
-        if let Some((n, m)) = &new.viewvalues.sets_export_progress {
+    if old.export_progress() != new.export_progress() {
+        if let Some((n, m)) = &new.export_progress() {
             view.progress_popup_progress_bar
                 .set_text(Some(format!("Exporting {n}/{m}").as_str()));
 
@@ -980,8 +980,8 @@ fn main() -> ExitCode {
             std::time::Duration::from_millis(50),
             clone!(@strong model_ptr, @strong view => move || {
                 let model = model_ptr.take().unwrap();
-                let export_job_rx = model.export_job_rx.clone();
-                let sources_loading = model.sources_loading.clone();
+                let export_job_rx = model.export_job_rx().clone();
+                let sources_loaders = model.source_loaders().clone();
                 model_ptr.set(Some(model));
 
                 if let Some(rx) = export_job_rx {
@@ -1010,8 +1010,8 @@ fn main() -> ExitCode {
                     }
                 }
 
-                for uuid in sources_loading.keys() {
-                    let recv = sources_loading.get(uuid).unwrap();
+                for uuid in sources_loaders.keys() {
+                    let recv = sources_loaders.get(uuid).unwrap();
 
                     match recv.try_recv() {
                         Ok(message) => {
@@ -1049,26 +1049,10 @@ fn main() -> ExitCode {
             clone!(@strong model_ptr, @strong view => move || {
                 let model = model_ptr.take().unwrap();
 
-                let mut event: Option<DrumkitSequenceEvent> = None;
+                // let mut event: Option<DrumkitSequenceEvent> = None;
+                //
 
-                if let Some(event_rx) = &model.drum_machine.event_rx {
-                    match event_rx.lock() {
-                        Ok(mut rx) => {
-                            match rx.latest() {
-                                Some(ev) if model.drum_machine.event_latest.is_none() ||
-                                    ev.step != model.drum_machine.event_latest
-                                        .as_ref()
-                                        .unwrap()
-                                        .step => {
-                                    event = Some(ev.clone());
-                                }
-                                _ => (),
-                            }
-                        }
-                        Err(e) => log::log!(log::Level::Warn,
-                            "Unable to lock drum machine event receiver: {e}"),
-                    }
-                }
+                let event = model.drum_machine_poll_event();
 
                 model_ptr.replace(Some(model));
 

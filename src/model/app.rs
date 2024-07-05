@@ -32,7 +32,7 @@ use crate::{
 type AnyhowResult<T> = Result<T, anyhow::Error>;
 type SourceLoaderMessage = Result<Sample, libasampo::errors::Error>;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExportState {
     Exporting,
     Finished,
@@ -676,6 +676,20 @@ impl AppModel {
         }
     }
 
+    pub fn export_state(&self) -> Option<ExportState> {
+        self.sets_export_state
+    }
+
+    pub fn export_job_rx(&self) -> Option<Rc<mpsc::Receiver<ExportJobMessage>>> {
+        self.export_job_rx.as_ref().map(Rc::clone)
+    }
+
+    pub fn source_loaders(
+        &self,
+    ) -> &HashMap<Uuid, Rc<mpsc::Receiver<Result<Sample, libasampo::errors::Error>>>> {
+        &self.sources_loading
+    }
+
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
@@ -683,6 +697,7 @@ impl AppModel {
     delegate!(viewflags, clear_signal_add_sample_to_set_show_dialog() -> Model);
     delegate!(viewflags, enable_set_export() -> Model);
     delegate!(viewflags, disable_set_export() -> Model);
+    delegate!(viewflags, is_set_export_enabled() -> bool);
     delegate!(viewflags, signal_add_set_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_add_set_show_dialog() -> Model);
     delegate!(viewflags, signal_export_begin_browse() -> Model);
@@ -731,6 +746,7 @@ impl AppModel {
     delegate!(viewvalues, add_fs_source_extensions_entry_text() -> &String);
     delegate!(viewvalues, export_dialog_view() -> Option<&ExportDialogView>);
     delegate!(viewvalues, sources_sample_count() -> &HashMap<Uuid, usize>);
+    delegate!(viewvalues, export_progress() -> Option<(usize, usize)>);
 
     delegate!(drum_machine, is_render_thread_active()
         as is_drum_machine_render_thread_active -> bool);
@@ -752,6 +768,9 @@ impl AppModel {
 
     // delegate!(drum_machine, latest_event()
     //     as latest_drum_machine_event -> Option<&DrumkitSequenceEvent>);
+
+    delegate!(drum_machine, poll_event()
+        as drum_machine_poll_event -> Option<DrumkitSequenceEvent>);
 }
 
 #[cfg(test)]

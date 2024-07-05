@@ -105,6 +105,10 @@ impl ViewFlags {
         }
     }
 
+    pub fn is_set_export_enabled(&self) -> bool {
+        self.sets_export_enabled
+    }
+
     pub fn signal_add_set_show_dialog(self) -> ViewFlags {
         ViewFlags {
             sets_add_set_show_dialog: true,
@@ -199,7 +203,7 @@ impl ViewFlags {
             ..self
         }
     }
-    
+
     pub fn disable_add_to_prev_set(self) -> ViewFlags {
         ViewFlags {
             samples_sidebar_add_to_prev_enabled: false,
@@ -470,5 +474,9 @@ impl ViewValues {
 
     pub fn sources_sample_count(&self) -> &HashMap<Uuid, usize> {
         &self.sources_sample_count
+    }
+
+    pub fn export_progress(&self) -> Option<(usize, usize)> {
+        self.sets_export_progress
     }
 }
