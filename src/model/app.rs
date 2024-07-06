@@ -42,13 +42,15 @@ pub enum ExportState {
 pub struct CoreModel {
     config: AppConfig,
     config_save_timeout: Option<std::time::Instant>,
+    savefile: Option<String>,
 }
 
 impl CoreModel {
-    pub fn new(config: AppConfig) -> CoreModel {
+    pub fn new(config: AppConfig, savefile_path: Option<impl Into<String>>) -> CoreModel {
         CoreModel {
             config,
             config_save_timeout: None,
+            savefile: savefile_path.map(|s| s.into()),
         }
     }
 
@@ -78,12 +80,22 @@ impl CoreModel {
         self.config_save_timeout
             .is_some_and(|t| t <= Instant::now())
     }
+
+    pub fn set_savefile_path(self, maybe_path: Option<impl Into<String>>) -> CoreModel {
+        CoreModel {
+            savefile: maybe_path.map(|s| s.into()),
+            ..self
+        }
+    }
+
+    pub fn savefile_path(&self) -> Option<&String> {
+        self.savefile.as_ref()
+    }
 }
 
 #[derive(Clone, Debug)]
 pub struct AppModel {
     core: CoreModel,
-    savefile: Option<String>,
     viewflags: ViewFlags,
     viewvalues: ViewValues,
     audiothread_tx: mpsc::Sender<audiothread::Message>,
@@ -113,8 +125,7 @@ impl AppModel {
         let drum_machine = DrumMachineModel::new_with_render_thread(audiothread_tx.clone());
 
         AppModel {
-            core: CoreModel::new(config),
-            savefile,
+            core: CoreModel::new(config, savefile),
             viewflags: ViewFlags::default(),
             viewvalues,
             audiothread_tx,
@@ -507,17 +518,6 @@ impl AppModel {
         Ok(result)
     }
 
-    pub fn set_savefile_path(self, maybe_path: Option<String>) -> AppModel {
-        AppModel {
-            savefile: maybe_path,
-            ..self
-        }
-    }
-
-    pub fn savefile_path(&self) -> Option<&String> {
-        self.savefile.as_ref()
-    }
-
     pub fn get_set(&self, uuid: Uuid) -> AnyhowResult<&SampleSet> {
         self.sets
             .get(&uuid)
@@ -689,6 +689,8 @@ impl AppModel {
     delegate!(core, set_config_save_timeout(deadline: Instant) -> Model);
     delegate!(core, clear_config_save_timeout() -> Model);
     delegate!(core, reached_config_save_timeout() -> bool);
+    delegate!(core, set_savefile_path(maybe_path: Option<impl Into<String>>) -> Model);
+    delegate!(core, savefile_path() -> Option<&String>);
 
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
