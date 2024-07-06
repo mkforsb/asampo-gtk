@@ -432,7 +432,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             }
 
             InputDialogContext::CreateSampleSet => {
-                Ok(model.add_sampleset(SampleSet::BaseSampleSet(BaseSampleSet::new(text))))
+                model.add_set(SampleSet::BaseSampleSet(BaseSampleSet::new(text)))
             }
         },
 

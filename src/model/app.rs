@@ -123,14 +123,6 @@ impl AppModel {
         })
     }
 
-    pub fn add_sampleset(self, set: SampleSet) -> AppModel {
-        AppModel {
-            sets_order: self.sets_order.clone_and_push(*set.uuid()),
-            sets: self.sets.clone_and_insert(*set.uuid(), set),
-            ..self
-        }
-    }
-
     #[cfg(test)]
     pub fn remove_sampleset(self, uuid: &Uuid) -> AnyhowResult<AppModel> {
         Ok(AppModel {
@@ -478,7 +470,7 @@ impl AppModel {
         rx
     }
 
-    fn add_set(self, set: SampleSet) -> AnyhowResult<AppModel> {
+    pub fn add_set(self, set: SampleSet) -> AnyhowResult<AppModel> {
         if self.sets.contains_key(set.uuid()) {
             Err(anyhow!("Failed to add set: UUID in use"))
         } else {
@@ -608,7 +600,7 @@ impl AppModel {
                 let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new(name));
                 let new_uuid = *new_set.uuid();
 
-                Ok((model.add_sampleset(new_set), new_uuid))
+                Ok((model.add_set(new_set)?, new_uuid))
             }
         }
     }
@@ -779,7 +771,9 @@ mod tests {
         let model = AppModel::new(AppConfig::default(), None, dummy_tx);
         let set = BaseSampleSet::new("Favorites".to_string());
 
-        let model = model.add_sampleset(SampleSet::BaseSampleSet(set.clone()));
+        let model = model
+            .add_set(SampleSet::BaseSampleSet(set.clone()))
+            .unwrap();
 
         assert!(model.sets.contains_key(set.uuid()));
         assert_eq!(model.sets.get(set.uuid()).unwrap().name(), "Favorites");
