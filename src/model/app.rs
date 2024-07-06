@@ -41,11 +41,15 @@ pub enum ExportState {
 #[derive(Clone, Debug)]
 pub struct CoreModel {
     config: AppConfig,
+    config_save_timeout: Option<std::time::Instant>,
 }
 
 impl CoreModel {
     pub fn new(config: AppConfig) -> CoreModel {
-        CoreModel { config }
+        CoreModel {
+            config,
+            config_save_timeout: None,
+        }
     }
 
     pub fn set_config(self, config: AppConfig) -> CoreModel {
@@ -55,12 +59,30 @@ impl CoreModel {
     pub fn config(&self) -> &AppConfig {
         &self.config
     }
+
+    pub fn set_config_save_timeout(self, deadline: Instant) -> CoreModel {
+        CoreModel {
+            config_save_timeout: Some(deadline),
+            ..self
+        }
+    }
+
+    pub fn clear_config_save_timeout(self) -> CoreModel {
+        CoreModel {
+            config_save_timeout: None,
+            ..self
+        }
+    }
+
+    pub fn reached_config_save_timeout(&self) -> bool {
+        self.config_save_timeout
+            .is_some_and(|t| t <= Instant::now())
+    }
 }
 
 #[derive(Clone, Debug)]
 pub struct AppModel {
     core: CoreModel,
-    config_save_timeout: Option<std::time::Instant>,
     savefile: Option<String>,
     viewflags: ViewFlags,
     viewvalues: ViewValues,
@@ -92,7 +114,6 @@ impl AppModel {
 
         AppModel {
             core: CoreModel::new(config),
-            config_save_timeout: None,
             savefile,
             viewflags: ViewFlags::default(),
             viewvalues,
@@ -149,20 +170,6 @@ impl AppModel {
             sets: self.sets.clone_and_remove(uuid)?,
             ..self
         })
-    }
-
-    pub fn set_config_save_timeout(self, deadline: Instant) -> AppModel {
-        AppModel {
-            config_save_timeout: Some(deadline),
-            ..self
-        }
-    }
-
-    pub fn clear_config_save_timeout(self) -> AppModel {
-        AppModel {
-            config_save_timeout: None,
-            ..self
-        }
     }
 
     pub fn add_source(self, source: Source) -> AnyhowResult<AppModel> {
@@ -227,11 +234,6 @@ impl AppModel {
 
     pub fn has_sources_loading(&self) -> bool {
         !self.sources_loading.is_empty()
-    }
-
-    pub fn reached_config_save_timeout(&self) -> bool {
-        self.config_save_timeout
-            .is_some_and(|t| t <= Instant::now())
     }
 
     pub fn audiothread_send(&self, message: audiothread::Message) -> AnyhowResult<()> {
@@ -684,6 +686,9 @@ impl AppModel {
 
     delegate!(core, set_config(config: AppConfig) -> Model);
     delegate!(core, config() -> &AppConfig);
+    delegate!(core, set_config_save_timeout(deadline: Instant) -> Model);
+    delegate!(core, clear_config_save_timeout() -> Model);
+    delegate!(core, reached_config_save_timeout() -> bool);
 
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
