@@ -39,8 +39,27 @@ pub enum ExportState {
 }
 
 #[derive(Clone, Debug)]
-pub struct AppModel {
+pub struct CoreModel {
     config: AppConfig,
+}
+
+impl CoreModel {
+    pub fn new(config: AppConfig) -> CoreModel {
+        CoreModel { config }
+    }
+
+    pub fn set_config(self, config: AppConfig) -> CoreModel {
+        CoreModel { config, ..self }
+    }
+
+    pub fn config(&self) -> &AppConfig {
+        &self.config
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct AppModel {
+    core: CoreModel,
     config_save_timeout: Option<std::time::Instant>,
     savefile: Option<String>,
     viewflags: ViewFlags,
@@ -72,7 +91,7 @@ impl AppModel {
         let drum_machine = DrumMachineModel::new_with_render_thread(audiothread_tx.clone());
 
         AppModel {
-            config,
+            core: CoreModel::new(config),
             config_save_timeout: None,
             savefile,
             viewflags: ViewFlags::default(),
@@ -130,10 +149,6 @@ impl AppModel {
             sets: self.sets.clone_and_remove(uuid)?,
             ..self
         })
-    }
-
-    pub fn set_config(self, config: AppConfig) -> AppModel {
-        AppModel { config, ..self }
     }
 
     pub fn set_config_save_timeout(self, deadline: Instant) -> AppModel {
@@ -217,10 +232,6 @@ impl AppModel {
     pub fn reached_config_save_timeout(&self) -> bool {
         self.config_save_timeout
             .is_some_and(|t| t <= Instant::now())
-    }
-
-    pub fn config(&self) -> &AppConfig {
-        &self.config
     }
 
     pub fn audiothread_send(&self, message: audiothread::Message) -> AnyhowResult<()> {
@@ -670,6 +681,9 @@ impl AppModel {
     pub fn selected_set(&self) -> Option<Uuid> {
         self.sets_selected_set
     }
+
+    delegate!(core, set_config(config: AppConfig) -> Model);
+    delegate!(core, config() -> &AppConfig);
 
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
