@@ -47,6 +47,12 @@ pub struct CoreModel {
     sources_loading: HashMap<Uuid, Rc<mpsc::Receiver<SourceLoaderMessage>>>,
     samples: Rc<RefCell<Vec<Sample>>>,
     samplelist_selected_sample: Option<Sample>,
+    sets: HashMap<Uuid, SampleSet>,
+    sets_order: Vec<Uuid>,
+    sets_selected_set: Option<Uuid>,
+    sets_most_recently_used_uuid: Option<Uuid>,
+    sets_export_state: Option<ExportState>,
+    export_job_rx: Option<Rc<mpsc::Receiver<ExportJobMessage>>>,
 }
 
 impl CoreModel {
@@ -60,6 +66,12 @@ impl CoreModel {
             sources_loading: HashMap::new(),
             samples: Rc::new(RefCell::new(Vec::new())),
             samplelist_selected_sample: None,
+            sets: HashMap::new(),
+            sets_order: Vec::new(),
+            sets_selected_set: None,
+            sets_most_recently_used_uuid: None,
+            sets_export_state: None,
+            export_job_rx: None,
         }
     }
 
@@ -267,6 +279,170 @@ impl CoreModel {
     pub fn selected_sample(&self) -> Option<&Sample> {
         self.samplelist_selected_sample.as_ref()
     }
+
+    pub fn sets_list(&self) -> Vec<&SampleSet> {
+        self.sets_order
+            .iter()
+            .map(|uuid| self.sets.get(uuid).unwrap())
+            .collect()
+    }
+
+    pub fn sets_map(&self) -> &HashMap<Uuid, SampleSet> {
+        &self.sets
+    }
+
+    pub fn get_set(&self, uuid: Uuid) -> AnyhowResult<&SampleSet> {
+        self.sets
+            .get(&uuid)
+            .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))
+    }
+
+    fn get_set_mut(&mut self, uuid: Uuid) -> AnyhowResult<&mut SampleSet> {
+        self.sets
+            .get_mut(&uuid)
+            .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))
+    }
+
+    pub fn add_set(self, set: SampleSet) -> AnyhowResult<CoreModel> {
+        if self.sets.contains_key(set.uuid()) {
+            Err(anyhow!("Failed to add set: UUID in use"))
+        } else {
+            let uuid = *set.uuid();
+
+            Ok(CoreModel {
+                sets: self.sets.clone_and_insert(uuid, set),
+                sets_order: self.sets_order.clone_and_push(uuid),
+                ..self
+            })
+        }
+    }
+
+    pub fn get_or_create_sampleset(
+        model: CoreModel,
+        name: impl Into<String>,
+    ) -> Result<(CoreModel, Uuid), anyhow::Error> {
+        let name = name.into();
+
+        match model
+            .sets
+            .iter()
+            .find(|(_, set)| set.name() == name)
+            .map(|(uuid, _)| *uuid)
+        {
+            Some(uuid) => Ok((model, uuid)),
+            None => {
+                let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new(name));
+                let new_uuid = *new_set.uuid();
+
+                Ok((model.add_set(new_set)?, new_uuid))
+            }
+        }
+    }
+
+    #[cfg(test)]
+    pub fn remove_set(self, uuid: Uuid) -> AnyhowResult<CoreModel> {
+        Ok(CoreModel {
+            sets_order: self.sets_order.clone_and_remove(&uuid)?,
+            sets: self.sets.clone_and_remove(&uuid)?,
+            ..self
+        })
+    }
+
+    pub fn clear_sets(self) -> CoreModel {
+        CoreModel {
+            sets: HashMap::new(),
+            sets_order: Vec::new(),
+            sets_selected_set: None,
+            sets_most_recently_used_uuid: None,
+            sets_export_state: None,
+            ..self
+        }
+    }
+
+    pub fn add_to_set(self, sample: Sample, set_uuid: Uuid) -> AnyhowResult<CoreModel> {
+        let mut result = self.clone();
+
+        result.get_set_mut(set_uuid)?.add(
+            self.source(
+                *sample
+                    .source_uuid()
+                    .ok_or(anyhow!("Sample missing source UUID"))?,
+            )?,
+            sample,
+        )?;
+
+        result.set_set_most_recently_added_to(Some(set_uuid))
+    }
+
+    fn set_set_most_recently_added_to(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<CoreModel> {
+        match maybe_uuid.and_then(|uuid| self.get_set(uuid).err()) {
+            Some(err) => Err(err),
+            None => Ok(CoreModel {
+                sets_most_recently_used_uuid: maybe_uuid,
+                ..self
+            }),
+        }
+    }
+
+    pub fn get_set_most_recently_added_to(&self) -> Option<Uuid> {
+        self.sets_most_recently_used_uuid
+    }
+
+    pub fn set_selected_set(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<CoreModel> {
+        if let Some(false) = maybe_uuid.map(|uuid| self.sets.contains_key(&uuid)) {
+            Err(anyhow!("Failed to set selected set: UUID not present"))
+        } else {
+            Ok(CoreModel {
+                sets_selected_set: maybe_uuid,
+                ..self
+            })
+        }
+    }
+
+    pub fn selected_set(&self) -> Option<Uuid> {
+        self.sets_selected_set
+    }
+
+    pub fn set_labelling(
+        self,
+        set_uuid: Uuid,
+        labelling: Option<SampleSetLabelling>,
+    ) -> AnyhowResult<CoreModel> {
+        let mut result = self.clone();
+
+        result
+            .sets
+            .get_mut(&set_uuid)
+            .ok_or(anyhow!("Failed to set labelling: UUID not present"))?
+            .set_labelling(labelling);
+
+        Ok(result)
+    }
+
+    pub fn set_export_state(self, maybe_state: Option<ExportState>) -> CoreModel {
+        CoreModel {
+            sets_export_state: maybe_state,
+            ..self
+        }
+    }
+
+    pub fn export_state(&self) -> Option<ExportState> {
+        self.sets_export_state
+    }
+
+    pub fn set_export_job_rx(
+        self,
+        maybe_rx: Option<mpsc::Receiver<ExportJobMessage>>,
+    ) -> CoreModel {
+        CoreModel {
+            export_job_rx: maybe_rx.map(Rc::new),
+            ..self
+        }
+    }
+
+    pub fn export_job_rx(&self) -> Option<Rc<mpsc::Receiver<ExportJobMessage>>> {
+        self.export_job_rx.clone()
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -275,12 +451,6 @@ pub struct AppModel {
     viewflags: ViewFlags,
     viewvalues: ViewValues,
     audiothread_tx: mpsc::Sender<audiothread::Message>,
-    sets: HashMap<Uuid, SampleSet>,
-    sets_order: Vec<Uuid>,
-    sets_selected_set: Option<Uuid>,
-    sets_most_recently_used_uuid: Option<Uuid>,
-    sets_export_state: Option<ExportState>,
-    export_job_rx: Option<Rc<mpsc::Receiver<ExportJobMessage>>>,
     drum_machine: DrumMachineModel,
 }
 
@@ -300,23 +470,8 @@ impl AppModel {
             viewflags: ViewFlags::default(),
             viewvalues,
             audiothread_tx,
-            sets: HashMap::new(),
-            sets_order: Vec::new(),
-            sets_selected_set: None,
-            sets_most_recently_used_uuid: None,
-            sets_export_state: None,
-            export_job_rx: None,
             drum_machine,
         }
-    }
-
-    #[cfg(test)]
-    pub fn remove_sampleset(self, uuid: &Uuid) -> AnyhowResult<AppModel> {
-        Ok(AppModel {
-            sets_order: self.sets_order.clone_and_remove(uuid)?,
-            sets: self.sets.clone_and_remove(uuid)?,
-            ..self
-        })
     }
 
     pub fn remove_source(self, uuid: Uuid) -> AnyhowResult<AppModel> {
@@ -408,10 +563,6 @@ impl AppModel {
         self.source_sample_count_add(source_uuid, added)
     }
 
-    pub fn get_set_most_recently_added_to(&self) -> Option<Uuid> {
-        self.sets_most_recently_used_uuid
-    }
-
     fn sources_add_fs_fields_valid(model: &AppModel) -> bool {
         !(model.add_fs_source_name_entry_text().is_empty()
             || model.add_fs_source_path_entry_text().is_empty()
@@ -493,17 +644,10 @@ impl AppModel {
     }
 
     pub fn clear_sets(self) -> AppModel {
-        AppModel {
-            sets: HashMap::new(),
-            sets_order: Vec::new(),
-            sets_selected_set: None,
-            sets_most_recently_used_uuid: None,
-            sets_export_state: None,
-            ..self
-        }
-        .disable_add_to_prev_set()
-        .disable_set_export()
-        .reset_export_progress()
+        self.clear_sets_core()
+            .disable_add_to_prev_set()
+            .disable_set_export()
+            .reset_export_progress()
     }
 
     pub fn load_sources(self, sources: Vec<Source>) -> AnyhowResult<AppModel> {
@@ -521,20 +665,6 @@ impl AppModel {
         Ok(result)
     }
 
-    pub fn add_set(self, set: SampleSet) -> AnyhowResult<AppModel> {
-        if self.sets.contains_key(set.uuid()) {
-            Err(anyhow!("Failed to add set: UUID in use"))
-        } else {
-            let uuid = *set.uuid();
-
-            Ok(AppModel {
-                sets: self.sets.clone_and_insert(uuid, set),
-                sets_order: self.sets_order.clone_and_push(uuid),
-                ..self
-            })
-        }
-    }
-
     pub fn load_sets(self, sets: Vec<SampleSet>) -> AnyhowResult<AppModel> {
         let mut result = self.clone();
 
@@ -545,63 +675,6 @@ impl AppModel {
         Ok(result)
     }
 
-    pub fn get_set(&self, uuid: Uuid) -> AnyhowResult<&SampleSet> {
-        self.sets
-            .get(&uuid)
-            .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))
-    }
-
-    pub fn get_set_mut(&mut self, uuid: Uuid) -> AnyhowResult<&mut SampleSet> {
-        self.sets
-            .get_mut(&uuid)
-            .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))
-    }
-
-    pub fn set_selected_set(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<AppModel> {
-        if let Some(false) = maybe_uuid.map(|uuid| self.sets.contains_key(&uuid)) {
-            Err(anyhow!("Failed to set selected set: UUID not present"))
-        } else {
-            Ok(AppModel {
-                sets_selected_set: maybe_uuid,
-                ..self
-            })
-        }
-    }
-
-    pub fn get_selected_set(&self) -> Option<Uuid> {
-        self.sets_selected_set
-    }
-
-    pub fn set_labelling(
-        self,
-        set_uuid: Uuid,
-        labelling: Option<SampleSetLabelling>,
-    ) -> AnyhowResult<AppModel> {
-        let mut result = self.clone();
-
-        result
-            .sets
-            .get_mut(&set_uuid)
-            .ok_or(anyhow!("Failed to set labelling: UUID not present"))?
-            .set_labelling(labelling);
-
-        Ok(result)
-    }
-
-    pub fn set_export_state(self, maybe_state: Option<ExportState>) -> AppModel {
-        AppModel {
-            sets_export_state: maybe_state,
-            ..self
-        }
-    }
-
-    pub fn set_export_job_rx(self, maybe_rx: Option<mpsc::Receiver<ExportJobMessage>>) -> AppModel {
-        AppModel {
-            export_job_rx: maybe_rx.map(Rc::new),
-            ..self
-        }
-    }
-
     // TODO: replace this with something more abstract
     pub fn set_drum_machine(self, drum_machine: DrumMachineModel) -> AppModel {
         AppModel {
@@ -610,83 +683,12 @@ impl AppModel {
         }
     }
 
-    pub fn get_or_create_sampleset(
-        model: AppModel,
-        name: String,
-    ) -> Result<(AppModel, Uuid), anyhow::Error> {
-        match model
-            .sets
-            .iter()
-            .find(|(_, set)| set.name() == name)
-            .map(|(uuid, _)| *uuid)
-        {
-            Some(uuid) => Ok((model, uuid)),
-            None => {
-                let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new(name));
-                let new_uuid = *new_set.uuid();
-
-                Ok((model.add_set(new_set)?, new_uuid))
-            }
-        }
-    }
-
-    pub fn add_to_set(self, sample: Sample, set_uuid: Uuid) -> AnyhowResult<AppModel> {
-        let mut result = self.clone();
-
-        result.get_set_mut(set_uuid)?.add(
-            self.source(
-                *sample
-                    .source_uuid()
-                    .ok_or(anyhow!("Sample missing source UUID"))?,
-            )?,
-            sample,
-        )?;
-
-        result.set_set_most_recently_added_to(Some(set_uuid))
-    }
-
-    pub fn set_set_most_recently_added_to(
-        self,
-        maybe_uuid: Option<Uuid>,
-    ) -> AnyhowResult<AppModel> {
-        match maybe_uuid.and_then(|uuid| self.get_set(uuid).err()) {
-            Some(err) => Err(err),
-            None => Ok(AppModel {
-                sets_most_recently_used_uuid: maybe_uuid,
-                ..self
-            }),
-        }
-    }
-
-    pub fn export_state(&self) -> Option<ExportState> {
-        self.sets_export_state
-    }
-
-    pub fn export_job_rx(&self) -> Option<Rc<mpsc::Receiver<ExportJobMessage>>> {
-        self.export_job_rx.clone()
-    }
-
-    pub fn sets_list(&self) -> Vec<&SampleSet> {
-        self.sets_order
-            .iter()
-            .map(|uuid| self.sets.get(uuid).unwrap())
-            .collect()
-    }
-
-    pub fn sets_map(&self) -> &HashMap<Uuid, SampleSet> {
-        &self.sets
-    }
-
     pub fn populate_samples_listmodel(&self) {
         self.viewvalues.populate_samples_listmodel(&self.samples());
     }
 
     pub fn drum_machine_model(&self) -> &DrumMachineModel {
         &self.drum_machine
-    }
-
-    pub fn selected_set(&self) -> Option<Uuid> {
-        self.sets_selected_set
     }
 
     delegate!(core, set_config(config: AppConfig) -> Model);
@@ -704,14 +706,48 @@ impl AppModel {
     delegate!(core, disable_source(uuid: Uuid) -> Result);
     delegate!(core, remove_source(uuid: Uuid) as remove_source_core -> Result);
     delegate!(core, clear_sources() as clear_sources_core -> Model);
-    delegate!(core, source_loaders() -> &HashMap<Uuid, Rc<mpsc::Receiver<Result<Sample, libasampo::errors::Error>>>>);
-    // delegate!(core, add_source_loader(uuid: Uuid, rx: mpsc::Receiver<SourceLoaderMessage>) -> Result);
-    delegate!(core, handle_source_loader(messages: Vec<SourceLoaderMessage>) as handle_source_loader_core -> ());
+    delegate!(core, source_loaders() ->
+        &HashMap<Uuid, Rc<mpsc::Receiver<Result<Sample, libasampo::errors::Error>>>>);
+    delegate!(core, handle_source_loader(messages: Vec<SourceLoaderMessage>)
+        as handle_source_loader_core -> ());
     delegate!(core, remove_source_loader(uuid: Uuid) -> Result);
     delegate!(core, has_sources_loading() -> bool);
     delegate!(core, samples() -> std::cell::Ref<Vec<Sample>>);
     delegate!(core, set_selected_sample(s: Option<Sample>) -> Model);
     delegate!(core, selected_sample() -> Option<&Sample>);
+    delegate!(core, sets_list() -> Vec<&SampleSet>);
+    delegate!(core, sets_map() -> &HashMap<Uuid, SampleSet>);
+    delegate!(core, get_set(uuid: Uuid) -> AnyhowResult<&SampleSet>);
+    delegate!(core, add_set(set: SampleSet) -> Result);
+
+    pub fn get_or_create_sampleset(
+        model: AppModel,
+        set_name: impl Into<String>,
+    ) -> AnyhowResult<(AppModel, Uuid)> {
+        let (result, uuid) = CoreModel::get_or_create_sampleset(model.core, set_name)?;
+
+        Ok((
+            AppModel {
+                core: result,
+                ..model
+            },
+            uuid,
+        ))
+    }
+
+    #[cfg(test)]
+    delegate!(core, remove_set(uuid: Uuid) -> Result);
+
+    delegate!(core, clear_sets() as clear_sets_core -> Model);
+    delegate!(core, add_to_set(sample: Sample, set_uuid: Uuid) -> Result);
+    delegate!(core, get_set_most_recently_added_to() -> Option<Uuid>);
+    delegate!(core, set_selected_set(maybe_uuid: Option<Uuid>) -> Result);
+    delegate!(core, selected_set() -> Option<Uuid>);
+    delegate!(core, set_labelling(set_uuid: Uuid, labelling: Option<SampleSetLabelling>) -> Result);
+    delegate!(core, set_export_state(maybe_state: Option<ExportState>) -> Model);
+    delegate!(core, export_state() -> Option<ExportState>);
+    delegate!(core, set_export_job_rx(rx: Option<mpsc::Receiver<ExportJobMessage>>) -> Model);
+    delegate!(core, export_job_rx() -> Option<Rc<mpsc::Receiver<ExportJobMessage>>>);
 
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
@@ -770,7 +806,6 @@ impl AppModel {
     delegate!(viewvalues, export_dialog_view() -> Option<&ExportDialogView>);
     delegate!(viewvalues, sources_sample_count() -> &HashMap<Uuid, usize>);
     delegate!(viewvalues, export_progress() -> Option<(usize, usize)>);
-    // delegate!(viewvalues, samples_filter_text() -> &String);
     delegate!(viewvalues, samples_listmodel() -> &gtk::gio::ListStore);
     delegate!(viewvalues, set_drum_machine_view(view: Option<DrumMachineView>)
         -> Model);
@@ -794,9 +829,6 @@ impl AppModel {
     delegate!(drum_machine, set_latest_event(event: Option<DrumkitSequenceEvent>)
         as set_latest_drum_machine_event -> Model);
 
-    // delegate!(drum_machine, latest_event()
-    //     as latest_drum_machine_event -> Option<&DrumkitSequenceEvent>);
-
     delegate!(drum_machine, poll_event()
         as drum_machine_poll_event -> Option<DrumkitSequenceEvent>);
 }
@@ -817,11 +849,14 @@ mod tests {
             .add_set(SampleSet::BaseSampleSet(set.clone()))
             .unwrap();
 
-        assert!(model.sets.contains_key(set.uuid()));
-        assert_eq!(model.sets.get(set.uuid()).unwrap().name(), "Favorites");
+        assert!(model.sets_map().contains_key(set.uuid()));
+        assert_eq!(
+            model.sets_map().get(set.uuid()).unwrap().name(),
+            "Favorites"
+        );
 
-        let model = model.remove_sampleset(set.uuid()).unwrap();
+        let model = model.remove_set(*set.uuid()).unwrap();
 
-        assert!(!model.sets.contains_key(set.uuid()));
+        assert!(!model.sets_map().contains_key(set.uuid()));
     }
 }

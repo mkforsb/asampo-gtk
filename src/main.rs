@@ -467,7 +467,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::SampleSetLabellingKindChanged(kind) => {
             let set_uuid = model
-                .get_selected_set()
+                .selected_set()
                 .ok_or(anyhow!("No sample set selected"))?;
 
             model.set_labelling(
@@ -510,7 +510,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             let set = model
                 .get_set(
                     model
-                        .get_selected_set()
+                        .selected_set()
                         .ok_or(anyhow!("No sample set selected"))?,
                 )?
                 .clone();
@@ -808,7 +808,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         }
     }
 
-    if old.get_selected_set() != new.get_selected_set() {
+    if old.selected_set() != new.selected_set() {
         update_samplesets_detail(model_ptr.clone(), new.clone(), view);
     }
 
