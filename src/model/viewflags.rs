@@ -47,19 +47,23 @@ impl ViewFlags {
     signal!(add_fs_source_begin_browse, sources_add_fs_begin_browse);
 }
 
-/// Expands to struct update syntax that updates a single field.
+/// Generates a pair of methods for a boolean field.
 ///
-/// `set_field!(self, foo, bar)` -> `Self { foo: bar, ..self }`
-macro_rules! set_field {
-    ($self:ident, $key:ident, $val:expr) => {
-        Self {
-            $key: $val,
-            ..$self
+/// `get_set!(prefix foo, myfield)` -> `pub fn set_foo(state: bool)`
+///                                    `pub fn prefix_foo()`
+///
+/// The `prefix` is intended to be e.g "is", such that the generated pair would be
+/// e.g `set_elevator_stopped` and `is_elevator_stopped`.
+macro_rules! get_set {
+    ($pre:ident $topic:ident, $field:ident) => {
+        paste::paste! {
+            pub fn [<set_ $topic>](self, state: bool) -> Self { set_field!(self, $field, state) }
+            pub fn [<$pre _ $topic>](&self) -> bool { self.$field }
         }
     };
 }
 
-use set_field;
+use get_set;
 
 /// Generates three methods for a boolean field.
 ///
@@ -78,20 +82,16 @@ macro_rules! signal {
 
 use signal;
 
-/// Generates a pair of methods for a boolean field.
+/// Expands to struct update syntax that updates a single field.
 ///
-/// `get_set!(prefix foo, myfield)` -> `pub fn set_foo(state: bool)`
-///                                    `pub fn prefix_foo()`
-///
-/// The `prefix` is intended to be e.g "is", such that the generated pair would be
-/// e.g `set_elevator_stopped` and `is_elevator_stopped`.
-macro_rules! get_set {
-    ($pre:ident $topic:ident, $field:ident) => {
-        paste::paste! {
-            pub fn [<set_ $topic>](self, state: bool) -> Self { set_field!(self, $field, state) }
-            pub fn [<$pre _ $topic>](&self) -> bool { self.$field }
+/// `set_field!(self, foo, bar)` -> `Self { foo: bar, ..self }`
+macro_rules! set_field {
+    ($self:ident, $key:ident, $val:expr) => {
+        Self {
+            $key: $val,
+            ..$self
         }
     };
 }
 
-use get_set;
+use set_field;
