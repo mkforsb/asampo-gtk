@@ -346,20 +346,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             model.add_to_set(sample, set_uuid)
         }
 
-        AppMessage::SourceEnabled(uuid) => {
-            let source = model.source(uuid)?;
-            let (tx, rx) = std::sync::mpsc::channel::<Result<Sample, libasampo::errors::Error>>();
-
-            std::thread::spawn(clone!(@strong source => move || {
-                source.list_async(tx);
-            }));
-
-            Ok(model
-                .add_source_loader(uuid, rx)?
-                .reset_source_sample_count(uuid)?
-                .enable_source(&uuid)?
-                .tap(AppModel::populate_samples_listmodel))
-        }
+        AppMessage::SourceEnabled(uuid) => Ok(model
+            .reset_source_sample_count(uuid)?
+            .enable_source(uuid)?
+            .tap(AppModel::populate_samples_listmodel)),
 
         AppMessage::SourceDisabled(uuid) => Ok(model
             .disable_source(uuid)?

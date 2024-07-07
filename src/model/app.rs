@@ -11,7 +11,6 @@ use std::{
 };
 
 use anyhow::anyhow;
-use gtk::glib::clone;
 use libasampo::{
     samples::{Sample, SampleOps},
     samplesets::{
@@ -43,6 +42,11 @@ pub struct CoreModel {
     config: AppConfig,
     config_save_timeout: Option<std::time::Instant>,
     savefile: Option<String>,
+    sources: HashMap<Uuid, Source>,
+    sources_order: Vec<Uuid>,
+    sources_loading: HashMap<Uuid, Rc<mpsc::Receiver<SourceLoaderMessage>>>,
+    samples: Rc<RefCell<Vec<Sample>>>,
+    samplelist_selected_sample: Option<Sample>,
 }
 
 impl CoreModel {
@@ -51,6 +55,11 @@ impl CoreModel {
             config,
             config_save_timeout: None,
             savefile: savefile_path.map(|s| s.into()),
+            sources: HashMap::new(),
+            sources_order: Vec::new(),
+            sources_loading: HashMap::new(),
+            samples: Rc::new(RefCell::new(Vec::new())),
+            samplelist_selected_sample: None,
         }
     }
 
@@ -91,6 +100,173 @@ impl CoreModel {
     pub fn savefile_path(&self) -> Option<&String> {
         self.savefile.as_ref()
     }
+
+    pub fn sources_map(&self) -> &HashMap<Uuid, Source> {
+        &self.sources
+    }
+
+    pub fn sources_list(&self) -> Vec<&Source> {
+        self.sources_order
+            .iter()
+            .map(|uuid| self.source(*uuid).unwrap())
+            .collect()
+    }
+
+    pub fn source(&self, uuid: Uuid) -> AnyhowResult<&Source> {
+        self.sources
+            .get(&uuid)
+            .ok_or(anyhow!("Failed to get source: UUID not present"))
+    }
+
+    pub fn add_source(self, source: Source) -> AnyhowResult<CoreModel> {
+        debug_assert!(self.sources.len() == self.sources_order.len());
+        debug_assert!(self
+            .sources
+            .iter()
+            .all(|(_uuid, source)| self.sources_order.iter().any(|uuid| source.uuid() == uuid)));
+
+        if self.sources.contains_key(source.uuid()) {
+            Err(anyhow!("Failed to add source: UUID in use"))
+        } else {
+            Ok(CoreModel {
+                sources_order: self.sources_order.clone_and_push(*source.uuid()),
+                sources: self.sources.clone_and_insert(*source.uuid(), source),
+                ..self
+            })
+        }
+    }
+
+    pub fn enable_source(self, uuid: Uuid) -> AnyhowResult<CoreModel> {
+        let loader_rx = Self::spawn_source_loader(self.source(uuid)?.clone());
+
+        CoreModel {
+            sources: self
+                .sources
+                .cloned_update_with(|mut s: HashMap<Uuid, Source>| {
+                    s.get_mut(&uuid)
+                        .ok_or_else(|| anyhow!("Failed to enable source: UUID not present"))?
+                        .enable();
+                    Ok(s)
+                })?,
+            ..self
+        }
+        .add_source_loader(uuid, loader_rx)
+    }
+
+    pub fn disable_source(self, uuid: Uuid) -> AnyhowResult<CoreModel> {
+        self.samples
+            .borrow_mut()
+            .retain(|s| s.source_uuid() != Some(&uuid));
+
+        Ok(CoreModel {
+            sources: self
+                .sources
+                .cloned_update_with(|mut s: HashMap<Uuid, Source>| {
+                    s.get_mut(&uuid)
+                        .ok_or_else(|| anyhow!("Failed to disable source: uuid not found!"))?
+                        .disable();
+                    Ok(s)
+                })?,
+            ..self
+        })
+    }
+
+    pub fn remove_source(self, uuid: Uuid) -> AnyhowResult<CoreModel> {
+        let model = self.disable_source(uuid)?;
+
+        Ok(CoreModel {
+            sources_order: model.sources_order.clone_and_remove(&uuid)?,
+            sources: model.sources.clone_and_remove(&uuid)?,
+            ..model
+        })
+    }
+
+    pub fn clear_sources(self) -> CoreModel {
+        CoreModel {
+            sources: HashMap::new(),
+            sources_order: Vec::new(),
+            sources_loading: HashMap::new(),
+            samples: Rc::new(RefCell::new(Vec::new())),
+            ..self
+        }
+    }
+
+    fn spawn_source_loader(source: Source) -> mpsc::Receiver<SourceLoaderMessage> {
+        let (tx, rx) = mpsc::channel::<SourceLoaderMessage>();
+
+        std::thread::spawn(move || {
+            source.list_async(tx);
+        });
+
+        rx
+    }
+
+    pub fn source_loaders(
+        &self,
+    ) -> &HashMap<Uuid, Rc<mpsc::Receiver<Result<Sample, libasampo::errors::Error>>>> {
+        &self.sources_loading
+    }
+
+    pub fn add_source_loader(
+        self,
+        source_uuid: Uuid,
+        loader_rx: mpsc::Receiver<SourceLoaderMessage>,
+    ) -> AnyhowResult<CoreModel> {
+        if self.sources_loading.contains_key(&source_uuid) {
+            Err(anyhow!("Failed to add source loader: UUID in use"))
+        } else {
+            Ok(CoreModel {
+                sources_loading: self
+                    .sources_loading
+                    .clone_and_insert(source_uuid, Rc::new(loader_rx)),
+                ..self
+            })
+        }
+    }
+
+    pub fn handle_source_loader(&self, messages: Vec<SourceLoaderMessage>) {
+        let mut samples = self.samples.borrow_mut();
+
+        for message in messages {
+            match message {
+                Ok(sample) => {
+                    samples.push(sample);
+                }
+
+                Err(e) => log::log!(log::Level::Error, "Error loading source: {e}"),
+            }
+        }
+    }
+
+    pub fn remove_source_loader(self, source_uuid: Uuid) -> AnyhowResult<CoreModel> {
+        if !self.sources_loading.contains_key(&source_uuid) {
+            Err(anyhow!("Failed to remove source loader: UUID not present"))
+        } else {
+            Ok(CoreModel {
+                sources_loading: self.sources_loading.clone_and_remove(&source_uuid)?,
+                ..self
+            })
+        }
+    }
+
+    pub fn has_sources_loading(&self) -> bool {
+        !self.sources_loading.is_empty()
+    }
+
+    pub fn samples(&self) -> std::cell::Ref<Vec<Sample>> {
+        self.samples.borrow()
+    }
+
+    pub fn set_selected_sample(self, maybe_sample: Option<Sample>) -> CoreModel {
+        CoreModel {
+            samplelist_selected_sample: maybe_sample,
+            ..self
+        }
+    }
+
+    pub fn selected_sample(&self) -> Option<&Sample> {
+        self.samplelist_selected_sample.as_ref()
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -99,11 +275,6 @@ pub struct AppModel {
     viewflags: ViewFlags,
     viewvalues: ViewValues,
     audiothread_tx: mpsc::Sender<audiothread::Message>,
-    sources: HashMap<Uuid, Source>,
-    sources_order: Vec<Uuid>,
-    sources_loading: HashMap<Uuid, Rc<mpsc::Receiver<SourceLoaderMessage>>>,
-    samples: Rc<RefCell<Vec<Sample>>>,
-    samplelist_selected_sample: Option<Sample>,
     sets: HashMap<Uuid, SampleSet>,
     sets_order: Vec<Uuid>,
     sets_selected_set: Option<Uuid>,
@@ -129,11 +300,6 @@ impl AppModel {
             viewflags: ViewFlags::default(),
             viewvalues,
             audiothread_tx,
-            sources: HashMap::new(),
-            sources_order: Vec::new(),
-            sources_loading: HashMap::new(),
-            samples: Rc::new(RefCell::new(Vec::new())),
-            samplelist_selected_sample: None,
             sets: HashMap::new(),
             sets_order: Vec::new(),
             sets_selected_set: None,
@@ -142,36 +308,6 @@ impl AppModel {
             export_job_rx: None,
             drum_machine,
         }
-    }
-
-    pub fn disable_source(self, uuid: Uuid) -> AnyhowResult<AppModel> {
-        self.samples
-            .borrow_mut()
-            .retain(|s| s.source_uuid() != Some(&uuid));
-
-        Ok(AppModel {
-            sources: self
-                .sources
-                .cloned_update_with(|mut s: HashMap<Uuid, Source>| {
-                    s.get_mut(&uuid)
-                        .ok_or_else(|| anyhow!("Failed to disable source: uuid not found!"))?
-                        .disable();
-                    Ok(s)
-                })?,
-            ..self
-        })
-    }
-
-    pub fn remove_source(self, uuid: Uuid) -> AnyhowResult<AppModel> {
-        let model = self
-            .disable_source(uuid)?
-            .remove_source_sample_count(uuid)?;
-
-        Ok(AppModel {
-            sources_order: model.sources_order.clone_and_remove(&uuid)?,
-            sources: model.sources.clone_and_remove(&uuid)?,
-            ..model
-        })
     }
 
     #[cfg(test)]
@@ -183,68 +319,9 @@ impl AppModel {
         })
     }
 
-    pub fn add_source(self, source: Source) -> AnyhowResult<AppModel> {
-        debug_assert!(self.sources.len() == self.sources_order.len());
-        debug_assert!(self
-            .sources
-            .iter()
-            .all(|(_uuid, source)| self.sources_order.iter().any(|uuid| source.uuid() == uuid)));
-
-        if self.sources.contains_key(source.uuid()) {
-            Err(anyhow!("Failed to add source: UUID in use"))
-        } else {
-            Ok(AppModel {
-                sources_order: self.sources_order.clone_and_push(*source.uuid()),
-                sources: self.sources.clone_and_insert(*source.uuid(), source),
-                ..self
-            })
-        }
-    }
-
-    pub fn add_source_loader(
-        self,
-        source_uuid: Uuid,
-        loader_rx: mpsc::Receiver<SourceLoaderMessage>,
-    ) -> AnyhowResult<AppModel> {
-        if self.sources_loading.contains_key(&source_uuid) {
-            Err(anyhow!("Failed to add source loader: UUID in use"))
-        } else {
-            Ok(AppModel {
-                sources_loading: self
-                    .sources_loading
-                    .clone_and_insert(source_uuid, Rc::new(loader_rx)),
-                ..self
-            })
-        }
-    }
-
-    pub fn remove_source_loader(self, source_uuid: Uuid) -> AnyhowResult<AppModel> {
-        if !self.sources_loading.contains_key(&source_uuid) {
-            Err(anyhow!("Failed to remove source loader: UUID not present"))
-        } else {
-            Ok(AppModel {
-                sources_loading: self.sources_loading.clone_and_remove(&source_uuid)?,
-                ..self
-            })
-        }
-    }
-
-    pub fn enable_source(self, uuid: &Uuid) -> AnyhowResult<AppModel> {
-        Ok(AppModel {
-            sources: self
-                .sources
-                .cloned_update_with(|mut s: HashMap<Uuid, Source>| {
-                    s.get_mut(uuid)
-                        .ok_or_else(|| anyhow!("Failed to enable source: UUID not present"))?
-                        .enable();
-                    Ok(s)
-                })?,
-            ..self
-        })
-    }
-
-    pub fn has_sources_loading(&self) -> bool {
-        !self.sources_loading.is_empty()
+    pub fn remove_source(self, uuid: Uuid) -> AnyhowResult<AppModel> {
+        self.remove_source_core(uuid)?
+            .remove_source_sample_count(uuid)
     }
 
     pub fn audiothread_send(&self, message: audiothread::Message) -> AnyhowResult<()> {
@@ -324,37 +401,11 @@ impl AppModel {
         source_uuid: Uuid,
         messages: Vec<SourceLoaderMessage>,
     ) -> AnyhowResult<AppModel> {
-        let mut samples = self.samples.borrow_mut();
-        let len_before = samples.len();
+        let len_before = self.samples().len();
+        self.handle_source_loader_core(messages);
 
-        for message in messages {
-            match message {
-                Ok(sample) => {
-                    samples.push(sample);
-                }
-
-                Err(e) => log::log!(log::Level::Error, "Error loading source: {e}"),
-            }
-        }
-
-        let added = samples.len() - len_before;
-        drop(samples);
-
-        // TODO: this goes in AppModel while the above goes in CoreModel
+        let added = self.samples().len() - len_before;
         self.source_sample_count_add(source_uuid, added)
-    }
-
-    pub fn source(&self, uuid: Uuid) -> AnyhowResult<&Source> {
-        self.sources
-            .get(&uuid)
-            .ok_or(anyhow!("Failed to get source: UUID not present"))
-    }
-
-    pub fn set_selected_sample(self, maybe_sample: Option<Sample>) -> AppModel {
-        AppModel {
-            samplelist_selected_sample: maybe_sample,
-            ..self
-        }
     }
 
     pub fn get_set_most_recently_added_to(&self) -> Option<Uuid> {
@@ -400,18 +451,12 @@ impl AppModel {
         let new_source = Source::FilesystemSource(FilesystemSource::new_named(name, path, exts));
         let uuid = *new_source.uuid();
 
-        let (loader_tx, loader_rx) = mpsc::channel::<Result<Sample, libasampo::errors::Error>>();
-
-        std::thread::spawn(clone!(@strong new_source => move || {
-            new_source.list_async(loader_tx);
-        }));
-
-        self.init_source_sample_count(uuid)?
-            .add_source(new_source.clone())?
-            .enable_source(&uuid)?
+        Ok(self
+            .init_source_sample_count(uuid)?
+            .add_source(new_source)?
+            .enable_source(uuid)?
             .clear_sources_add_fs_fields()
-            .set_are_sources_add_fs_fields_valid(false)
-            .add_source_loader(uuid, loader_rx)
+            .set_are_sources_add_fs_fields_valid(false))
     }
 
     pub fn conditionally<P, F>(self, cond: P, op: F) -> AppModel
@@ -444,14 +489,7 @@ impl AppModel {
     }
 
     pub fn clear_sources(self) -> AppModel {
-        AppModel {
-            sources: HashMap::new(),
-            sources_order: Vec::new(),
-            sources_loading: HashMap::new(),
-            samples: Rc::new(RefCell::new(Vec::new())),
-            ..self
-        }
-        .clear_sources_sample_counts()
+        self.clear_sources_core().clear_sources_sample_counts() // goes in appmodel, above in coremodel
     }
 
     pub fn clear_sets(self) -> AppModel {
@@ -473,25 +511,14 @@ impl AppModel {
 
         for source in sources {
             let uuid = *source.uuid();
-            let loader_rx = Self::load_source(source.clone());
 
             result = result
-                .add_source(source)?
                 .init_source_sample_count(uuid)?
-                .add_source_loader(uuid, loader_rx)?;
+                .add_source(source)?
+                .enable_source(uuid)?;
         }
 
         Ok(result)
-    }
-
-    fn load_source(source: Source) -> mpsc::Receiver<SourceLoaderMessage> {
-        let (tx, rx) = mpsc::channel::<SourceLoaderMessage>();
-
-        std::thread::spawn(move || {
-            source.list_async(tx);
-        });
-
-        rx
     }
 
     pub fn add_set(self, set: SampleSet) -> AnyhowResult<AppModel> {
@@ -561,17 +588,6 @@ impl AppModel {
         Ok(result)
     }
 
-    pub fn sources_map(&self) -> &HashMap<Uuid, Source> {
-        &self.sources
-    }
-
-    pub fn sources_list(&self) -> Vec<&Source> {
-        self.sources_order
-            .iter()
-            .map(|uuid| self.source(*uuid).unwrap())
-            .collect()
-    }
-
     pub fn set_export_state(self, maybe_state: Option<ExportState>) -> AppModel {
         AppModel {
             sets_export_state: maybe_state,
@@ -592,10 +608,6 @@ impl AppModel {
             drum_machine,
             ..self
         }
-    }
-
-    pub fn selected_sample(&self) -> Option<&Sample> {
-        self.samplelist_selected_sample.as_ref()
     }
 
     pub fn get_or_create_sampleset(
@@ -651,13 +663,7 @@ impl AppModel {
     }
 
     pub fn export_job_rx(&self) -> Option<Rc<mpsc::Receiver<ExportJobMessage>>> {
-        self.export_job_rx.as_ref().map(Rc::clone)
-    }
-
-    pub fn source_loaders(
-        &self,
-    ) -> &HashMap<Uuid, Rc<mpsc::Receiver<Result<Sample, libasampo::errors::Error>>>> {
-        &self.sources_loading
+        self.export_job_rx.clone()
     }
 
     pub fn sets_list(&self) -> Vec<&SampleSet> {
@@ -672,8 +678,7 @@ impl AppModel {
     }
 
     pub fn populate_samples_listmodel(&self) {
-        self.viewvalues
-            .populate_samples_listmodel(&self.samples.borrow());
+        self.viewvalues.populate_samples_listmodel(&self.samples());
     }
 
     pub fn drum_machine_model(&self) -> &DrumMachineModel {
@@ -691,6 +696,22 @@ impl AppModel {
     delegate!(core, reached_config_save_timeout() -> bool);
     delegate!(core, set_savefile_path(maybe_path: Option<impl Into<String>>) -> Model);
     delegate!(core, savefile_path() -> Option<&String>);
+    delegate!(core, source(uuid: Uuid) -> AnyhowResult<&Source>);
+    delegate!(core, sources_map() -> &HashMap<Uuid, Source>);
+    delegate!(core, sources_list() -> Vec<&Source>);
+    delegate!(core, add_source(source: Source) -> Result);
+    delegate!(core, enable_source(uuid: Uuid) -> Result);
+    delegate!(core, disable_source(uuid: Uuid) -> Result);
+    delegate!(core, remove_source(uuid: Uuid) as remove_source_core -> Result);
+    delegate!(core, clear_sources() as clear_sources_core -> Model);
+    delegate!(core, source_loaders() -> &HashMap<Uuid, Rc<mpsc::Receiver<Result<Sample, libasampo::errors::Error>>>>);
+    // delegate!(core, add_source_loader(uuid: Uuid, rx: mpsc::Receiver<SourceLoaderMessage>) -> Result);
+    delegate!(core, handle_source_loader(messages: Vec<SourceLoaderMessage>) as handle_source_loader_core -> ());
+    delegate!(core, remove_source_loader(uuid: Uuid) -> Result);
+    delegate!(core, has_sources_loading() -> bool);
+    delegate!(core, samples() -> std::cell::Ref<Vec<Sample>>);
+    delegate!(core, set_selected_sample(s: Option<Sample>) -> Model);
+    delegate!(core, selected_sample() -> Option<&Sample>);
 
     delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
