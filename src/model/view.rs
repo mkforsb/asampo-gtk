@@ -56,21 +56,21 @@ impl Default for ViewFlags {
 }
 
 impl ViewFlags {
-    pub fn set_are_sources_add_fs_fields_valid(self, valid: bool) -> ViewFlags {
+    pub fn set_are_add_fs_source_fields_valid(self, valid: bool) -> ViewFlags {
         ViewFlags {
             sources_add_fs_fields_valid: valid,
             ..self
         }
     }
 
-    pub fn signal_sources_add_fs_begin_browse(self) -> ViewFlags {
+    pub fn signal_add_fs_source_begin_browse(self) -> ViewFlags {
         ViewFlags {
             sources_add_fs_begin_browse: true,
             ..self
         }
     }
 
-    pub fn clear_signal_sources_add_fs_begin_browse(self) -> ViewFlags {
+    pub fn clear_signal_add_fs_source_begin_browse(self) -> ViewFlags {
         ViewFlags {
             sources_add_fs_begin_browse: false,
             ..self
@@ -328,7 +328,7 @@ impl ViewValues {
         })
     }
 
-    pub fn clear_sources_add_fs_fields(self) -> ViewValues {
+    pub fn clear_add_fs_source_fields(self) -> ViewValues {
         ViewValues {
             sources_add_fs_name_entry: String::from(""),
             sources_add_fs_path_entry: String::from(""),
@@ -337,14 +337,14 @@ impl ViewValues {
         }
     }
 
-    pub fn set_sources_add_fs_name_entry(self, text: impl Into<String>) -> ViewValues {
+    pub fn set_add_fs_source_name(self, text: impl Into<String>) -> ViewValues {
         ViewValues {
             sources_add_fs_name_entry: text.into(),
             ..self
         }
     }
 
-    pub fn set_sources_add_fs_name_entry_if_empty(self, text: impl Into<String>) -> ViewValues {
+    pub fn set_add_fs_source_name_if_empty(self, text: impl Into<String>) -> ViewValues {
         if self.sources_add_fs_name_entry.is_empty() {
             ViewValues {
                 sources_add_fs_name_entry: text.into(),
@@ -355,14 +355,14 @@ impl ViewValues {
         }
     }
 
-    pub fn set_sources_add_fs_path_entry(self, text: impl Into<String>) -> ViewValues {
+    pub fn set_add_fs_source_path(self, text: impl Into<String>) -> ViewValues {
         ViewValues {
             sources_add_fs_path_entry: text.into(),
             ..self
         }
     }
 
-    pub fn set_sources_add_fs_extensions_entry(self, text: impl Into<String>) -> ViewValues {
+    pub fn set_add_fs_source_extensions(self, text: impl Into<String>) -> ViewValues {
         ViewValues {
             sources_add_fs_extensions_entry: text.into(),
             ..self
@@ -382,7 +382,7 @@ impl ViewValues {
             .clone())
     }
 
-    pub fn set_samples_list_filter_text(self, text: impl Into<String>) -> ViewValues {
+    pub fn set_samples_list_filter(self, text: impl Into<String>) -> ViewValues {
         ViewValues {
             samples_list_filter: text.into(),
             ..self
@@ -403,7 +403,7 @@ impl ViewValues {
         }
     }
 
-    pub fn set_export_target_dir_entry_text(self, text: impl Into<String>) -> ViewValues {
+    pub fn set_export_target_dir(self, text: impl Into<String>) -> ViewValues {
         ViewValues {
             sets_export_target_dir_entry: text.into(),
             ..self
@@ -452,19 +452,19 @@ impl ViewValues {
         &self.sets_export_kind
     }
 
-    pub fn latency_approx_label_text(&self) -> &String {
+    pub fn latency_approx_label(&self) -> &String {
         &self.settings_latency_approx_label
     }
 
-    pub fn add_fs_source_name_entry_text(&self) -> &String {
+    pub fn add_fs_source_name(&self) -> &String {
         &self.sources_add_fs_name_entry
     }
 
-    pub fn add_fs_source_path_entry_text(&self) -> &String {
+    pub fn add_fs_source_path(&self) -> &String {
         &self.sources_add_fs_path_entry
     }
 
-    pub fn add_fs_source_extensions_entry_text(&self) -> &String {
+    pub fn add_fs_source_extensions(&self) -> &String {
         &self.sources_add_fs_extensions_entry
     }
 
@@ -479,10 +479,6 @@ impl ViewValues {
     pub fn export_progress(&self) -> Option<(usize, usize)> {
         self.sets_export_progress
     }
-
-    // pub fn samples_filter_text(&self) -> &String {
-    //     &self.samples_list_filter
-    // }
 
     pub fn populate_samples_listmodel(&self, samples: &[Sample]) {
         let filter = &self.samples_list_filter;

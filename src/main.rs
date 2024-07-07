@@ -258,28 +258,28 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::AddFilesystemSourceNameChanged(text) => Ok(model
-            .set_sources_add_fs_name_entry(text)
-            .validate_sources_add_fs_fields()),
+            .set_add_fs_source_name(text)
+            .validate_add_fs_source_fields()),
 
         AppMessage::AddFilesystemSourcePathChanged(text) => Ok(model
-            .set_sources_add_fs_path_entry(text)
-            .validate_sources_add_fs_fields()),
+            .set_add_fs_source_path(text)
+            .validate_add_fs_source_fields()),
 
         AppMessage::AddFilesystemSourcePathBrowseClicked => {
-            Ok(model.signal_sources_add_fs_begin_browse())
+            Ok(model.signal_add_fs_source_begin_browse())
         }
 
         AppMessage::AddFilesystemSourcePathBrowseSubmitted(text) => {
             Ok(match Path::new(&text).file_name() {
-                Some(filename) => model.set_sources_add_fs_name_entry_if_empty(
+                Some(filename) => model.set_add_fs_source_name_if_empty(
                     filename
                         .to_str()
                         .ok_or(anyhow!("Path contains invalid UTF-8"))?,
                 ),
                 None => model,
             }
-            .set_sources_add_fs_path_entry(text)
-            .validate_sources_add_fs_fields())
+            .set_add_fs_source_path(text)
+            .validate_add_fs_source_fields())
         }
 
         AppMessage::AddFilesystemSourcePathBrowseError(error) => {
@@ -289,8 +289,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::AddFilesystemSourceExtensionsChanged(text) => Ok(model
-            .set_sources_add_fs_extensions_entry(text)
-            .validate_sources_add_fs_fields()),
+            .set_add_fs_source_extensions(text)
+            .validate_add_fs_source_fields()),
 
         AppMessage::AddFilesystemSourceClicked => Ok(model
             .commit_file_system_source()?
@@ -326,7 +326,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SamplesFilterChanged(text) => Ok(model
-            .set_samples_list_filter_text(text)
+            .set_samples_list_filter(text)
             .tap(AppModel::populate_samples_listmodel)),
 
         AppMessage::SampleSidebarAddToSetClicked => {
@@ -340,7 +340,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 .clone();
 
             let set_uuid = model
-                .get_set_most_recently_added_to()
+                .set_most_recently_added_to()
                 .ok_or(anyhow!("No sample set recently added to"))?;
 
             model.add_to_set(sample, set_uuid)
@@ -412,7 +412,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::InputDialogSubmitted(context, text) => match context {
             InputDialogContext::AddToSampleset => {
-                let (model, set_uuid) = AppModel::get_or_create_sampleset(model, text)?;
+                let (model, set_uuid) = AppModel::get_or_create_set(model, text)?;
                 let sample = model
                     .selected_sample()
                     .ok_or(anyhow!("No sample selected"))?
@@ -429,7 +429,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         // TODO: replace with function pointer, just like "ok" and "cancel" for input dialog?
         AppMessage::SelectFolderDialogOpened(context) => match context {
             SelectFolderDialogContext::BrowseForFilesystemSource => {
-                Ok(model.clear_signal_sources_add_fs_begin_browse())
+                Ok(model.clear_signal_add_fs_source_begin_browse())
             }
 
             SelectFolderDialogContext::BrowseForExportTargetDirectory => {
@@ -438,7 +438,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         },
 
         AppMessage::SampleSetSelected(uuid) => {
-            let len = model.get_set(uuid)?.len();
+            let len = model.set(uuid)?.len();
 
             // TODO: replace these `conditionally` with some `set_export_enabled(bool)`
             model
@@ -494,12 +494,12 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::ExportTargetDirectoryChanged(text) => Ok(model
             .set_are_export_fields_valid(!text.is_empty())
-            .set_export_target_dir_entry_text(text)),
+            .set_export_target_dir(text)),
 
         AppMessage::ExportTargetDirectoryBrowseClicked => Ok(model.signal_export_begin_browse()),
 
         AppMessage::ExportTargetDirectoryBrowseSubmitted(text) => {
-            Ok(model.set_export_target_dir_entry_text(text))
+            Ok(model.set_export_target_dir(text))
         }
 
         AppMessage::ExportTargetDirectoryBrowseError(_e) => Ok(model),
@@ -508,7 +508,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             use libasampo::samplesets::export::{RateConversionQuality, WavSampleFormat, WavSpec};
 
             let set = model
-                .get_set(
+                .set(
                     model
                         .selected_set()
                         .ok_or(anyhow!("No sample set selected"))?,
@@ -586,7 +586,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             }
 
             if model.is_drum_machine_render_thread_active() {
-                Ok(model.set_drum_machine(DrumMachineModel::new(None, None)))
+                Ok(model.set_drum_machine_model(DrumMachineModel::new(None, None)))
             } else {
                 Ok(model)
             }
@@ -692,21 +692,12 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         view.set_sensitive(new.is_main_view_sensitive());
     }
 
-    maybe_update_text!(
-        view.settings_latency_approx_label,
-        latency_approx_label_text
-    );
-    maybe_update_text!(
-        view.sources_add_fs_name_entry,
-        add_fs_source_name_entry_text
-    );
-    maybe_update_text!(
-        view.sources_add_fs_path_entry,
-        add_fs_source_path_entry_text
-    );
+    maybe_update_text!(view.settings_latency_approx_label, latency_approx_label);
+    maybe_update_text!(view.sources_add_fs_name_entry, add_fs_source_name);
+    maybe_update_text!(view.sources_add_fs_path_entry, add_fs_source_path);
     maybe_update_text!(
         view.sources_add_fs_extensions_entry,
-        add_fs_source_extensions_entry_text
+        add_fs_source_extensions
     );
 
     if let Some(dialogview) = new.export_dialog_view() {
@@ -799,9 +790,9 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             .set_visible(new.is_add_to_prev_set_enabled());
     }
 
-    if old.get_set_most_recently_added_to() != new.get_set_most_recently_added_to() {
-        if let Some(mru) = &new.get_set_most_recently_added_to() {
-            if let Ok(set) = new.get_set(*mru) {
+    if old.set_most_recently_added_to() != new.set_most_recently_added_to() {
+        if let Some(mru) = &new.set_most_recently_added_to() {
+            if let Ok(set) = new.set(*mru) {
                 view.samples_sidebar_add_to_prev_button
                     .set_label(&format!("Add to '{}'", set.name()));
             }

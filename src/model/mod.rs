@@ -29,7 +29,7 @@ pub(in crate::model) mod delegate;
 mod drum_machine;
 mod view;
 
-use delegate::delegate;
+use delegate::{delegate, delegate_priv};
 
 use core::{CoreModel, SourceLoaderMessage};
 use view::{ViewFlags, ViewValues};
@@ -69,9 +69,40 @@ impl AppModel {
         }
     }
 
-    pub fn remove_source(self, uuid: Uuid) -> AnyhowResult<AppModel> {
-        self.remove_source_core(uuid)?
-            .remove_source_sample_count(uuid)
+    pub fn conditionally<P, F>(self, cond: P, op: F) -> AppModel
+    where
+        P: FnOnce() -> bool,
+        F: FnOnce(AppModel) -> AppModel,
+    {
+        if cond() {
+            op(self)
+        } else {
+            self
+        }
+    }
+
+    pub fn tap<F: FnOnce(&AppModel)>(self, f: F) -> AppModel {
+        f(&self);
+        self
+    }
+
+    pub fn spawn_audiothread(
+        config: &AppConfig,
+    ) -> AnyhowResult<mpsc::Sender<audiothread::Message>> {
+        let (audiothread_tx, audiothread_rx) = mpsc::channel::<audiothread::Message>();
+
+        let _ = audiothread::spawn(
+            audiothread_rx,
+            Some(
+                audiothread::Opts::default()
+                    .with_name("asampo")
+                    .with_spec(audiothread::AudioSpec::new(config.output_samplerate_hz, 2)?)
+                    .with_conversion_quality(config.sample_rate_conversion_quality)
+                    .with_buffer_size((config.buffer_size_frames as usize).try_into()?),
+            ),
+        );
+
+        Ok(audiothread_tx)
     }
 
     pub fn audiothread_send(&self, message: audiothread::Message) -> AnyhowResult<()> {
@@ -79,6 +110,24 @@ impl AppModel {
             .send(message)
             .map_err(|e| anyhow!("Audiothread send error: {e}"))
     }
+
+    // TODO: replace this with something more abstract
+    pub fn set_drum_machine_model(self, drum_machine: DrumMachineModel) -> AppModel {
+        AppModel {
+            drum_machine,
+            ..self
+        }
+    }
+
+    pub fn drum_machine_model(&self) -> &DrumMachineModel {
+        &self.drum_machine
+    }
+
+    delegate!(core, set_config(config: AppConfig) -> Model);
+    delegate!(core, config() -> &AppConfig);
+    delegate!(core, set_config_save_timeout(deadline: Instant) -> Model);
+    delegate!(core, clear_config_save_timeout() -> Model);
+    delegate!(core, reached_config_save_timeout() -> bool);
 
     pub fn reconfigure(self, config: AppConfig) -> AnyhowResult<AppModel> {
         let mut result = self.clone();
@@ -127,54 +176,30 @@ impl AppModel {
         Ok(result.set_config(config))
     }
 
-    pub fn spawn_audiothread(
-        config: &AppConfig,
-    ) -> AnyhowResult<mpsc::Sender<audiothread::Message>> {
-        let (audiothread_tx, audiothread_rx) = mpsc::channel::<audiothread::Message>();
+    delegate!(core, set_savefile_path(maybe_path: Option<impl Into<String>>) -> Model);
+    delegate!(core, savefile_path() -> Option<&String>);
+    delegate!(core, source(uuid: Uuid) -> AnyhowResult<&Source>);
+    delegate!(core, sources_map() -> &HashMap<Uuid, Source>);
+    delegate!(core, sources_list() -> Vec<&Source>);
+    delegate!(core, add_source(source: Source) -> Result);
 
-        let _ = audiothread::spawn(
-            audiothread_rx,
-            Some(
-                audiothread::Opts::default()
-                    .with_name("asampo")
-                    .with_spec(audiothread::AudioSpec::new(config.output_samplerate_hz, 2)?)
-                    .with_conversion_quality(config.sample_rate_conversion_quality)
-                    .with_buffer_size((config.buffer_size_frames as usize).try_into()?),
-            ),
-        );
-
-        Ok(audiothread_tx)
+    fn add_fs_source_fields_valid(model: &AppModel) -> bool {
+        !(model.add_fs_source_name().is_empty()
+            || model.add_fs_source_path().is_empty()
+            || model.add_fs_source_extensions().is_empty())
     }
 
-    pub fn handle_source_loader(
-        self,
-        source_uuid: Uuid,
-        messages: Vec<SourceLoaderMessage>,
-    ) -> AnyhowResult<AppModel> {
-        let len_before = self.samples().len();
-        self.handle_source_loader_core(messages);
-
-        let added = self.samples().len() - len_before;
-        self.source_sample_count_add(source_uuid, added)
-    }
-
-    fn sources_add_fs_fields_valid(model: &AppModel) -> bool {
-        !(model.add_fs_source_name_entry_text().is_empty()
-            || model.add_fs_source_path_entry_text().is_empty()
-            || model.add_fs_source_extensions_entry_text().is_empty())
-    }
-
-    pub fn validate_sources_add_fs_fields(self) -> AppModel {
-        let valid = Self::sources_add_fs_fields_valid(&self);
-        self.set_are_sources_add_fs_fields_valid(valid)
+    pub fn validate_add_fs_source_fields(self) -> AppModel {
+        let valid = Self::add_fs_source_fields_valid(&self);
+        self.set_are_add_fs_source_fields_valid(valid)
     }
 
     pub fn commit_file_system_source(self) -> AnyhowResult<AppModel> {
-        if Self::sources_add_fs_fields_valid(&self) {
-            let name = self.add_fs_source_name_entry_text().clone();
-            let path = self.add_fs_source_path_entry_text().clone();
+        if Self::add_fs_source_fields_valid(&self) {
+            let name = self.add_fs_source_name().clone();
+            let path = self.add_fs_source_path().clone();
             let exts = self
-                .add_fs_source_extensions_entry_text()
+                .add_fs_source_extensions()
                 .split(',')
                 .map(|s| s.trim().to_string())
                 .collect();
@@ -188,7 +213,7 @@ impl AppModel {
     }
 
     // TODO: more validation, e.g is the path readable
-    pub fn add_file_system_source(
+    fn add_file_system_source(
         self,
         name: String,
         path: String,
@@ -201,36 +226,8 @@ impl AppModel {
             .init_source_sample_count(uuid)?
             .add_source(new_source)?
             .enable_source(uuid)?
-            .clear_sources_add_fs_fields()
-            .set_are_sources_add_fs_fields_valid(false))
-    }
-
-    pub fn conditionally<P, F>(self, cond: P, op: F) -> AppModel
-    where
-        P: FnOnce() -> bool,
-        F: FnOnce(AppModel) -> AppModel,
-    {
-        if cond() {
-            op(self)
-        } else {
-            self
-        }
-    }
-
-    pub fn tap<F: FnOnce(&AppModel)>(self, f: F) -> AppModel {
-        f(&self);
-        self
-    }
-
-    pub fn clear_sources(self) -> AppModel {
-        self.clear_sources_core().clear_sources_sample_counts() // goes in appmodel, above in coremodel
-    }
-
-    pub fn clear_sets(self) -> AppModel {
-        self.clear_sets_core()
-            .disable_add_to_prev_set()
-            .disable_set_export()
-            .reset_export_progress()
+            .clear_add_fs_source_fields()
+            .set_are_add_fs_source_fields_valid(false))
     }
 
     pub fn load_sources(self, sources: Vec<Source>) -> AnyhowResult<AppModel> {
@@ -248,66 +245,59 @@ impl AppModel {
         Ok(result)
     }
 
-    pub fn load_sets(self, sets: Vec<SampleSet>) -> AnyhowResult<AppModel> {
-        let mut result = self.clone();
+    delegate!(core, enable_source(uuid: Uuid) -> Result);
+    delegate!(core, disable_source(uuid: Uuid) -> Result);
+    delegate_priv!(core, remove_source(uuid: Uuid) as remove_source_core -> Result);
 
-        for set in sets {
-            result = result.add_set(set)?
-        }
-
-        Ok(result)
+    pub fn remove_source(self, uuid: Uuid) -> AnyhowResult<AppModel> {
+        self.remove_source_core(uuid)?
+            .remove_source_sample_count(uuid)
     }
 
-    // TODO: replace this with something more abstract
-    pub fn set_drum_machine(self, drum_machine: DrumMachineModel) -> AppModel {
-        AppModel {
-            drum_machine,
-            ..self
-        }
+    delegate_priv!(core, clear_sources() as clear_sources_core -> Model);
+
+    pub fn clear_sources(self) -> AppModel {
+        self.clear_sources_core().clear_sources_sample_counts()
     }
+
+    delegate!(core, source_loaders() ->
+        &HashMap<Uuid, Rc<mpsc::Receiver<Result<Sample, libasampo::errors::Error>>>>);
+
+    delegate_priv!(core, handle_source_loader(messages: Vec<SourceLoaderMessage>)
+        as handle_source_loader_core -> ());
+
+    pub fn handle_source_loader(
+        self,
+        source_uuid: Uuid,
+        messages: Vec<SourceLoaderMessage>,
+    ) -> AnyhowResult<AppModel> {
+        let len_before = self.samples().len();
+        self.handle_source_loader_core(messages);
+
+        let added = self.samples().len() - len_before;
+        self.source_sample_count_add(source_uuid, added)
+    }
+
+    delegate!(core, remove_source_loader(uuid: Uuid) -> Result);
+    delegate!(core, has_sources_loading() -> bool);
+    delegate!(core, samples() -> std::cell::Ref<Vec<Sample>>);
 
     pub fn populate_samples_listmodel(&self) {
         self.viewvalues.populate_samples_listmodel(&self.samples());
     }
 
-    pub fn drum_machine_model(&self) -> &DrumMachineModel {
-        &self.drum_machine
-    }
-
-    delegate!(core, set_config(config: AppConfig) -> Model);
-    delegate!(core, config() -> &AppConfig);
-    delegate!(core, set_config_save_timeout(deadline: Instant) -> Model);
-    delegate!(core, clear_config_save_timeout() -> Model);
-    delegate!(core, reached_config_save_timeout() -> bool);
-    delegate!(core, set_savefile_path(maybe_path: Option<impl Into<String>>) -> Model);
-    delegate!(core, savefile_path() -> Option<&String>);
-    delegate!(core, source(uuid: Uuid) -> AnyhowResult<&Source>);
-    delegate!(core, sources_map() -> &HashMap<Uuid, Source>);
-    delegate!(core, sources_list() -> Vec<&Source>);
-    delegate!(core, add_source(source: Source) -> Result);
-    delegate!(core, enable_source(uuid: Uuid) -> Result);
-    delegate!(core, disable_source(uuid: Uuid) -> Result);
-    delegate!(core, remove_source(uuid: Uuid) as remove_source_core -> Result);
-    delegate!(core, clear_sources() as clear_sources_core -> Model);
-    delegate!(core, source_loaders() ->
-        &HashMap<Uuid, Rc<mpsc::Receiver<Result<Sample, libasampo::errors::Error>>>>);
-    delegate!(core, handle_source_loader(messages: Vec<SourceLoaderMessage>)
-        as handle_source_loader_core -> ());
-    delegate!(core, remove_source_loader(uuid: Uuid) -> Result);
-    delegate!(core, has_sources_loading() -> bool);
-    delegate!(core, samples() -> std::cell::Ref<Vec<Sample>>);
     delegate!(core, set_selected_sample(s: Option<Sample>) -> Model);
     delegate!(core, selected_sample() -> Option<&Sample>);
     delegate!(core, sets_list() -> Vec<&SampleSet>);
     delegate!(core, sets_map() -> &HashMap<Uuid, SampleSet>);
-    delegate!(core, get_set(uuid: Uuid) -> AnyhowResult<&SampleSet>);
+    delegate!(core, set(uuid: Uuid) -> AnyhowResult<&SampleSet>);
     delegate!(core, add_set(set: SampleSet) -> Result);
 
-    pub fn get_or_create_sampleset(
+    pub fn get_or_create_set(
         model: AppModel,
         set_name: impl Into<String>,
     ) -> AnyhowResult<(AppModel, Uuid)> {
-        let (result, uuid) = CoreModel::get_or_create_sampleset(model.core, set_name)?;
+        let (result, uuid) = CoreModel::get_or_create_set(model.core, set_name)?;
 
         Ok((
             AppModel {
@@ -318,9 +308,27 @@ impl AppModel {
         ))
     }
 
-    delegate!(core, clear_sets() as clear_sets_core -> Model);
+    pub fn load_sets(self, sets: Vec<SampleSet>) -> AnyhowResult<AppModel> {
+        let mut result = self.clone();
+
+        for set in sets {
+            result = result.add_set(set)?
+        }
+
+        Ok(result)
+    }
+
+    delegate_priv!(core, clear_sets() as clear_sets_core -> Model);
+
+    pub fn clear_sets(self) -> AppModel {
+        self.clear_sets_core()
+            .disable_add_to_prev_set()
+            .disable_set_export()
+            .reset_export_progress()
+    }
+
     delegate!(core, add_to_set(sample: Sample, set_uuid: Uuid) -> Result);
-    delegate!(core, get_set_most_recently_added_to() -> Option<Uuid>);
+    delegate!(core, set_most_recently_added_to() -> Option<Uuid>);
     delegate!(core, set_selected_set(maybe_uuid: Option<Uuid>) -> Result);
     delegate!(core, selected_set() -> Option<Uuid>);
     delegate!(core, set_labelling(set_uuid: Uuid, labelling: Option<SampleSetLabelling>) -> Result);
@@ -329,63 +337,62 @@ impl AppModel {
     delegate!(core, set_export_job_rx(rx: Option<mpsc::Receiver<ExportJobMessage>>) -> Model);
     delegate!(core, export_job_rx() -> Option<Rc<mpsc::Receiver<ExportJobMessage>>>);
 
-    delegate!(viewflags, set_are_sources_add_fs_fields_valid(valid: bool) -> Model);
-    delegate!(viewflags, signal_sources_add_fs_begin_browse() -> Model);
-    delegate!(viewflags, clear_signal_sources_add_fs_begin_browse() -> Model);
-    delegate!(viewflags, signal_add_sample_to_set_show_dialog() -> Model);
-    delegate!(viewflags, clear_signal_add_sample_to_set_show_dialog() -> Model);
+    delegate!(viewflags, set_main_view_sensitive(sensitive: bool) -> Model);
+    delegate!(viewflags, is_main_view_sensitive() -> bool);
+    delegate!(viewflags, set_are_add_fs_source_fields_valid(valid: bool) -> Model);
+    delegate!(viewflags, are_add_fs_source_fields_valid() -> bool);
+    delegate!(viewflags, set_are_export_fields_valid(valid: bool) -> Model);
+    delegate!(viewflags, are_export_fields_valid() -> bool);
     delegate!(viewflags, enable_set_export() -> Model);
     delegate!(viewflags, disable_set_export() -> Model);
     delegate!(viewflags, is_set_export_enabled() -> bool);
+    delegate!(viewflags, enable_add_to_prev_set() -> Model);
+    delegate!(viewflags, disable_add_to_prev_set() -> Model);
+    delegate!(viewflags, is_add_to_prev_set_enabled() -> bool);
+    delegate!(viewflags, signal_add_fs_source_begin_browse() -> Model);
+    delegate!(viewflags, signal_add_sample_to_set_show_dialog() -> Model);
     delegate!(viewflags, signal_add_set_show_dialog() -> Model);
-    delegate!(viewflags, clear_signal_add_set_show_dialog() -> Model);
     delegate!(viewflags, signal_export_begin_browse() -> Model);
-    delegate!(viewflags, clear_signal_export_begin_browse() -> Model);
     delegate!(viewflags, signal_export_show_dialog() -> Model);
-    delegate!(viewflags, clear_signal_export_show_dialog() -> Model);
-    delegate!(viewflags, set_main_view_sensitive(sensitive: bool) -> Model);
-    delegate!(viewflags, set_are_export_fields_valid(valid: bool) -> Model);
-    delegate!(viewflags, is_main_view_sensitive() -> bool);
-    delegate!(viewflags, are_export_fields_valid() -> bool);
     delegate!(viewflags, is_signalling_add_fs_source_begin_browse() -> bool);
     delegate!(viewflags, is_signalling_add_sample_to_set_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_add_set_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_export_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_export_begin_browse() -> bool);
-    delegate!(viewflags, are_add_fs_source_fields_valid() -> bool);
-    delegate!(viewflags, enable_add_to_prev_set() -> Model);
-    delegate!(viewflags, disable_add_to_prev_set() -> Model);
-    delegate!(viewflags, is_add_to_prev_set_enabled() -> bool);
+    delegate!(viewflags, clear_signal_add_fs_source_begin_browse() -> Model);
+    delegate!(viewflags, clear_signal_add_sample_to_set_show_dialog() -> Model);
+    delegate!(viewflags, clear_signal_add_set_show_dialog() -> Model);
+    delegate!(viewflags, clear_signal_export_begin_browse() -> Model);
+    delegate!(viewflags, clear_signal_export_show_dialog() -> Model);
 
-    // delegate!(viewvalues, set_latency_approx_label(text: String) -> Model);
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);
+    delegate!(viewvalues, latency_approx_label() -> &String);
+    delegate!(viewvalues, sources_sample_count() -> &HashMap<Uuid, usize>);
     delegate!(viewvalues, init_source_sample_count(source_uuid: Uuid) -> Result);
     delegate!(viewvalues, source_sample_count_add(source_uuid: Uuid, add: usize) -> Result);
     delegate!(viewvalues, reset_source_sample_count(source_uuid: Uuid) -> Result);
     delegate!(viewvalues, remove_source_sample_count(source_uuid: Uuid) -> Result);
-    delegate!(viewvalues, clear_sources_add_fs_fields() -> Model);
-    delegate!(viewvalues, set_sources_add_fs_name_entry(text: impl Into<String>) -> Model);
-    delegate!(viewvalues, set_sources_add_fs_name_entry_if_empty(text: impl Into<String>) -> Model);
-    delegate!(viewvalues, set_sources_add_fs_path_entry(text: impl Into<String>) -> Model);
-    delegate!(viewvalues, set_sources_add_fs_extensions_entry(text: impl Into<String>) -> Model);
-    delegate!(viewvalues, get_listed_sample(index: u32) -> Result<Sample, anyhow::Error>);
-    delegate!(viewvalues, set_samples_list_filter_text(text: impl Into<String>) -> Model);
     delegate!(viewvalues, clear_sources_sample_counts() -> Model);
+    delegate!(viewvalues, set_add_fs_source_name(text: impl Into<String>) -> Model);
+    delegate!(viewvalues, set_add_fs_source_name_if_empty(text: impl Into<String>) -> Model);
+    delegate!(viewvalues, add_fs_source_name() -> &String);
+    delegate!(viewvalues, set_add_fs_source_path(text: impl Into<String>) -> Model);
+    delegate!(viewvalues, add_fs_source_path() -> &String);
+    delegate!(viewvalues, set_add_fs_source_extensions(text: impl Into<String>) -> Model);
+    delegate!(viewvalues, add_fs_source_extensions() -> &String);
+    delegate!(viewvalues, clear_add_fs_source_fields() -> Model);
+    delegate!(viewvalues, get_listed_sample(index: u32) -> Result<Sample, anyhow::Error>);
+    delegate!(viewvalues, set_samples_list_filter(text: impl Into<String>) -> Model);
     delegate!(viewvalues, set_export_dialog_view(view: Option<ExportDialogView>) -> Model);
-    delegate!(viewvalues, set_export_target_dir_entry_text(text: impl Into<String>) -> Model);
+    delegate!(viewvalues, export_dialog_view() -> Option<&ExportDialogView>);
+    delegate!(viewvalues, set_export_target_dir(text: impl Into<String>) -> Model);
+    delegate!(viewvalues, export_target_dir() -> &String);
     delegate!(viewvalues, set_export_kind(kind: ExportKind) -> Model);
+    delegate!(viewvalues, export_kind() -> &ExportKind);
     delegate!(viewvalues, init_export_progress(total_items: usize) -> Model);
+    delegate!(viewvalues, export_progress() -> Option<(usize, usize)>);
     delegate!(viewvalues, set_export_items_completed(completed: usize) -> Result);
     delegate!(viewvalues, reset_export_progress() -> Model);
-    delegate!(viewvalues, export_target_dir() -> &String);
-    delegate!(viewvalues, export_kind() -> &ExportKind);
-    delegate!(viewvalues, latency_approx_label_text() -> &String);
-    delegate!(viewvalues, add_fs_source_name_entry_text() -> &String);
-    delegate!(viewvalues, add_fs_source_path_entry_text() -> &String);
-    delegate!(viewvalues, add_fs_source_extensions_entry_text() -> &String);
-    delegate!(viewvalues, export_dialog_view() -> Option<&ExportDialogView>);
-    delegate!(viewvalues, sources_sample_count() -> &HashMap<Uuid, usize>);
-    delegate!(viewvalues, export_progress() -> Option<(usize, usize)>);
     delegate!(viewvalues, samples_listmodel() -> &gtk::gio::ListStore);
     delegate!(viewvalues, set_drum_machine_view(view: Option<DrumMachineView>)
         -> Model);

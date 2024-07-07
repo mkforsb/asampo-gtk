@@ -282,13 +282,13 @@ impl CoreModel {
         &self.sets
     }
 
-    pub fn get_set(&self, uuid: Uuid) -> AnyhowResult<&SampleSet> {
+    pub fn set(&self, uuid: Uuid) -> AnyhowResult<&SampleSet> {
         self.sets
             .get(&uuid)
             .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))
     }
 
-    fn get_set_mut(&mut self, uuid: Uuid) -> AnyhowResult<&mut SampleSet> {
+    fn set_mut(&mut self, uuid: Uuid) -> AnyhowResult<&mut SampleSet> {
         self.sets
             .get_mut(&uuid)
             .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))
@@ -308,7 +308,7 @@ impl CoreModel {
         }
     }
 
-    pub fn get_or_create_sampleset(
+    pub fn get_or_create_set(
         model: CoreModel,
         name: impl Into<String>,
     ) -> Result<(CoreModel, Uuid), anyhow::Error> {
@@ -353,7 +353,7 @@ impl CoreModel {
     pub fn add_to_set(self, sample: Sample, set_uuid: Uuid) -> AnyhowResult<CoreModel> {
         let mut result = self.clone();
 
-        result.get_set_mut(set_uuid)?.add(
+        result.set_mut(set_uuid)?.add(
             self.source(
                 *sample
                     .source_uuid()
@@ -366,7 +366,7 @@ impl CoreModel {
     }
 
     fn set_set_most_recently_added_to(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<CoreModel> {
-        match maybe_uuid.and_then(|uuid| self.get_set(uuid).err()) {
+        match maybe_uuid.and_then(|uuid| self.set(uuid).err()) {
             Some(err) => Err(err),
             None => Ok(CoreModel {
                 sets_most_recently_used_uuid: maybe_uuid,
@@ -375,7 +375,7 @@ impl CoreModel {
         }
     }
 
-    pub fn get_set_most_recently_added_to(&self) -> Option<Uuid> {
+    pub fn set_most_recently_added_to(&self) -> Option<Uuid> {
         self.sets_most_recently_used_uuid
     }
 

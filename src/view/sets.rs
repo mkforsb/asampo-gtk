@@ -86,7 +86,7 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
             .object::<gtk::Label>(format!("{uuid}-name-label"))
             .unwrap();
 
-        name_label.set_text(model.get_set(*uuid).unwrap().name());
+        name_label.set_text(model.set(*uuid).unwrap().name());
 
         let clicked = GestureClick::new();
 
@@ -119,10 +119,7 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
 pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
     view.sets_details_sample_list.remove_all();
 
-    match model
-        .selected_set()
-        .and_then(|uuid| model.get_set(uuid).ok())
-    {
+    match model.selected_set().and_then(|uuid| model.set(uuid).ok()) {
         Some(set) => {
             view.sets_details_name_label.set_text(set.name());
 

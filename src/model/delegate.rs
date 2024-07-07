@@ -95,3 +95,4 @@ macro_rules! delegate_priv {
 }
 
 pub(in crate::model) use delegate;
+pub(in crate::model) use delegate_priv;
