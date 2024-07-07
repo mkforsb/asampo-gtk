@@ -27,16 +27,18 @@ use crate::{
 mod core;
 pub(in crate::model) mod delegate;
 mod drum_machine;
-mod view;
+mod viewflags;
+mod viewvalues;
 
 use delegate::{delegate, delegate_priv};
 
 use core::{CoreModel, SourceLoaderMessage};
-use view::{ViewFlags, ViewValues};
+use viewflags::ViewFlags;
+use viewvalues::ViewValues;
 
 pub use core::ExportState;
 pub use drum_machine::DrumMachineModel;
-pub use view::ExportKind;
+pub use viewvalues::ExportKind;
 
 pub type AnyhowResult<T> = Result<T, anyhow::Error>;
 
