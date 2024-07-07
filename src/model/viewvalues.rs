@@ -86,6 +86,10 @@ impl ViewValues {
         ))
     }
 
+    pub fn latency_approx_label(&self) -> &String {
+        &self.settings_latency_approx_label
+    }
+
     pub fn init_source_sample_count(self, source_uuid: Uuid) -> AnyhowResult<ViewValues> {
         if self.sources_sample_count.contains_key(&source_uuid) {
             Err(anyhow!("Failed to init source sample count: UUID in use"))
@@ -95,6 +99,10 @@ impl ViewValues {
                 ..self
             })
         }
+    }
+
+    pub fn sources_sample_count(&self) -> &HashMap<Uuid, usize> {
+        &self.sources_sample_count
     }
 
     pub fn source_sample_count_add(
@@ -139,11 +147,9 @@ impl ViewValues {
         })
     }
 
-    pub fn clear_add_fs_source_fields(self) -> ViewValues {
+    pub fn clear_sources_sample_counts(self) -> ViewValues {
         ViewValues {
-            sources_add_fs_name_entry: String::from(""),
-            sources_add_fs_path_entry: String::from(""),
-            sources_add_fs_extensions_entry: String::from(""),
+            sources_sample_count: HashMap::new(),
             ..self
         }
     }
@@ -166,6 +172,10 @@ impl ViewValues {
         }
     }
 
+    pub fn add_fs_source_name(&self) -> &String {
+        &self.sources_add_fs_name_entry
+    }
+
     pub fn set_add_fs_source_path(self, text: impl Into<String>) -> ViewValues {
         ViewValues {
             sources_add_fs_path_entry: text.into(),
@@ -173,9 +183,26 @@ impl ViewValues {
         }
     }
 
+    pub fn add_fs_source_path(&self) -> &String {
+        &self.sources_add_fs_path_entry
+    }
+
     pub fn set_add_fs_source_extensions(self, text: impl Into<String>) -> ViewValues {
         ViewValues {
             sources_add_fs_extensions_entry: text.into(),
+            ..self
+        }
+    }
+
+    pub fn add_fs_source_extensions(&self) -> &String {
+        &self.sources_add_fs_extensions_entry
+    }
+
+    pub fn clear_add_fs_source_fields(self) -> ViewValues {
+        ViewValues {
+            sources_add_fs_name_entry: String::from(""),
+            sources_add_fs_path_entry: String::from(""),
+            sources_add_fs_extensions_entry: String::from(""),
             ..self
         }
     }
@@ -200,18 +227,15 @@ impl ViewValues {
         }
     }
 
-    pub fn clear_sources_sample_counts(self) -> ViewValues {
-        ViewValues {
-            sources_sample_count: HashMap::new(),
-            ..self
-        }
-    }
-
     pub fn set_export_dialog_view(self, maybe_view: Option<ExportDialogView>) -> ViewValues {
         ViewValues {
             sets_export_dialog_view: maybe_view,
             ..self
         }
+    }
+
+    pub fn export_dialog_view(&self) -> Option<&ExportDialogView> {
+        self.sets_export_dialog_view.as_ref()
     }
 
     pub fn set_export_target_dir(self, text: impl Into<String>) -> ViewValues {
@@ -221,6 +245,10 @@ impl ViewValues {
         }
     }
 
+    pub fn export_target_dir(&self) -> &String {
+        &self.sets_export_target_dir_entry
+    }
+
     pub fn set_export_kind(self, kind: ExportKind) -> ViewValues {
         ViewValues {
             sets_export_kind: kind,
@@ -228,11 +256,19 @@ impl ViewValues {
         }
     }
 
+    pub fn export_kind(&self) -> &ExportKind {
+        &self.sets_export_kind
+    }
+
     pub fn init_export_progress(self, total_items: usize) -> ViewValues {
         ViewValues {
             sets_export_progress: Some((0, total_items)),
             ..self
         }
+    }
+
+    pub fn export_progress(&self) -> Option<(usize, usize)> {
+        self.sets_export_progress
     }
 
     pub fn set_export_items_completed(self, completed: usize) -> AnyhowResult<ViewValues> {
@@ -253,42 +289,6 @@ impl ViewValues {
             sets_export_progress: None,
             ..self
         }
-    }
-
-    pub fn export_target_dir(&self) -> &String {
-        &self.sets_export_target_dir_entry
-    }
-
-    pub fn export_kind(&self) -> &ExportKind {
-        &self.sets_export_kind
-    }
-
-    pub fn latency_approx_label(&self) -> &String {
-        &self.settings_latency_approx_label
-    }
-
-    pub fn add_fs_source_name(&self) -> &String {
-        &self.sources_add_fs_name_entry
-    }
-
-    pub fn add_fs_source_path(&self) -> &String {
-        &self.sources_add_fs_path_entry
-    }
-
-    pub fn add_fs_source_extensions(&self) -> &String {
-        &self.sources_add_fs_extensions_entry
-    }
-
-    pub fn export_dialog_view(&self) -> Option<&ExportDialogView> {
-        self.sets_export_dialog_view.as_ref()
-    }
-
-    pub fn sources_sample_count(&self) -> &HashMap<Uuid, usize> {
-        &self.sources_sample_count
-    }
-
-    pub fn export_progress(&self) -> Option<(usize, usize)> {
-        self.sets_export_progress
     }
 
     pub fn populate_samples_listmodel(&self, samples: &[Sample]) {
