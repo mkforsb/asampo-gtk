@@ -71,18 +71,6 @@ impl AppModel {
         }
     }
 
-    pub fn conditionally<P, F>(self, cond: P, op: F) -> AppModel
-    where
-        P: FnOnce() -> bool,
-        F: FnOnce(AppModel) -> AppModel,
-    {
-        if cond() {
-            op(self)
-        } else {
-            self
-        }
-    }
-
     pub fn tap<F: FnOnce(&AppModel)>(self, f: F) -> AppModel {
         f(&self);
         self
@@ -193,7 +181,7 @@ impl AppModel {
 
     pub fn validate_add_fs_source_fields(self) -> AppModel {
         let valid = Self::add_fs_source_fields_valid(&self);
-        self.set_are_add_fs_source_fields_valid(valid)
+        self.set_add_fs_source_fields_valid(valid)
     }
 
     pub fn commit_file_system_source(self) -> AnyhowResult<AppModel> {
@@ -229,7 +217,7 @@ impl AppModel {
             .add_source(new_source)?
             .enable_source(uuid)?
             .clear_add_fs_source_fields()
-            .set_are_add_fs_source_fields_valid(false))
+            .set_add_fs_source_fields_valid(false))
     }
 
     pub fn load_sources(self, sources: Vec<Source>) -> AnyhowResult<AppModel> {
@@ -324,8 +312,8 @@ impl AppModel {
 
     pub fn clear_sets(self) -> AppModel {
         self.clear_sets_core()
-            .disable_add_to_prev_set()
-            .disable_set_export()
+            .set_add_to_prev_set_enabled(false)
+            .set_set_export_enabled(false)
             .reset_export_progress()
     }
 
@@ -341,15 +329,13 @@ impl AppModel {
 
     delegate!(viewflags, set_main_view_sensitive(sensitive: bool) -> Model);
     delegate!(viewflags, is_main_view_sensitive() -> bool);
-    delegate!(viewflags, set_are_add_fs_source_fields_valid(valid: bool) -> Model);
+    delegate!(viewflags, set_add_fs_source_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, are_add_fs_source_fields_valid() -> bool);
-    delegate!(viewflags, set_are_export_fields_valid(valid: bool) -> Model);
+    delegate!(viewflags, set_export_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, are_export_fields_valid() -> bool);
-    delegate!(viewflags, enable_set_export() -> Model);
-    delegate!(viewflags, disable_set_export() -> Model);
+    delegate!(viewflags, set_set_export_enabled(state: bool) -> Model);
     delegate!(viewflags, is_set_export_enabled() -> bool);
-    delegate!(viewflags, enable_add_to_prev_set() -> Model);
-    delegate!(viewflags, disable_add_to_prev_set() -> Model);
+    delegate!(viewflags, set_add_to_prev_set_enabled(state: bool) -> Model);
     delegate!(viewflags, is_add_to_prev_set_enabled() -> bool);
     delegate!(viewflags, signal_add_fs_source_begin_browse() -> Model);
     delegate!(viewflags, signal_add_sample_to_set_show_dialog() -> Model);

@@ -418,7 +418,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                     .ok_or(anyhow!("No sample selected"))?
                     .clone();
 
-                Ok(model.add_to_set(sample, set_uuid)?.enable_add_to_prev_set())
+                Ok(model
+                    .add_to_set(sample, set_uuid)?
+                    .set_add_to_prev_set_enabled(true))
             }
 
             InputDialogContext::CreateSampleSet => {
@@ -440,10 +442,8 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         AppMessage::SampleSetSelected(uuid) => {
             let len = model.set(uuid)?.len();
 
-            // TODO: replace these `conditionally` with some `set_export_enabled(bool)`
             model
-                .conditionally(|| len > 0, AppModel::enable_set_export)
-                .conditionally(|| len == 0, AppModel::disable_set_export)
+                .set_set_export_enabled(len > 0)
                 .set_selected_set(Some(uuid))
         }
 
@@ -493,7 +493,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             .set_main_view_sensitive(true)),
 
         AppMessage::ExportTargetDirectoryChanged(text) => Ok(model
-            .set_are_export_fields_valid(!text.is_empty())
+            .set_export_fields_valid(!text.is_empty())
             .set_export_target_dir(text)),
 
         AppMessage::ExportTargetDirectoryBrowseClicked => Ok(model.signal_export_begin_browse()),
