@@ -13,7 +13,7 @@ use libasampo::sequences::{
     TimeSpec,
 };
 
-type AnyhowResult<T> = Result<T, anyhow::Error>;
+use crate::model::AnyhowResult;
 
 pub type RenderThreadTx = Sender<drumkit_render_thread::Message>;
 pub type EventRx = Arc<Mutex<single_value_channel::Receiver<Option<DrumkitSequenceEvent>>>>;
