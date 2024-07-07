@@ -22,7 +22,8 @@ use std::{
 };
 
 use anyhow::anyhow;
-use audiothread::{AudioSpec, NonZeroNumFrames};
+use audiothread::{AudioSpec, NonZeroNumFrames, SourceMatcher, SourceType};
+use config::SamplePlaybackBehavior;
 use model::{DrumMachineModel, ExportState};
 use uuid::Uuid;
 
@@ -316,6 +317,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                         .ok_or(anyhow!("Sample missing source UUID"))?,
                 )?
                 .stream(&sample)?;
+
+            if model.config().sample_playback_behavior == SamplePlaybackBehavior::PlaySingleSample {
+                model
+                    .audiothread_send(audiothread::Message::DropAllMatching(
+                        SourceMatcher::new().match_type(SourceType::SymphoniaSource),
+                    ))
+                    .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
+            }
 
             model
                 .audiothread_send(audiothread::Message::PlaySymphoniaSource(
