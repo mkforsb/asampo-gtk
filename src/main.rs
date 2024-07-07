@@ -8,6 +8,7 @@ mod ext;
 mod model;
 mod savefile;
 mod testutils;
+mod timers;
 mod util;
 mod view;
 
@@ -905,7 +906,7 @@ fn main() -> ExitCode {
                     .with_spec(
                         AudioSpec::new(config.output_samplerate_hz, 2).unwrap_or_else(|_| {
                             log::log!(
-                                log::Level::Error,
+                                log::Level::Warn,
                                 "Invalid sample rate in config, using default"
                             );
                             AudioSpec::new(48000, 2).unwrap()
@@ -917,7 +918,7 @@ fn main() -> ExitCode {
                             .try_into()
                             .unwrap_or_else(|_| {
                                 log::log!(
-                                    log::Level::Error,
+                                    log::Level::Warn,
                                     "Invalid buffer size in config, using default"
                                 );
                                 NonZeroNumFrames::new(1024).unwrap()
@@ -947,107 +948,9 @@ fn main() -> ExitCode {
 
         view.present();
 
-        // timer for AppMessage::TimerTick
-        gtk::glib::timeout_add_seconds_local(
-            1,
-            clone!(@strong model_ptr, @strong view => move || {
-                update(model_ptr.clone(), &view, AppMessage::TimerTick);
-                gtk::glib::ControlFlow::Continue
-            }),
-        );
-
-        // timer for async/thread messaging
-        gtk::glib::timeout_add_local(
-            std::time::Duration::from_millis(50),
-            clone!(@strong model_ptr, @strong view => move || {
-                let model = model_ptr.take().unwrap();
-                let export_job_rx = model.export_job_rx().clone();
-                let sources_loaders = model.source_loaders().clone();
-                model_ptr.set(Some(model));
-
-                if let Some(rx) = export_job_rx {
-                    loop {
-                        match rx.try_recv() {
-                            Ok(m) => update(
-                                model_ptr.clone(),
-                                &view,
-                                AppMessage::ExportJobMessage(m)
-                            ),
-
-                            Err(e) => {
-                                match e {
-                                    mpsc::TryRecvError::Empty => (),
-                                    mpsc::TryRecvError::Disconnected =>
-                                        update(
-                                            model_ptr.clone(),
-                                            &view,
-                                            AppMessage::ExportJobDisconnected
-                                        ),
-                                }
-
-                                break
-                            },
-                        }
-                    }
-                }
-
-                for uuid in sources_loaders.keys() {
-                    let recv = sources_loaders.get(uuid).unwrap();
-
-                    match recv.try_recv() {
-                        Ok(message) => {
-                            let mut messages = vec![message];
-                            messages.extend(recv.try_iter());
-
-                            update(
-                                model_ptr.clone(),
-                                &view,
-                                AppMessage::SourceLoadingMessage(*uuid, messages)
-                            );
-                        }
-
-                        Err(e) => {
-                            match e {
-                                mpsc::TryRecvError::Empty => (),
-                                mpsc::TryRecvError::Disconnected => {
-                                    update(
-                                        model_ptr.clone(),
-                                        &view,
-                                        AppMessage::SourceLoadingDisconnected(*uuid)
-                                    );
-                                },
-                            }
-                        }
-                    };
-                }
-
-                gtk::glib::ControlFlow::Continue
-            }),
-        );
-
-        gtk::glib::timeout_add_local(
-            std::time::Duration::from_millis(4),
-            clone!(@strong model_ptr, @strong view => move || {
-                let model = model_ptr.take().unwrap();
-
-                // let mut event: Option<DrumkitSequenceEvent> = None;
-                //
-
-                let event = model.drum_machine_poll_event();
-
-                model_ptr.replace(Some(model));
-
-                if let Some(ev) = event {
-                    update(
-                        model_ptr.clone(),
-                        &view,
-                        AppMessage::DrumMachinePlaybackEvent(ev.clone())
-                    );
-                }
-
-                gtk::glib::ControlFlow::Continue
-            }),
-        );
+        timers::init_timertick_timer(model_ptr.clone(), &view);
+        timers::init_messaging_timer(model_ptr.clone(), &view);
+        timers::init_drum_machine_events_timer(model_ptr.clone(), &view);
     });
 
     app.run()
