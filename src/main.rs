@@ -49,7 +49,7 @@ use crate::{
     config::AppConfig,
     configfile::ConfigFile,
     ext::WithModel,
-    model::{AppModel, AppModelPtr},
+    model::{AppModel, AppModelPtr, DrumMachinePlaybackState},
     util::gtk_find_child_by_builder_id,
     view::{
         dialogs,
@@ -622,9 +622,20 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             Ok(model)
         }
 
-        AppMessage::DrumMachinePlayClicked => Ok(model),
-        AppMessage::DrumMachineStopClicked => Ok(model),
-        AppMessage::DrumMachineBackClicked => Ok(model),
+        AppMessage::DrumMachinePlayClicked => match model.drum_machine_playback_state() {
+            DrumMachinePlaybackState::Paused | DrumMachinePlaybackState::Stopped => {
+                model.drum_machine_play()
+            }
+            DrumMachinePlaybackState::Playing => model.drum_machine_pause(),
+        },
+
+        AppMessage::DrumMachineStopClicked => model.drum_machine_stop(),
+
+        AppMessage::DrumMachineBackClicked => {
+            model.drum_machine_rewind()?;
+            Ok(model)
+        }
+
         AppMessage::DrumMachineSaveSequenceClicked => Ok(model),
         AppMessage::DrumMachineSaveSequenceAsClicked => Ok(model),
         AppMessage::DrumMachineSaveSampleSetClicked => Ok(model),

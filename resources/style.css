@@ -317,6 +317,12 @@ overlay#input-dialog {
     margin-right: 2em;
 }
 
+#sequences-editor-transport-buttons button.activated {
+    background: #faa;
+    transition-duration: 0.1s;
+    transition-property: all;
+}
+
 #sequences-page #sequences-editor-transport-buttons button {
     margin-left: 1em;
     border-width: 2px;

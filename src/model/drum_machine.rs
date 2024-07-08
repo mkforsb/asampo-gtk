@@ -18,8 +18,17 @@ use crate::model::AnyhowResult;
 pub type RenderThreadTx = Sender<drumkit_render_thread::Message>;
 pub type EventRx = Arc<Mutex<single_value_channel::Receiver<Option<DrumkitSequenceEvent>>>>;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PlaybackState {
+    Playing,
+    Paused,
+    Stopped,
+}
+
 #[derive(Clone, Debug)]
 pub struct DrumMachineModel {
+    playback_state: PlaybackState,
+    waiting: bool,
     render_thread_tx: Option<RenderThreadTx>,
     event_rx: Option<EventRx>,
     event_latest: Option<DrumkitSequenceEvent>,
@@ -29,6 +38,10 @@ pub struct DrumMachineModel {
 
 impl PartialEq for DrumMachineModel {
     fn eq(&self, other: &Self) -> bool {
+        if self.playback_state != other.playback_state {
+            return false;
+        }
+
         match (&self.event_latest, &other.event_latest) {
             (Some(a), Some(b)) => {
                 if a.step != b.step || a.labels != b.labels {
@@ -57,6 +70,8 @@ impl DrumMachineModel {
         empty_sequence.set_len(16);
 
         Self {
+            playback_state: PlaybackState::Stopped,
+            waiting: false,
             render_thread_tx,
             event_rx: event_rx.map(|x| Arc::new(Mutex::new(x))),
             event_latest: None,
@@ -119,6 +134,7 @@ impl DrumMachineModel {
     pub fn set_latest_event(self, event: Option<DrumkitSequenceEvent>) -> DrumMachineModel {
         DrumMachineModel {
             event_latest: event,
+            waiting: false,
             ..self
         }
     }
@@ -148,5 +164,45 @@ impl DrumMachineModel {
         } else {
             None
         }
+    }
+
+    pub fn play(self) -> AnyhowResult<DrumMachineModel> {
+        self.render_thread_send(drumkit_render_thread::Message::Play)?;
+
+        Ok(DrumMachineModel {
+            playback_state: PlaybackState::Playing,
+            waiting: true,
+            ..self
+        })
+    }
+
+    pub fn pause(self) -> AnyhowResult<DrumMachineModel> {
+        self.render_thread_send(drumkit_render_thread::Message::Pause)?;
+
+        Ok(DrumMachineModel {
+            playback_state: PlaybackState::Paused,
+            ..self
+        })
+    }
+
+    pub fn stop(self) -> AnyhowResult<DrumMachineModel> {
+        self.render_thread_send(drumkit_render_thread::Message::Stop)?;
+
+        Ok(DrumMachineModel {
+            playback_state: PlaybackState::Stopped,
+            ..self
+        })
+    }
+
+    pub fn rewind(&self) -> AnyhowResult<()> {
+        self.render_thread_send(drumkit_render_thread::Message::ResetSequence)
+    }
+
+    pub fn playback_state(&self) -> PlaybackState {
+        self.playback_state
+    }
+
+    pub fn is_waiting(&self) -> bool {
+        self.waiting
     }
 }

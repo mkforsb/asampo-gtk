@@ -8,7 +8,10 @@ use gtk::{
 };
 use libasampo::samplesets::DrumkitLabel;
 
-use crate::{model::AppModel, update, AppMessage, AppModelPtr, AsampoView};
+use crate::{
+    model::{AppModel, DrumMachinePlaybackState},
+    update, AppMessage, AppModelPtr, AsampoView,
+};
 
 pub const LABELS: [DrumkitLabel; 16] = [
     DrumkitLabel::RimShot,
@@ -35,6 +38,9 @@ pub fn setup_sequences_page(model_ptr: AppModelPtr, view: &AsampoView) {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DrumMachineView {
+    play_button: gtk::Button,
+    stop_button: gtk::Button,
+    back_button: gtk::Button,
     pad_buttons: [gtk::Button; 16],
     part_buttons: [gtk::Button; 4],
     step_buttons: [gtk::Button; 16],
@@ -121,6 +127,15 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
 
     let mut model = model_ptr.take().unwrap();
     model = model.set_drum_machine_view(Some(DrumMachineView {
+        play_button: objects
+            .object::<gtk::Button>("sequences-editor-play-button")
+            .unwrap(),
+        stop_button: objects
+            .object::<gtk::Button>("sequences-editor-stop-button")
+            .unwrap(),
+        back_button: objects
+            .object::<gtk::Button>("sequences-editor-back-button")
+            .unwrap(),
         pad_buttons,
         part_buttons,
         step_buttons,
@@ -139,18 +154,51 @@ pub fn update_drum_machine_view(model: AppModel) {
 
     assert!(drum_machine_model.activated_pad() < 16);
 
-    if let Some(event) = drum_machine_model.latest_event() {
-        for (i, label) in LABELS.iter().enumerate() {
-            if i == event.step {
-                drum_machine_view.step_buttons[i].add_css_class("playing");
-            } else {
-                drum_machine_view.step_buttons[i].remove_css_class("playing");
-            }
+    drum_machine_view.play_button.remove_css_class("activated");
+    drum_machine_view.stop_button.remove_css_class("activated");
+    drum_machine_view.back_button.remove_css_class("activated");
 
-            if event.labels.contains(label) {
-                drum_machine_view.pad_buttons[i].add_css_class("playing");
-            } else {
-                drum_machine_view.pad_buttons[i].remove_css_class("playing");
+    match drum_machine_model.playback_state() {
+        DrumMachinePlaybackState::Playing => {
+            drum_machine_view.play_button.add_css_class("activated");
+            drum_machine_view
+                .play_button
+                .set_icon_name("media-playback-start-symbolic");
+        }
+        DrumMachinePlaybackState::Paused => {
+            drum_machine_view.play_button.add_css_class("activated");
+            drum_machine_view
+                .play_button
+                .set_icon_name("media-playback-pause-symbolic");
+        }
+        DrumMachinePlaybackState::Stopped => {
+            drum_machine_view.stop_button.add_css_class("activated");
+            drum_machine_view
+                .play_button
+                .set_icon_name("media-playback-start-symbolic");
+        }
+    }
+
+    if drum_machine_model.is_waiting()
+        || drum_machine_model.playback_state() == DrumMachinePlaybackState::Stopped
+    {
+        for (i, _) in LABELS.iter().enumerate() {
+            drum_machine_view.step_buttons[i].remove_css_class("playing");
+        }
+    } else {
+        if let Some(event) = drum_machine_model.latest_event() {
+            for (i, label) in LABELS.iter().enumerate() {
+                if i == event.step {
+                    drum_machine_view.step_buttons[i].add_css_class("playing");
+                } else {
+                    drum_machine_view.step_buttons[i].remove_css_class("playing");
+                }
+
+                if event.labels.contains(label) {
+                    drum_machine_view.pad_buttons[i].add_css_class("playing");
+                } else {
+                    drum_machine_view.pad_buttons[i].remove_css_class("playing");
+                }
             }
         }
     }

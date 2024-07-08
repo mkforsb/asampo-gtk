@@ -11,6 +11,7 @@ use std::{
 };
 
 use anyhow::anyhow;
+use drum_machine::PlaybackState;
 use libasampo::{
     samples::Sample,
     samplesets::{export::ExportJobMessage, SampleSet, SampleSetLabelling},
@@ -37,7 +38,7 @@ use viewflags::ViewFlags;
 use viewvalues::ViewValues;
 
 pub use core::ExportState;
-pub use drum_machine::DrumMachineModel;
+pub use drum_machine::{DrumMachineModel, PlaybackState as DrumMachinePlaybackState};
 pub use viewvalues::ExportKind;
 
 pub type AnyhowResult<T> = Result<T, anyhow::Error>;
@@ -406,4 +407,10 @@ impl AppModel {
 
     delegate!(drum_machine, poll_event()
         as drum_machine_poll_event -> Option<DrumkitSequenceEvent>);
+
+    delegate!(drum_machine, play() as drum_machine_play -> Result);
+    delegate!(drum_machine, pause() as drum_machine_pause -> Result);
+    delegate!(drum_machine, stop() as drum_machine_stop -> Result);
+    delegate!(drum_machine, rewind() as drum_machine_rewind -> AnyhowResult<()>);
+    delegate!(drum_machine, playback_state() as drum_machine_playback_state -> PlaybackState);
 }
