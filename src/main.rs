@@ -160,6 +160,7 @@ enum AppMessage {
     DrumMachinePartClicked(usize),
     DrumMachineStepClicked(usize),
     DrumMachinePlaybackEvent(DrumkitSequenceEvent),
+    AssignSampleToPadClicked(usize),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -696,6 +697,27 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::DrumMachinePlaybackEvent(event) => {
             Ok(model.set_latest_drum_machine_event(Some(event)))
+        }
+
+        AppMessage::AssignSampleToPadClicked(n) => {
+            let sample = model
+                .selected_sample()
+                .ok_or(anyhow!("No sample selected"))?
+                .clone();
+
+            let source = model
+                .source(
+                    *sample
+                        .source_uuid()
+                        .ok_or(anyhow!("Sample missing source UUID"))?,
+                )?
+                .clone();
+
+            let label = DRUM_MACHINE_VIEW_LABELS
+                .get(n)
+                .ok_or(anyhow!("No such label"))?;
+
+            model.assign_drum_pad(&source, sample, *label)
         }
     }
 }

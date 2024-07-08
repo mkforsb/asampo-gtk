@@ -219,6 +219,16 @@ overlay#input-dialog {
     margin-right: 0.5em;
 }
 
+#samples-page #samples-sidebar-sequence-label {
+    padding-left: 0.5em;
+    padding-top: 1.5em;
+    font-weight: bold;
+}
+
+#samples-page #samples-sidebar-assign-to-drum-pad-button {
+    margin: 0.6em;
+}
+
 #sets-page #sets-list-frame {
     margin: 0.5em;
 }

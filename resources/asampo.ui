@@ -970,6 +970,132 @@
                                 </child>
                               </object>
                             </child>
+                            <child>
+                              <object class="GtkLabel">
+                                <property name="name">samples-sidebar-sequence-label</property>
+                                <property name="label">Sequence</property>
+                                <property name="xalign">0.0</property>
+                              </object>
+                            </child>
+                            <child>
+                              <object class="GtkPopover" id="assign-popover">
+                                <child>
+                                  <object class="GtkFlowBox" id="samples-sidebar-assign-button-box">
+                                    <property name="name">samples-sidebar-assign-button-box</property>
+                                    <property name="homogeneous">true</property>
+                                    <property name="min-children-per-line">8</property>
+                                    <property name="max-children-per-line">8</property>
+                                    <property name="column-spacing">0</property>
+                                    <property name="halign">start</property>
+                                    <property name="hexpand">true</property>
+                                    <property name="selection-mode">none</property>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-0">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-0</property>
+                                        <property name="label">RS</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-1">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-1</property>
+                                        <property name="label">CP</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-2">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-2</property>
+                                        <property name="label">CH</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-3">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-3</property>
+                                        <property name="label">OH</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-4">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-4</property>
+                                        <property name="label">CR</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-5">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-5</property>
+                                        <property name="label">RD</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-6">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-6</property>
+                                        <property name="label">SH</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-7">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-7</property>
+                                        <property name="label">P1</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-8">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-8</property>
+                                        <property name="label">BD</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-9">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-9</property>
+                                        <property name="label">SD</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-10">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-10</property>
+                                        <property name="label">LT</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-11">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-11</property>
+                                        <property name="label">MT</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-12">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-12</property>
+                                        <property name="label">HT</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-13">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-13</property>
+                                        <property name="label">P2</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-14">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-14</property>
+                                        <property name="label">P3</property>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkButton" id="samples-sidebar-assign-to-pad-button-15">
+                                        <property name="name">samples-sidebar-assign-to-pad-button-15</property>
+                                        <property name="label">P4</property>
+                                      </object>
+                                    </child>
+                                  </object>
+                                </child>
+                              </object>
+                              <object class="GtkMenuButton" id="samples-sidebar-assign-to-drum-pad-button">
+                                <property name="name">samples-sidebar-assign-to-drum-pad-button</property>
+                                <property name="label">Assign to</property>
+                                <property name="halign">start</property>
+                                <property name="hexpand">false</property>
+                                <property name="popover">assign-popover</property>
+                              </object>
+                            </child>
                           </object>
                         </child>
                         <property name="position">895</property>

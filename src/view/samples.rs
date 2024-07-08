@@ -23,7 +23,7 @@ use uuid::Uuid;
 use crate::{
     model::AppModel,
     update,
-    util::{self, resource_as_string, uuidize_builder_template},
+    util::{self, gtk_find_child_by_builder_id, resource_as_string, uuidize_builder_template},
     view::AsampoView,
     AppMessage, AppModelPtr, WithModel,
 };
@@ -177,6 +177,19 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
             );
         }),
     );
+
+    for i in 0..16 {
+        gtk_find_child_by_builder_id::<gtk::Button>(
+            view,
+            &format!("samples-sidebar-assign-to-pad-button-{i}"),
+        )
+        .unwrap()
+        .connect_clicked(
+            clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
+                update(model_ptr.clone(), &view, AppMessage::AssignSampleToPadClicked(i));
+            }),
+        );
+    }
 }
 
 pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {

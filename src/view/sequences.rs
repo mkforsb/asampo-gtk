@@ -186,20 +186,18 @@ pub fn update_drum_machine_view(model: &AppModel) {
         for (i, _) in LABELS.iter().enumerate() {
             drum_machine_view.step_buttons[i].remove_css_class("playing");
         }
-    } else {
-        if let Some(event) = drum_machine_model.latest_event() {
-            for (i, label) in LABELS.iter().enumerate() {
-                if i == event.step {
-                    drum_machine_view.step_buttons[i].add_css_class("playing");
-                } else {
-                    drum_machine_view.step_buttons[i].remove_css_class("playing");
-                }
+    } else if let Some(event) = drum_machine_model.latest_event() {
+        for (i, label) in LABELS.iter().enumerate() {
+            if i == event.step {
+                drum_machine_view.step_buttons[i].add_css_class("playing");
+            } else {
+                drum_machine_view.step_buttons[i].remove_css_class("playing");
+            }
 
-                if event.labels.contains(label) {
-                    drum_machine_view.pad_buttons[i].add_css_class("playing");
-                } else {
-                    drum_machine_view.pad_buttons[i].remove_css_class("playing");
-                }
+            if event.labels.contains(label) {
+                drum_machine_view.pad_buttons[i].add_css_class("playing");
+            } else {
+                drum_machine_view.pad_buttons[i].remove_css_class("playing");
             }
         }
     }

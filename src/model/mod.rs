@@ -14,7 +14,7 @@ use anyhow::anyhow;
 use drum_machine::PlaybackState;
 use libasampo::{
     samples::Sample,
-    samplesets::{export::ExportJobMessage, SampleSet, SampleSetLabelling},
+    samplesets::{export::ExportJobMessage, DrumkitLabel, SampleSet, SampleSetLabelling},
     sequences::{drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent},
     sources::{file_system_source::FilesystemSource, Source, SourceOps},
 };
@@ -413,4 +413,7 @@ impl AppModel {
     delegate!(drum_machine, stop() as drum_machine_stop -> Result);
     delegate!(drum_machine, rewind() as drum_machine_rewind -> AnyhowResult<()>);
     delegate!(drum_machine, playback_state() as drum_machine_playback_state -> PlaybackState);
+
+    delegate!(drum_machine, assign_sample(source: &Source, sample: Sample, label: DrumkitLabel)
+        as assign_drum_pad -> Result);
 }
