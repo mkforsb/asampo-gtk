@@ -108,12 +108,12 @@ impl DrumMachineModel {
         self.activated_pad
     }
 
-    pub fn sequence(&self) -> &DrumkitSequence {
-        &self.sequence
-    }
-
     pub fn set_sequence(self, sequence: DrumkitSequence) -> DrumMachineModel {
         DrumMachineModel { sequence, ..self }
+    }
+
+    pub fn sequence(&self) -> &DrumkitSequence {
+        &self.sequence
     }
 
     pub fn set_latest_event(self, event: Option<DrumkitSequenceEvent>) -> DrumMachineModel {
