@@ -866,7 +866,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     }
 
     if old.drum_machine_model() != new.drum_machine_model() {
-        update_drum_machine_view(new);
+        update_drum_machine_view(&new);
     }
 }
 

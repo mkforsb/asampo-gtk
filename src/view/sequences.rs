@@ -140,6 +140,7 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
         part_buttons,
         step_buttons,
     }));
+    update_drum_machine_view(&model);
     model_ptr.replace(Some(model));
 
     let root = objects.object::<gtk::Box>("drum-machine-root").unwrap();
@@ -148,7 +149,7 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
         .set_child(Some(&root));
 }
 
-pub fn update_drum_machine_view(model: AppModel) {
+pub fn update_drum_machine_view(model: &AppModel) {
     let drum_machine_model = model.drum_machine_model();
     let drum_machine_view = model.drum_machine_view().unwrap();
 
