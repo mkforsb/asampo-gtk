@@ -59,6 +59,7 @@
             <property name="column-spacing">6</property>
             <property name="halign">end</property>
             <property name="hexpand">true</property>
+            <property name="selection-mode">none</property>
             <child>
               <object class="GtkButton" id="sequences-editor-play-button">
                 <property name="name">sequences-editor-play-button</property>
