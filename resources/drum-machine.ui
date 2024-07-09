@@ -19,7 +19,7 @@
             <style>
               <class name="spin-value-frame" />
             </style>
-            <property name="label">Tempo</property>
+            <property name="label">Tempo (BPM)</property>
             <child>
               <object class="GtkSpinButton" id="sequences-editor-tempo-entry">
                 <property name="name">sequences-editor-tempo-entry</property>
@@ -41,7 +41,7 @@
             <style>
               <class name="spin-value-frame" />
             </style>
-            <property name="label">Swing</property>
+            <property name="label">Swing %</property>
             <child>
               <object class="GtkSpinButton" id="sequences-editor-swing-entry">
                 <property name="name">sequences-editor-swing-entry</property>
