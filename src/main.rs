@@ -46,7 +46,7 @@ use libasampo::{
         drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent, NoteLength, TimeSpec,
     },
 };
-use view::sequences::update_sequences_list;
+use view::{dialogs::ButtonSpec, sequences::update_sequences_list};
 
 use crate::{
     config::AppConfig,
@@ -168,6 +168,11 @@ enum AppMessage {
     AssignSampleToPadClicked(usize),
     SequenceSelected(Uuid),
     AddSequenceClicked,
+    LoadSequenceConfirmDialogOpened,
+    LoadSequenceConfirmSaveChanges,
+    LoadSequenceConfirmDiscardChanges,
+    LoadSequenceCancel,
+    LoadSequenceConfirmDialogError(anyhow::Error),
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -722,12 +727,78 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::SequenceSelected(uuid) => {
-            let sequence = model.sequence(uuid)?.clone();
+            if model
+                .drum_machine_model()
+                .loaded_sequence()
+                .is_some_and(|seq| seq.uuid() == uuid)
+            {
+                Ok(model)
+            } else if model.drum_machine_model().is_sequence_modified() {
+                Ok(model
+                    .set_selected_sequence(Some(uuid))?
+                    .signal_sequence_load_show_confirm_dialog())
+            } else {
+                let sequence = model.sequence(uuid)?.clone();
 
-            model.set_drum_machine_sequence(sequence, Mirroring::Mirror)
+                model
+                    .set_selected_sequence(Some(uuid))?
+                    .load_drum_machine_sequence(sequence)
+            }
         }
 
         AppMessage::AddSequenceClicked => Ok(model.signal_create_sequence_show_dialog()),
+
+        AppMessage::LoadSequenceConfirmDialogOpened => Ok(model
+            .set_main_view_sensitive(false)
+            .clear_signal_sequence_load_show_confirm_dialog()),
+
+        AppMessage::LoadSequenceConfirmSaveChanges => {
+            let sequence_to_save = model.drum_machine_model().sequence().clone();
+            let sequence_to_load = model
+                .sequence(
+                    model
+                        .selected_sequence()
+                        .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?,
+                )?
+                .clone();
+
+            Ok(model
+                .remove_sequence(sequence_to_save.uuid())?
+                .add_sequence(sequence_to_save)?
+                .load_drum_machine_sequence(sequence_to_load)?
+                .set_main_view_sensitive(true))
+        }
+
+        AppMessage::LoadSequenceConfirmDiscardChanges => {
+            let sequence_to_load = model
+                .sequence(
+                    model
+                        .selected_sequence()
+                        .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?,
+                )?
+                .clone();
+
+            Ok(model
+                .load_drum_machine_sequence(sequence_to_load)?
+                .set_main_view_sensitive(true))
+        }
+
+        AppMessage::LoadSequenceCancel => {
+            let loaded_uuid = model
+                .drum_machine_model()
+                .loaded_sequence()
+                .ok_or(anyhow!("No sequence loaded"))?
+                .uuid();
+
+            Ok(model
+                .set_selected_sequence(Some(loaded_uuid))?
+                .set_main_view_sensitive(true))
+        }
+
+        AppMessage::LoadSequenceConfirmDialogError(e) => {
+            log::log!(log::Level::Error, "{e}");
+            Ok(model)
+        }
     }
 }
 
@@ -817,6 +888,34 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             "Name of sequence:",
             "Name",
             "Save",
+        );
+    }
+
+    if new.is_signalling_sequence_load_show_confirm_dialog() {
+        dialogs::confirm(
+            model_ptr.clone(),
+            view,
+            format!(
+                "Save changes to sequence {}?",
+                new.drum_machine_model()
+                    .loaded_sequence()
+                    .expect("There should be a loaded sequence")
+                    .name()
+            )
+            .as_str(),
+            "",
+            vec![
+                ButtonSpec::new("Save changes", || {
+                    AppMessage::LoadSequenceConfirmSaveChanges
+                })
+                .set_as_default(),
+                ButtonSpec::new("Discard changes", || {
+                    AppMessage::LoadSequenceConfirmDiscardChanges
+                }),
+                ButtonSpec::new("Cancel", || AppMessage::LoadSequenceCancel).set_as_cancel(),
+            ],
+            AppMessage::LoadSequenceConfirmDialogOpened,
+            |e| AppMessage::LoadSequenceConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
         );
     }
 
@@ -920,7 +1019,9 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
         }
     }
 
-    if old.sequences_map() != new.sequences_map() {
+    if old.sequences_map() != new.sequences_map()
+        || old.selected_sequence() != new.selected_sequence()
+    {
         update_sequences_list(model_ptr.clone(), &new, view);
     }
 

@@ -16,6 +16,7 @@ pub struct ViewFlags {
     sets_export_fields_valid: bool,
     sequences_create_sequence_show_dialog: bool,
     sequences_sequence_save_as_show_dialog: bool,
+    sequences_load_sequence_show_confirm_dialog: bool,
 }
 
 impl Default for ViewFlags {
@@ -33,6 +34,7 @@ impl Default for ViewFlags {
             sets_export_fields_valid: false,
             sequences_create_sequence_show_dialog: false,
             sequences_sequence_save_as_show_dialog: false,
+            sequences_load_sequence_show_confirm_dialog: false,
         }
     }
 }
@@ -56,6 +58,10 @@ impl ViewFlags {
     signal!(
         sequence_save_as_show_dialog,
         sequences_sequence_save_as_show_dialog
+    );
+    signal!(
+        sequence_load_show_confirm_dialog,
+        sequences_load_sequence_show_confirm_dialog
     );
 }
 

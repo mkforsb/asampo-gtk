@@ -46,6 +46,7 @@ pub struct DrumMachineModel {
     render_thread_tx: Option<RenderThreadTx>,
     event_rx: Option<EventRx>,
     event_latest: Option<DrumkitSequenceEvent>,
+    loaded_sequence: Option<DrumkitSequence>,
     sequence: DrumkitSequence,
     sampleset: SampleSet,
     sources: Vec<Source>,
@@ -96,6 +97,7 @@ impl DrumMachineModel {
             render_thread_tx,
             event_rx: event_rx.map(|x| Arc::new(Mutex::new(x))),
             event_latest: None,
+            loaded_sequence: None,
             sequence: empty_sequence,
             sampleset: SampleSet::BaseSampleSet(empty_sampleset),
             sources: Vec::new(),
@@ -144,6 +146,23 @@ impl DrumMachineModel {
 
     pub fn activated_pad(&self) -> usize {
         self.activated_pad
+    }
+
+    pub fn load_sequence(self, sequence: DrumkitSequence) -> AnyhowResult<DrumMachineModel> {
+        Ok(DrumMachineModel {
+            loaded_sequence: Some(sequence.clone()),
+            ..self.set_sequence(sequence, Mirroring::Mirror)?
+        })
+    }
+
+    pub fn loaded_sequence(&self) -> Option<&DrumkitSequence> {
+        self.loaded_sequence.as_ref()
+    }
+
+    pub fn is_sequence_modified(&self) -> bool {
+        self.loaded_sequence
+            .as_ref()
+            .is_some_and(|seq| *seq != self.sequence)
     }
 
     pub fn set_sequence(

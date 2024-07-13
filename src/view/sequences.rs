@@ -95,14 +95,20 @@ pub fn update_sequences_list(model_ptr: AppModelPtr, model: &AppModel, view: &As
         ));
 
         row.add_controller(keyup);
+        view.sequences_list.append(&row);
+
+        if model
+            .selected_sequence()
+            .is_some_and(|sel_uuid| sel_uuid == uuid)
+        {
+            row.activate();
+        }
 
         row.connect_activate(
             clone!(@strong model_ptr, @strong view, @strong uuid => move |_: &gtk::ListBoxRow| {
                 update(model_ptr.clone(), &view, AppMessage::SequenceSelected(uuid));
             }),
         );
-
-        view.sequences_list.append(&row);
     }
 }
 

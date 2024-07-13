@@ -248,3 +248,95 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
         }),
     );
 }
+
+#[derive(Debug)]
+pub struct ButtonSpec {
+    pub text: String,
+    pub action: fn() -> AppMessage,
+    pub is_default: bool,
+    pub is_cancel: bool,
+}
+
+impl ButtonSpec {
+    pub fn new(text: impl Into<String>, action: fn() -> AppMessage) -> ButtonSpec {
+        ButtonSpec {
+            text: text.into(),
+            action,
+            is_default: false,
+            is_cancel: false,
+        }
+    }
+
+    pub fn set_as_default(self) -> ButtonSpec {
+        ButtonSpec {
+            is_default: true,
+            ..self
+        }
+    }
+
+    pub fn set_as_cancel(self) -> ButtonSpec {
+        ButtonSpec {
+            is_cancel: true,
+            ..self
+        }
+    }
+}
+
+pub fn confirm(
+    model_ptr: AppModelPtr,
+    view: &AsampoView,
+    message: &str,
+    detail: &str,
+    buttons: Vec<ButtonSpec>,
+    on_open: AppMessage,
+    err: fn(gtk::glib::Error) -> AppMessage,
+) {
+    let dialog = gtk::AlertDialog::builder()
+        .modal(true)
+        .message(message)
+        .detail(detail)
+        .buttons(
+            buttons
+                .iter()
+                .map(|but| but.text.as_str())
+                .collect::<Vec<_>>(),
+        )
+        .default_button(
+            buttons
+                .iter()
+                .position(|but| but.is_default)
+                .map(|x| x as i32)
+                .unwrap_or(-1),
+        )
+        .cancel_button(
+            buttons
+                .iter()
+                .position(|but| but.is_cancel)
+                .map(|x| x as i32)
+                .unwrap_or(-1),
+        )
+        .build();
+
+    dialog.choose(
+        Some(view),
+        None::<&gtk::gio::Cancellable>,
+        clone!(@strong model_ptr, @strong view => move |result: Result<i32, gtk::glib::Error>| {
+            match result {
+                Ok(n) if n >= 0 && n < buttons.len() as i32 => {
+                    update(model_ptr.clone(), &view, (buttons[n as usize].action)());
+                }
+
+                Ok(n) => {
+                    log::log!(
+                        log::Level::Error,
+                        "Unexpected index returned in confirm dialog: {n}"
+                    );
+                }
+
+                Err(e) => update(model_ptr.clone(), &view, err(e)),
+            }
+        }),
+    );
+
+    update(model_ptr.clone(), view, on_open);
+}

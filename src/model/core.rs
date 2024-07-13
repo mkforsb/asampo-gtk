@@ -46,6 +46,7 @@ pub struct CoreModel {
     sets_export_state: Option<ExportState>,
     sequences: HashMap<Uuid, DrumkitSequence>,
     sequences_order: Vec<Uuid>,
+    sequences_selected_sequence: Option<Uuid>,
     export_job_rx: Option<Rc<mpsc::Receiver<ExportJobMessage>>>,
 }
 
@@ -67,6 +68,7 @@ impl CoreModel {
             sets_export_state: None,
             sequences: HashMap::new(),
             sequences_order: Vec::new(),
+            sequences_selected_sequence: None,
             export_job_rx: None,
         }
     }
@@ -469,6 +471,29 @@ impl CoreModel {
                 ..self
             })
         }
+    }
+
+    pub fn set_selected_sequence(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<CoreModel> {
+        if let Some(false) = maybe_uuid.map(|uuid| self.sequences.contains_key(&uuid)) {
+            Err(anyhow!("Failed to set selected sequence: UUID not present"))
+        } else {
+            Ok(CoreModel {
+                sequences_selected_sequence: maybe_uuid,
+                ..self
+            })
+        }
+    }
+
+    pub fn selected_sequence(&self) -> Option<Uuid> {
+        self.sequences_selected_sequence
+    }
+
+    pub fn remove_sequence(self, uuid: Uuid) -> AnyhowResult<CoreModel> {
+        Ok(CoreModel {
+            sequences_order: self.sequences_order.clone_and_remove(&uuid)?,
+            sequences: self.sequences.clone_and_remove(&uuid)?,
+            ..self
+        })
     }
 
     pub fn clear_sequences(self) -> CoreModel {

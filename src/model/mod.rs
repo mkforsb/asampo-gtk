@@ -322,6 +322,9 @@ impl AppModel {
     delegate!(core, sequences_list() -> Vec<&DrumkitSequence>);
     delegate!(core, sequences_map() -> &HashMap<Uuid, DrumkitSequence>);
     delegate!(core, add_sequence(seq: DrumkitSequence) -> Result);
+    delegate!(core, set_selected_sequence(maybe_uuid: Option<Uuid>) -> Result);
+    delegate!(core, selected_sequence() -> Option<Uuid>);
+    delegate!(core, remove_sequence(uuid: Uuid) -> Result);
     delegate!(core, clear_sequences() -> Model);
 
     pub fn load_sequences(self, seqs: Vec<DrumkitSequence>) -> AnyhowResult<AppModel> {
@@ -351,6 +354,7 @@ impl AppModel {
     delegate!(viewflags, signal_export_show_dialog() -> Model);
     delegate!(viewflags, signal_create_sequence_show_dialog() -> Model);
     delegate!(viewflags, signal_sequence_save_as_show_dialog() -> Model);
+    delegate!(viewflags, signal_sequence_load_show_confirm_dialog() -> Model);
     delegate!(viewflags, is_signalling_add_fs_source_begin_browse() -> bool);
     delegate!(viewflags, is_signalling_add_sample_to_set_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_add_set_show_dialog() -> bool);
@@ -358,6 +362,7 @@ impl AppModel {
     delegate!(viewflags, is_signalling_export_begin_browse() -> bool);
     delegate!(viewflags, is_signalling_create_sequence_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_sequence_save_as_show_dialog() -> bool);
+    delegate!(viewflags, is_signalling_sequence_load_show_confirm_dialog() -> bool);
     delegate!(viewflags, clear_signal_add_fs_source_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_add_sample_to_set_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_add_set_show_dialog() -> Model);
@@ -365,6 +370,7 @@ impl AppModel {
     delegate!(viewflags, clear_signal_export_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_create_sequence_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_sequence_save_as_show_dialog() -> Model);
+    delegate!(viewflags, clear_signal_sequence_load_show_confirm_dialog() -> Model);
 
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);
     delegate!(viewvalues, latency_approx_label() -> &String);
@@ -410,6 +416,9 @@ impl AppModel {
 
     delegate!(drum_machine, activated_pad() as activated_drum_machine_pad -> usize);
     delegate!(drum_machine, sequence() as drum_machine_sequence -> &DrumkitSequence);
+
+    delegate!(drum_machine, load_sequence(sequence: DrumkitSequence)
+        as load_drum_machine_sequence -> Result);
 
     delegate!(
         drum_machine,
