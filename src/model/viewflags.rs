@@ -14,6 +14,8 @@ pub struct ViewFlags {
     sets_export_show_dialog: bool,
     sets_export_begin_browse: bool,
     sets_export_fields_valid: bool,
+    sequences_create_sequence_show_dialog: bool,
+    sequences_sequence_save_as_show_dialog: bool,
 }
 
 impl Default for ViewFlags {
@@ -29,6 +31,8 @@ impl Default for ViewFlags {
             sets_export_show_dialog: false,
             sets_export_begin_browse: false,
             sets_export_fields_valid: false,
+            sequences_create_sequence_show_dialog: false,
+            sequences_sequence_save_as_show_dialog: false,
         }
     }
 }
@@ -45,6 +49,14 @@ impl ViewFlags {
     signal!(export_begin_browse, sets_export_begin_browse);
     signal!(export_show_dialog, sets_export_show_dialog);
     signal!(add_fs_source_begin_browse, sources_add_fs_begin_browse);
+    signal!(
+        create_sequence_show_dialog,
+        sequences_create_sequence_show_dialog
+    );
+    signal!(
+        sequence_save_as_show_dialog,
+        sequences_sequence_save_as_show_dialog
+    );
 }
 
 /// Generates a pair of methods for a boolean field.

@@ -8,7 +8,11 @@ use anyhow::anyhow;
 use libasampo::{
     errors::Error as LaError,
     samplesets::SampleSet as DomSampleSet,
-    serialize::{SampleSet as SerSampleSet, Source as SerSource, TryFromDomain, TryIntoDomain},
+    sequences::DrumkitSequence,
+    serialize::{
+        SampleSet as SerSampleSet, Sequence as SerSequence, Source as SerSource, TryFromDomain,
+        TryIntoDomain,
+    },
     sources::Source as DomSource,
 };
 use serde::{Deserialize, Serialize};
@@ -21,6 +25,7 @@ type AnyhowResult<T> = Result<T, anyhow::Error>;
 pub struct SavefileV1 {
     sources: Vec<SerSource>,
     samplesets: Vec<SerSampleSet>,
+    sequences: Vec<SerSequence>,
 }
 
 impl SavefileV1 {
@@ -37,6 +42,12 @@ impl SavefileV1 {
                 .iter()
                 .map(|set| SerSampleSet::try_from_domain(set))
                 .collect::<Result<Vec<SerSampleSet>, LaError>>()?,
+
+            sequences: model
+                .sequences_list()
+                .iter()
+                .map(|seq| SerSequence::try_from_domain(seq))
+                .collect::<Result<Vec<SerSequence>, LaError>>()?,
         })
     }
 
@@ -58,6 +69,17 @@ impl SavefileV1 {
                 s.clone()
                     .try_into_domain()
                     .map_err(|e| anyhow!("Failed to deserialize sample set: {e}"))
+            })
+            .collect()
+    }
+
+    pub fn sequences_domained(&self) -> AnyhowResult<Vec<DrumkitSequence>> {
+        self.sequences
+            .iter()
+            .map(|s| {
+                s.clone()
+                    .try_into_domain()
+                    .map_err(|e| anyhow!("Failed to deserialize sequence: {e}"))
             })
             .collect()
     }
@@ -97,13 +119,19 @@ impl Savefile {
 
     pub fn sources_domained(&self) -> AnyhowResult<Vec<DomSource>> {
         match self {
-            Savefile::V1(source) => source.sources_domained(),
+            Savefile::V1(sf) => sf.sources_domained(),
         }
     }
 
     pub fn sets_domained(&self) -> AnyhowResult<Vec<DomSampleSet>> {
         match self {
-            Savefile::V1(source) => source.sets_domained(),
+            Savefile::V1(sf) => sf.sets_domained(),
+        }
+    }
+
+    pub fn sequences_domained(&self) -> AnyhowResult<Vec<DrumkitSequence>> {
+        match self {
+            Savefile::V1(sf) => sf.sequences_domained(),
         }
     }
 }

@@ -42,14 +42,17 @@ use libasampo::{
         export::{Conversion, ExportJob, ExportJobMessage},
         BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling,
     },
-    sequences::{drumkit_render_thread, DrumkitSequenceEvent},
+    sequences::{
+        drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent, NoteLength, TimeSpec,
+    },
 };
+use view::sequences::update_sequences_list;
 
 use crate::{
     config::AppConfig,
     configfile::ConfigFile,
     ext::WithModel,
-    model::{AppModel, AppModelPtr, DrumMachinePlaybackState},
+    model::{AppModel, AppModelPtr, DrumMachinePlaybackState, Mirroring},
     util::gtk_find_child_by_builder_id,
     view::{
         dialogs,
@@ -92,6 +95,8 @@ impl std::error::Error for ErrorWithEffect {}
 enum InputDialogContext {
     AddToSampleset,
     CreateSampleSet,
+    CreateEmptySequence,
+    SaveDrumMachineSequenceAs,
 }
 
 #[derive(Debug, Clone)]
@@ -161,6 +166,8 @@ enum AppMessage {
     DrumMachineStepClicked(usize),
     DrumMachinePlaybackEvent(DrumkitSequenceEvent),
     AssignSampleToPadClicked(usize),
+    SequenceSelected(Uuid),
+    AddSequenceClicked,
 }
 
 fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
@@ -377,8 +384,10 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 Ok(loaded_savefile) => model
                     .clear_sources()
                     .clear_sets()
+                    .clear_sequences()
                     .load_sources(loaded_savefile.sources_domained()?)?
-                    .load_sets(loaded_savefile.sets_domained()?),
+                    .load_sets(loaded_savefile.sets_domained()?)?
+                    .load_sequences(loaded_savefile.sequences_domained()?),
                 Err(e) => Err(anyhow::Error::new(ErrorWithEffect::AlertDialog {
                     text: "Error loading savefile".to_string(),
                     detail: e.to_string(),
@@ -417,6 +426,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
             }
 
             InputDialogContext::CreateSampleSet => Ok(model.clear_signal_add_set_show_dialog()),
+
+            InputDialogContext::CreateEmptySequence => {
+                Ok(model.clear_signal_create_sequence_show_dialog())
+            }
+
+            InputDialogContext::SaveDrumMachineSequenceAs => {
+                Ok(model.clear_signal_sequence_save_as_show_dialog())
+            }
         },
 
         AppMessage::InputDialogCanceled(_context) => Ok(model),
@@ -436,6 +453,16 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             InputDialogContext::CreateSampleSet => {
                 model.add_set(SampleSet::BaseSampleSet(BaseSampleSet::new(text)))
+            }
+
+            InputDialogContext::CreateEmptySequence => model.add_sequence(
+                DrumkitSequence::new_named(text, TimeSpec::new(120, 4, 4)?, NoteLength::Sixteenth),
+            ),
+
+            InputDialogContext::SaveDrumMachineSequenceAs => {
+                let mut sequence = model.drum_machine_model().sequence().clone();
+                sequence.set_name(text);
+                model.add_sequence(DrumkitSequence::new_from(&sequence))
             }
         },
 
@@ -604,23 +631,11 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::DrumMachineTempoChanged(tempo) => {
-            if model.is_drum_machine_render_thread_active() {
-                let _ = model.drum_machine_render_thread_send(
-                    drumkit_render_thread::Message::SetTempo(tempo.try_into()?),
-                );
-            }
-
-            Ok(model)
+            model.set_drum_machine_tempo(tempo, Mirroring::Mirror)
         }
 
         AppMessage::DrumMachineSwingChanged(swing) => {
-            if model.is_drum_machine_render_thread_active() {
-                let _ = model.drum_machine_render_thread_send(
-                    drumkit_render_thread::Message::SetSwing((swing as f64 / 100.0).try_into()?),
-                );
-            }
-
-            Ok(model)
+            model.set_drum_machine_swing(swing as f64 / 100.0, Mirroring::Mirror)
         }
 
         AppMessage::DrumMachinePlayClicked => match model.drum_machine_playback_state() {
@@ -638,7 +653,9 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
         }
 
         AppMessage::DrumMachineSaveSequenceClicked => Ok(model),
-        AppMessage::DrumMachineSaveSequenceAsClicked => Ok(model),
+        AppMessage::DrumMachineSaveSequenceAsClicked => {
+            Ok(model.signal_sequence_save_as_show_dialog())
+        }
         AppMessage::DrumMachineSaveSampleSetClicked => Ok(model),
         AppMessage::DrumMachineSaveSampleSetAsClicked => Ok(model),
         AppMessage::DrumMachinePadClicked(n) => Ok(model.set_activated_drum_machine_pad(n)?),
@@ -692,7 +709,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
                 }
             }
 
-            Ok(model.set_drum_machine_sequence(new_sequence))
+            model.set_drum_machine_sequence(new_sequence, Mirroring::Off)
         }
 
         AppMessage::DrumMachinePlaybackEvent(event) => {
@@ -719,6 +736,14 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             model.assign_drum_pad(&source, sample, *label)
         }
+
+        AppMessage::SequenceSelected(uuid) => {
+            let sequence = model.sequence(uuid)?.clone();
+
+            model.set_drum_machine_sequence(sequence, Mirroring::Mirror)
+        }
+
+        AppMessage::AddSequenceClicked => Ok(model.signal_create_sequence_show_dialog()),
     }
 }
 
@@ -784,6 +809,30 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             "Name of set:",
             "Favorites",
             "Create",
+        );
+    }
+
+    if new.is_signalling_create_sequence_show_dialog() {
+        dialogs::input(
+            model_ptr.clone(),
+            view,
+            InputDialogContext::CreateEmptySequence,
+            "Add sequence",
+            "Name of sequence:",
+            "Name",
+            "Add",
+        );
+    }
+
+    if new.is_signalling_sequence_save_as_show_dialog() {
+        dialogs::input(
+            model_ptr.clone(),
+            view,
+            InputDialogContext::SaveDrumMachineSequenceAs,
+            "Save sequence as",
+            "Name of sequence:",
+            "Name",
+            "Save",
         );
     }
 
@@ -885,6 +934,10 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
             view.progress_popup_progress_bar
                 .set_fraction(*n as f64 / *m as f64);
         }
+    }
+
+    if old.sequences_map() != new.sequences_map() {
+        update_sequences_list(model_ptr.clone(), &new, &view);
     }
 
     if old.drum_machine_model() != new.drum_machine_model() {
@@ -1011,6 +1064,7 @@ mod tests {
             Ok(loaded_savefile) => Ok(savefile_for_test::Savefile {
                 sources_domained: loaded_savefile.sources_domained()?,
                 sets_domained: loaded_savefile.sets_domained()?,
+                sequences_domained: loaded_savefile.sequences_domained()?,
             }),
             Err(e) => Err(e),
         }));

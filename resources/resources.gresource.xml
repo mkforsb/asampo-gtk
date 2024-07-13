@@ -6,6 +6,7 @@
     <file compressed="true" preprocess="xml-stripblanks">sources-list-row.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">sets-details-sample-list-row.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">sets-list-row.ui</file>
+    <file compressed="true" preprocess="xml-stripblanks">sequences-list-row.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">export-dialog.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">input-dialog.ui</file>
     <file compressed="true" preprocess="xml-stripblanks">drum-machine.ui</file>

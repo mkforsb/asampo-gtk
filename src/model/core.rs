@@ -10,6 +10,7 @@ use libasampo::{
     samplesets::{
         export::ExportJobMessage, BaseSampleSet, SampleSet, SampleSetLabelling, SampleSetOps,
     },
+    sequences::{DrumkitSequence, StepSequenceOps},
     sources::{Source, SourceOps},
 };
 use uuid::Uuid;
@@ -43,6 +44,8 @@ pub struct CoreModel {
     sets_selected_set: Option<Uuid>,
     sets_most_recently_used_uuid: Option<Uuid>,
     sets_export_state: Option<ExportState>,
+    sequences: HashMap<Uuid, DrumkitSequence>,
+    sequences_order: Vec<Uuid>,
     export_job_rx: Option<Rc<mpsc::Receiver<ExportJobMessage>>>,
 }
 
@@ -62,6 +65,8 @@ impl CoreModel {
             sets_selected_set: None,
             sets_most_recently_used_uuid: None,
             sets_export_state: None,
+            sequences: HashMap::new(),
+            sequences_order: Vec::new(),
             export_job_rx: None,
         }
     }
@@ -433,6 +438,45 @@ impl CoreModel {
 
     pub fn export_job_rx(&self) -> Option<Rc<mpsc::Receiver<ExportJobMessage>>> {
         self.export_job_rx.clone()
+    }
+
+    pub fn sequence(&self, uuid: Uuid) -> AnyhowResult<&DrumkitSequence> {
+        self.sequences
+            .get(&uuid)
+            .ok_or(anyhow!("Failed to get sequence: UUID not present"))
+    }
+
+    pub fn sequences_list(&self) -> Vec<&DrumkitSequence> {
+        self.sequences_order
+            .iter()
+            .map(|uuid| self.sequence(*uuid).unwrap())
+            .collect()
+    }
+
+    pub fn sequences_map(&self) -> &HashMap<Uuid, DrumkitSequence> {
+        &self.sequences
+    }
+
+    pub fn add_sequence(self, sequence: DrumkitSequence) -> AnyhowResult<CoreModel> {
+        if self.sequences.contains_key(&sequence.uuid()) {
+            Err(anyhow!("Failed to add sequence: UUID in use"))
+        } else {
+            let uuid = sequence.uuid();
+
+            Ok(CoreModel {
+                sequences: self.sequences.clone_and_insert(uuid, sequence),
+                sequences_order: self.sequences_order.clone_and_push(uuid),
+                ..self
+            })
+        }
+    }
+
+    pub fn clear_sequences(self) -> CoreModel {
+        CoreModel {
+            sequences: HashMap::new(),
+            sequences_order: Vec::new(),
+            ..self
+        }
     }
 }
 

@@ -4,13 +4,17 @@
 
 use gtk::{
     glib::clone,
-    prelude::{ButtonExt, FrameExt, WidgetExt},
+    prelude::{ButtonExt, EventControllerExt, FrameExt, ListBoxRowExt, WidgetExt},
+    EventControllerKey, GestureClick,
 };
-use libasampo::samplesets::DrumkitLabel;
+use libasampo::{samplesets::DrumkitLabel, sequences::StepSequenceOps};
 
 use crate::{
+    ext::WithModel,
     model::{AppModel, DrumMachinePlaybackState},
-    update, AppMessage, AppModelPtr, AsampoView,
+    update,
+    util::{resource_as_string, uuidize_builder_template},
+    AppMessage, AppModelPtr, AsampoView,
 };
 
 pub const LABELS: [DrumkitLabel; 16] = [
@@ -33,7 +37,73 @@ pub const LABELS: [DrumkitLabel; 16] = [
 ];
 
 pub fn setup_sequences_page(model_ptr: AppModelPtr, view: &AsampoView) {
-    setup_drum_machine_view(model_ptr, view);
+    setup_drum_machine_view(model_ptr.clone(), &view);
+
+    view.sequences_add_sequence_button.connect_clicked(
+        clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
+            update(model_ptr.clone(), &view, AppMessage::AddSequenceClicked);
+        }),
+    );
+
+    model_ptr.with_model(|model| {
+        update_sequences_list(model_ptr.clone(), &model, &view);
+        update_drum_machine_view(&model);
+        model
+    });
+}
+
+pub fn update_sequences_list(model_ptr: AppModelPtr, model: &AppModel, view: &AsampoView) {
+    view.sequences_list.remove_all();
+
+    view.sequences_list_frame.set_label(Some(&format!(
+        "Sequences ({})",
+        model.sequences_map().len()
+    )));
+
+    for sequence in model.sequences_list().iter() {
+        let uuid = sequence.uuid();
+
+        let objects = gtk::Builder::from_string(&uuidize_builder_template(
+            &resource_as_string("/sequences-list-row.ui").unwrap(),
+            uuid,
+        ));
+
+        let row = objects
+            .object::<gtk::ListBoxRow>(format!("{uuid}-row"))
+            .unwrap();
+
+        let name_label = objects
+            .object::<gtk::Label>(format!("{uuid}-name-label"))
+            .unwrap();
+
+        name_label.set_text(model.sequence(uuid).unwrap().name());
+
+        let clicked = GestureClick::new();
+
+        clicked.connect_pressed(|e: &GestureClick, _, _, _| {
+            e.widget().activate();
+        });
+
+        row.add_controller(clicked);
+
+        let keyup = EventControllerKey::new();
+
+        keyup.connect_key_released(clone!(@strong model_ptr, @strong view, @strong uuid =>
+            move |_: &EventControllerKey, _, _, _| {
+                update(model_ptr.clone(), &view, AppMessage::SequenceSelected(uuid));
+            }
+        ));
+
+        row.add_controller(keyup);
+
+        row.connect_activate(
+            clone!(@strong model_ptr, @strong view, @strong uuid => move |_: &gtk::ListBoxRow| {
+                update(model_ptr.clone(), &view, AppMessage::SequenceSelected(uuid));
+            }),
+        );
+
+        view.sequences_list.append(&row);
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -140,7 +210,6 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
         part_buttons,
         step_buttons,
     }));
-    update_drum_machine_view(&model);
     model_ptr.replace(Some(model));
 
     let root = objects.object::<gtk::Box>("drum-machine-root").unwrap();

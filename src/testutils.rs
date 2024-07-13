@@ -6,7 +6,7 @@
 pub mod savefile_for_test {
     use std::cell::Cell;
 
-    use libasampo::{samplesets::SampleSet, sources::Source};
+    use libasampo::{samplesets::SampleSet, sequences::DrumkitSequence, sources::Source};
 
     use crate::model::AppModel;
 
@@ -25,6 +25,7 @@ pub mod savefile_for_test {
     pub struct Savefile {
         pub sources_domained: Vec<Source>,
         pub sets_domained: Vec<SampleSet>,
+        pub sequences_domained: Vec<DrumkitSequence>,
     }
 
     impl Savefile {
@@ -44,6 +45,10 @@ pub mod savefile_for_test {
 
         pub fn sets_domained(&self) -> AnyhowResult<Vec<SampleSet>> {
             Ok(self.sets_domained.clone())
+        }
+
+        pub fn sequences_domained(&self) -> AnyhowResult<Vec<DrumkitSequence>> {
+            Ok(self.sequences_domained.clone())
         }
     }
 }

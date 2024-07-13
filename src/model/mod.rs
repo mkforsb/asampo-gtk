@@ -11,7 +11,6 @@ use std::{
 };
 
 use anyhow::anyhow;
-use drum_machine::PlaybackState;
 use libasampo::{
     samples::Sample,
     samplesets::{export::ExportJobMessage, DrumkitLabel, SampleSet, SampleSetLabelling},
@@ -38,7 +37,7 @@ use viewflags::ViewFlags;
 use viewvalues::ViewValues;
 
 pub use core::ExportState;
-pub use drum_machine::{DrumMachineModel, PlaybackState as DrumMachinePlaybackState};
+pub use drum_machine::{DrumMachineModel, Mirroring, PlaybackState as DrumMachinePlaybackState};
 pub use viewvalues::ExportKind;
 
 pub type AnyhowResult<T> = Result<T, anyhow::Error>;
@@ -327,6 +326,21 @@ impl AppModel {
     delegate!(core, export_state() -> Option<ExportState>);
     delegate!(core, set_export_job_rx(rx: Option<mpsc::Receiver<ExportJobMessage>>) -> Model);
     delegate!(core, export_job_rx() -> Option<Rc<mpsc::Receiver<ExportJobMessage>>>);
+    delegate!(core, sequence(uuid: Uuid) -> AnyhowResult<&DrumkitSequence>);
+    delegate!(core, sequences_list() -> Vec<&DrumkitSequence>);
+    delegate!(core, sequences_map() -> &HashMap<Uuid, DrumkitSequence>);
+    delegate!(core, add_sequence(seq: DrumkitSequence) -> Result);
+    delegate!(core, clear_sequences() -> Model);
+
+    pub fn load_sequences(self, seqs: Vec<DrumkitSequence>) -> AnyhowResult<AppModel> {
+        let mut result = self.clone();
+
+        for seq in seqs {
+            result = result.add_sequence(seq)?
+        }
+
+        Ok(result)
+    }
 
     delegate!(viewflags, set_main_view_sensitive(sensitive: bool) -> Model);
     delegate!(viewflags, is_main_view_sensitive() -> bool);
@@ -343,16 +357,22 @@ impl AppModel {
     delegate!(viewflags, signal_add_set_show_dialog() -> Model);
     delegate!(viewflags, signal_export_begin_browse() -> Model);
     delegate!(viewflags, signal_export_show_dialog() -> Model);
+    delegate!(viewflags, signal_create_sequence_show_dialog() -> Model);
+    delegate!(viewflags, signal_sequence_save_as_show_dialog() -> Model);
     delegate!(viewflags, is_signalling_add_fs_source_begin_browse() -> bool);
     delegate!(viewflags, is_signalling_add_sample_to_set_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_add_set_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_export_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_export_begin_browse() -> bool);
+    delegate!(viewflags, is_signalling_create_sequence_show_dialog() -> bool);
+    delegate!(viewflags, is_signalling_sequence_save_as_show_dialog() -> bool);
     delegate!(viewflags, clear_signal_add_fs_source_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_add_sample_to_set_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_add_set_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_export_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_export_show_dialog() -> Model);
+    delegate!(viewflags, clear_signal_create_sequence_show_dialog() -> Model);
+    delegate!(viewflags, clear_signal_sequence_save_as_show_dialog() -> Model);
 
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);
     delegate!(viewvalues, latency_approx_label() -> &String);
@@ -399,8 +419,16 @@ impl AppModel {
     delegate!(drum_machine, activated_pad() as activated_drum_machine_pad -> usize);
     delegate!(drum_machine, sequence() as drum_machine_sequence -> &DrumkitSequence);
 
-    delegate!(drum_machine, set_sequence(sequence: DrumkitSequence)
-        as set_drum_machine_sequence -> Model);
+    delegate!(
+        drum_machine,
+        set_sequence(sequence: DrumkitSequence, mirroring: Mirroring)
+        as set_drum_machine_sequence -> Result);
+
+    delegate!(drum_machine, set_tempo(bpm: u16, mirroring: Mirroring)
+        as set_drum_machine_tempo -> Result);
+
+    delegate!(drum_machine, set_swing(swing: f64, mirroring: Mirroring)
+        as set_drum_machine_swing -> Result);
 
     delegate!(drum_machine, set_latest_event(event: Option<DrumkitSequenceEvent>)
         as set_latest_drum_machine_event -> Model);
@@ -412,7 +440,9 @@ impl AppModel {
     delegate!(drum_machine, pause() as drum_machine_pause -> Result);
     delegate!(drum_machine, stop() as drum_machine_stop -> Result);
     delegate!(drum_machine, rewind() as drum_machine_rewind -> AnyhowResult<()>);
-    delegate!(drum_machine, playback_state() as drum_machine_playback_state -> PlaybackState);
+    delegate!(
+        drum_machine,
+        playback_state() as drum_machine_playback_state -> DrumMachinePlaybackState);
 
     delegate!(drum_machine, assign_sample(source: &Source, sample: Sample, label: DrumkitLabel)
         as assign_drum_pad -> Result);

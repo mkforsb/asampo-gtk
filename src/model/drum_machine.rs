@@ -33,6 +33,12 @@ pub enum PlaybackState {
     Stopped,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Mirroring {
+    Mirror,
+    Off,
+}
+
 #[derive(Clone, Debug)]
 pub struct DrumMachineModel {
     playback_state: PlaybackState,
@@ -140,12 +146,56 @@ impl DrumMachineModel {
         self.activated_pad
     }
 
-    pub fn set_sequence(self, sequence: DrumkitSequence) -> DrumMachineModel {
-        DrumMachineModel { sequence, ..self }
+    pub fn set_sequence(
+        self,
+        sequence: DrumkitSequence,
+        mirroring: Mirroring,
+    ) -> AnyhowResult<DrumMachineModel> {
+        if mirroring == Mirroring::Mirror {
+            self.render_thread_send(drumkit_render_thread::Message::SetSequence(
+                sequence.clone(),
+            ))?;
+        }
+
+        Ok(DrumMachineModel { sequence, ..self })
     }
 
     pub fn sequence(&self) -> &DrumkitSequence {
         &self.sequence
+    }
+
+    pub fn set_tempo(self, bpm: u16, mirroring: Mirroring) -> AnyhowResult<DrumMachineModel> {
+        if mirroring == Mirroring::Mirror {
+            self.render_thread_send(drumkit_render_thread::Message::SetTempo(bpm.try_into()?))?;
+        }
+
+        let mut sequence = self.sequence.clone();
+
+        sequence.set_timespec(TimeSpec::new_with_swing(
+            bpm,
+            sequence.timespec().signature.upper(),
+            sequence.timespec().signature.lower(),
+            sequence.timespec().swing.get(),
+        )?);
+
+        Ok(DrumMachineModel { sequence, ..self })
+    }
+
+    pub fn set_swing(self, swing: f64, mirroring: Mirroring) -> AnyhowResult<DrumMachineModel> {
+        if mirroring == Mirroring::Mirror {
+            self.render_thread_send(drumkit_render_thread::Message::SetSwing(swing.try_into()?))?;
+        }
+
+        let mut sequence = self.sequence.clone();
+
+        sequence.set_timespec(TimeSpec::new_with_swing(
+            sequence.timespec().bpm.get(),
+            sequence.timespec().signature.upper(),
+            sequence.timespec().signature.lower(),
+            swing,
+        )?);
+
+        Ok(DrumMachineModel { sequence, ..self })
     }
 
     pub fn set_latest_event(self, event: Option<DrumkitSequenceEvent>) -> DrumMachineModel {
