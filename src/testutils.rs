@@ -3,6 +3,7 @@
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
 #[cfg(test)]
+#[allow(dead_code)]
 pub mod savefile_for_test {
     use std::cell::Cell;
 
