@@ -387,6 +387,7 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
             match Savefile::load(&filename) {
                 Ok(loaded_savefile) => model
+                    .set_savefile_path(Some(filename))
                     .clear_sources()
                     .clear_sets()
                     .clear_sequences()
