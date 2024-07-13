@@ -108,6 +108,8 @@ pub fn update_sequences_list(model_ptr: AppModelPtr, model: &AppModel, view: &As
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DrumMachineView {
+    tempo_spinbutton: gtk::SpinButton,
+    swing_spinbutton: gtk::SpinButton,
     play_button: gtk::Button,
     stop_button: gtk::Button,
     back_button: gtk::Button,
@@ -197,6 +199,12 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
 
     let mut model = model_ptr.take().unwrap();
     model = model.set_drum_machine_view(Some(DrumMachineView {
+        tempo_spinbutton: objects
+            .object::<gtk::SpinButton>("sequences-editor-tempo-entry")
+            .unwrap(),
+        swing_spinbutton: objects
+            .object::<gtk::SpinButton>("sequences-editor-swing-entry")
+            .unwrap(),
         play_button: objects
             .object::<gtk::Button>("sequences-editor-play-button")
             .unwrap(),
@@ -223,6 +231,14 @@ pub fn update_drum_machine_view(model: &AppModel) {
     let drum_machine_view = model.drum_machine_view().unwrap();
 
     assert!(drum_machine_model.activated_pad() < 16);
+
+    drum_machine_view
+        .tempo_spinbutton
+        .set_value(drum_machine_model.sequence().timespec().bpm.get() as f64);
+
+    drum_machine_view
+        .swing_spinbutton
+        .set_value(drum_machine_model.sequence().timespec().swing.get() * 100.0);
 
     drum_machine_view.play_button.remove_css_class("activated");
     drum_machine_view.stop_button.remove_css_class("activated");
