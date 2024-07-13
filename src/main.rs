@@ -24,7 +24,7 @@ use std::{
 use anyhow::anyhow;
 use audiothread::{AudioSpec, NonZeroNumFrames, SourceMatcher, SourceType};
 use config::SamplePlaybackBehavior;
-use model::{DrumMachineModel, ExportState};
+use model::ExportState;
 use uuid::Uuid;
 
 use gtk::{
@@ -603,31 +603,15 @@ fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow
 
         AppMessage::ExportJobDisconnected => Ok(model.set_export_job_rx(None)),
 
-        // TODO: "stop" the drum machine instead of shutting it down
         AppMessage::StopAllSoundButtonClicked => {
-            if model.is_drum_machine_render_thread_active() {
-                match model
-                    .drum_machine_render_thread_send(drumkit_render_thread::Message::Shutdown)
-                {
-                    Ok(_) => (),
-                    Err(e) => log::log!(log::Level::Error, "Stop all sounds error: {e}"),
-                }
-
-                // TODO: find a good way to avoid having to sleep
-                // give drum machine thread some time to shut down gracefully
-                std::thread::sleep(std::time::Duration::from_millis(250));
-            }
-
-            match model.audiothread_send(audiothread::Message::DropAll) {
+            match model.audiothread_send(audiothread::Message::DropAllMatching(
+                SourceMatcher::default().match_type(SourceType::SymphoniaSource),
+            )) {
                 Ok(_) => (),
                 Err(e) => log::log!(log::Level::Error, "Stop all sounds error: {e}"),
             }
 
-            if model.is_drum_machine_render_thread_active() {
-                Ok(model.set_drum_machine_model(DrumMachineModel::new(None, None)))
-            } else {
-                Ok(model)
-            }
+            model.drum_machine_stop()
         }
 
         AppMessage::DrumMachineTempoChanged(tempo) => {

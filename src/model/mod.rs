@@ -101,14 +101,6 @@ impl AppModel {
             .map_err(|e| anyhow!("Audiothread send error: {e}"))
     }
 
-    // TODO: replace this with something more abstract
-    pub fn set_drum_machine_model(self, drum_machine: DrumMachineModel) -> AppModel {
-        AppModel {
-            drum_machine,
-            ..self
-        }
-    }
-
     pub fn drum_machine_model(&self) -> &DrumMachineModel {
         &self.drum_machine
     }
