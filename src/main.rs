@@ -937,7 +937,7 @@ fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &Asam
     }
 
     if old.sequences_map() != new.sequences_map() {
-        update_sequences_list(model_ptr.clone(), &new, &view);
+        update_sequences_list(model_ptr.clone(), &new, view);
     }
 
     if old.drum_machine_model() != new.drum_machine_model() {

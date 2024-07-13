@@ -37,7 +37,7 @@ pub const LABELS: [DrumkitLabel; 16] = [
 ];
 
 pub fn setup_sequences_page(model_ptr: AppModelPtr, view: &AsampoView) {
-    setup_drum_machine_view(model_ptr.clone(), &view);
+    setup_drum_machine_view(model_ptr.clone(), view);
 
     view.sequences_add_sequence_button.connect_clicked(
         clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
@@ -46,7 +46,7 @@ pub fn setup_sequences_page(model_ptr: AppModelPtr, view: &AsampoView) {
     );
 
     model_ptr.with_model(|model| {
-        update_sequences_list(model_ptr.clone(), &model, &view);
+        update_sequences_list(model_ptr.clone(), &model, view);
         update_drum_machine_view(&model);
         model
     });
