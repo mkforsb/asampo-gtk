@@ -2,16 +2,6 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-mod config;
-mod configfile;
-mod ext;
-mod model;
-mod savefile;
-mod testutils;
-mod timers;
-mod util;
-mod view;
-
 use std::{
     cell::Cell,
     io::BufReader,
@@ -23,8 +13,6 @@ use std::{
 
 use anyhow::anyhow;
 use audiothread::{AudioSpec, NonZeroNumFrames, SourceMatcher, SourceType};
-use config::SamplePlaybackBehavior;
-use model::ExportState;
 use uuid::Uuid;
 
 use gtk::{
@@ -47,11 +35,21 @@ use libasampo::{
     },
 };
 
+mod config;
+mod configfile;
+mod ext;
+mod model;
+mod savefile;
+mod testutils;
+mod timers;
+mod util;
+mod view;
+
 use crate::{
-    config::AppConfig,
+    config::{AppConfig, SamplePlaybackBehavior},
     configfile::ConfigFile,
     ext::WithModel,
-    model::{AppModel, AppModelPtr, DrumMachinePlaybackState, Mirroring},
+    model::{AppModel, AppModelPtr, DrumMachinePlaybackState, ExportState, Mirroring},
     util::gtk_find_child_by_builder_id,
     view::{
         dialogs,
