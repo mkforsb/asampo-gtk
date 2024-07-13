@@ -11,8 +11,22 @@ use crate::{
     model::{AppModel, AppModelPtr},
     update, util,
     view::AsampoView,
-    AppMessage, InputDialogContext, SelectFolderDialogContext,
+    AppMessage,
 };
+
+#[derive(Debug, Clone)]
+pub enum InputDialogContext {
+    AddToSampleset,
+    CreateSampleSet,
+    CreateEmptySequence,
+    SaveDrumMachineSequenceAs,
+}
+
+#[derive(Debug, Clone)]
+pub enum SelectFolderDialogContext {
+    BrowseForFilesystemSource,
+    BrowseForExportTargetDirectory,
+}
 
 pub fn choose_folder(
     model_ptr: AppModelPtr,

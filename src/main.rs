@@ -46,7 +46,6 @@ use libasampo::{
         drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent, NoteLength, TimeSpec,
     },
 };
-use view::{dialogs::ButtonSpec, sequences::update_sequences_list};
 
 use crate::{
     config::AppConfig,
@@ -56,8 +55,10 @@ use crate::{
     util::gtk_find_child_by_builder_id,
     view::{
         dialogs,
+        dialogs::{ButtonSpec, InputDialogContext, SelectFolderDialogContext},
         menus::build_actions,
         samples::{setup_samples_page, update_samples_sidebar},
+        sequences::update_sequences_list,
         sequences::{
             setup_sequences_page, update_drum_machine_view, LABELS as DRUM_MACHINE_VIEW_LABELS,
         },
@@ -90,20 +91,6 @@ impl std::fmt::Display for ErrorWithEffect {
 }
 
 impl std::error::Error for ErrorWithEffect {}
-
-#[derive(Debug, Clone)]
-enum InputDialogContext {
-    AddToSampleset,
-    CreateSampleSet,
-    CreateEmptySequence,
-    SaveDrumMachineSequenceAs,
-}
-
-#[derive(Debug, Clone)]
-enum SelectFolderDialogContext {
-    BrowseForFilesystemSource,
-    BrowseForExportTargetDirectory,
-}
 
 #[derive(Debug)]
 enum AppMessage {
