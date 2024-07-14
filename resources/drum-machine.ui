@@ -96,27 +96,57 @@
         <property name="column-spacing">10</property>
         <property name="selection-mode">none</property>
         <child>
-          <object class="GtkButton" id="sequences-editor-save-seq-button">
-            <property name="name">sequences-editor-save-seq-button</property>
-            <property name="label">Save sequence</property>
+          <object class="GtkPopover" id="-sequences-editor-seq-popover">
+            <property name="name">sequences-editor-seq-popover</property>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkButton" id="sequences-editor-save-seq-button">
+                    <property name="name">sequences-editor-save-seq-button</property>
+                    <property name="label">Save</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="sequences-editor-save-seq-as-button">
+                    <property name="name">sequences-editor-save-seq-as-button</property>
+                    <property name="label">Save As ..</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <object class="GtkMenuButton" id="sequences-editor-seq-popover-button">
+            <property name="name">sequences-editor-seq-popover-button</property>
+            <property name="label">Sequence</property>
+            <property name="popover">-sequences-editor-seq-popover</property>
           </object>
         </child>
         <child>
-          <object class="GtkButton" id="sequences-editor-save-seq-as-button">
-            <property name="name">sequences-editor-save-seq-as-button</property>
-            <property name="label">Save sequence as ..</property>
+          <object class="GtkPopover" id="-sequences-editor-set-popover">
+            <property name="name">sequences-editor-set-popover</property>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <child>
+                  <object class="GtkButton" id="sequences-editor-save-set-button">
+                    <property name="name">sequences-editor-save-set-button</property>
+                    <property name="label">Save</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="sequences-editor-save-set-as-button">
+                    <property name="name">sequences-editor-save-set-as-button</property>
+                    <property name="label">Save As ..</property>
+                  </object>
+                </child>
+              </object>
+            </child>
           </object>
-        </child>
-        <child>
-          <object class="GtkButton" id="sequences-editor-save-set-button">
-            <property name="name">sequences-editor-save-set-button</property>
-            <property name="label">Save sample set</property>
-          </object>
-        </child>
-        <child>
-          <object class="GtkButton" id="sequences-editor-save-set-as-button">
-            <property name="name">sequences-editor-save-set-as-button</property>
-            <property name="label">Save sample set as ..</property>
+          <object class="GtkMenuButton" id="sequences-editor-set-popover-button">
+            <property name="name">sequences-editor-set-popover-button</property>
+            <property name="label">Sample set</property>
+            <property name="popover">-sequences-editor-set-popover</property>
           </object>
         </child>
       </object>

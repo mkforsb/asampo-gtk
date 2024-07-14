@@ -119,6 +119,7 @@ pub struct DrumMachineView {
     play_button: gtk::Button,
     stop_button: gtk::Button,
     back_button: gtk::Button,
+    save_seq_button: gtk::Button,
     pad_buttons: [gtk::Button; 16],
     part_buttons: [gtk::Button; 4],
     step_buttons: [gtk::Button; 16],
@@ -220,6 +221,9 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
         back_button: objects
             .object::<gtk::Button>("sequences-editor-back-button")
             .unwrap(),
+        save_seq_button: objects
+            .object::<gtk::Button>("sequences-editor-save-seq-button")
+            .unwrap(),
         pad_buttons,
         part_buttons,
         step_buttons,
@@ -269,6 +273,17 @@ pub fn update_drum_machine_view(model: &AppModel) {
                 .play_button
                 .set_icon_name("media-playback-start-symbolic");
         }
+    }
+
+    if drum_machine_model.loaded_sequence().is_some() {
+        drum_machine_view.save_seq_button.set_label(format!(
+            "Save to '{}'",
+            drum_machine_model.loaded_sequence().unwrap().name()
+        ).as_str());
+
+        drum_machine_view.save_seq_button.set_sensitive(true);
+    } else {
+        drum_machine_view.save_seq_button.set_sensitive(false);
     }
 
     if drum_machine_model.is_waiting()
