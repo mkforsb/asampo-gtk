@@ -293,9 +293,13 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             ),
 
             InputDialogContext::SaveDrumMachineSequenceAs => {
-                let mut sequence = model.drum_machine_model().sequence().clone();
-                sequence.set_name(text);
-                model.add_sequence(DrumkitSequence::new_from(&sequence))
+                let mut sequence = DrumkitSequence::new_from(model.drum_machine_model().sequence());
+                sequence.set_name(text.clone());
+
+                model
+                    .add_sequence(sequence.clone())?
+                    .swap_drum_machine_sequence(sequence.clone())?
+                    .set_selected_sequence(Some(sequence.uuid()))
             }
         },
 
@@ -465,7 +469,15 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             Ok(model)
         }
 
-        AppMessage::DrumMachineSaveSequenceClicked => Ok(model),
+        AppMessage::DrumMachineSaveSequenceClicked => {
+            let sequence = model.drum_machine_model().sequence().clone();
+
+            model
+                .remove_sequence(sequence.uuid())?
+                .add_sequence(sequence)?
+                .commit_drum_machine_sequence()
+        }
+
         AppMessage::DrumMachineSaveSequenceAsClicked => {
             Ok(model.signal_sequence_save_as_show_dialog())
         }

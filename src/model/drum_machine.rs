@@ -165,6 +165,69 @@ impl DrumMachineModel {
             .is_some_and(|seq| *seq != self.sequence)
     }
 
+    /// Reset the change-tracking for the loaded sequence.
+    ///
+    /// Intended to be called after the sequence has been saved externally, in order to
+    /// clear any 'changed' status.
+    pub fn commit_sequence(self) -> AnyhowResult<DrumMachineModel> {
+        if self.loaded_sequence.is_some() {
+            Ok(DrumMachineModel {
+                loaded_sequence: Some(self.sequence.clone()),
+                ..self
+            })
+        } else {
+            Err(anyhow!("No sequence loaded"))
+        }
+    }
+
+    fn assert_valid_swap(a: &DrumkitSequence, b: &DrumkitSequence) {
+        assert_eq!(a.len(), b.len(), "Invalid swap");
+        assert_eq!(a.timespec(), b.timespec(), "Invalid swap");
+        assert_eq!(a.step_base_len(), a.step_base_len(), "Invalid swap");
+
+        let sr = libasampo::sequences::Samplerate::try_from(44100).unwrap();
+
+        for i in 0..a.len() {
+            if a.step(i, sr).is_some() {
+                assert!(b.step(i, sr).is_some(), "Invalid swap");
+
+                let astep = a.step(i, sr).unwrap();
+                let bstep = b.step(i, sr).unwrap();
+
+                assert_eq!(astep.triggers(), bstep.triggers(), "Invalid swap");
+            } else {
+                assert!(b.step(i, sr).is_none(), "Invalid swap");
+            }
+        }
+    }
+
+    /// Swap out the drum machine sequence for an essentially identical sequence.
+    ///
+    /// Intended to be called after the sequence has been saved-as externally, in order
+    /// to potentially update the name and UUID of the sequence (which may have changed
+    /// due to the semantics of save-as), as well as to clear any 'changed' status.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if the given sequence differs from the current drum
+    /// machine sequence in any way other than name and/or UUID.
+    pub fn swap_to_saved_sequence(
+        self,
+        saved_seq: DrumkitSequence,
+    ) -> AnyhowResult<DrumMachineModel> {
+        if self.loaded_sequence.is_some() {
+            Self::assert_valid_swap(&self.sequence, &saved_seq);
+
+            Ok(DrumMachineModel {
+                loaded_sequence: Some(saved_seq.clone()),
+                sequence: saved_seq,
+                ..self
+            })
+        } else {
+            Err(anyhow!("No sequence loaded"))
+        }
+    }
+
     pub fn set_sequence(
         self,
         sequence: DrumkitSequence,

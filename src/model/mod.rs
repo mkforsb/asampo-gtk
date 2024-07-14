@@ -420,6 +420,11 @@ impl AppModel {
     delegate!(drum_machine, load_sequence(sequence: DrumkitSequence)
         as load_drum_machine_sequence -> Result);
 
+    delegate!(drum_machine, commit_sequence() as commit_drum_machine_sequence -> Result);
+
+    delegate!(drum_machine, swap_to_saved_sequence(saved_seq: DrumkitSequence)
+        as swap_drum_machine_sequence -> Result);
+
     delegate!(
         drum_machine,
         set_sequence(sequence: DrumkitSequence, mirroring: Mirroring)
