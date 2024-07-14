@@ -4,7 +4,7 @@
 
 use gtk::{
     glib::clone,
-    prelude::{ButtonExt, EventControllerExt, FrameExt, ListBoxRowExt, WidgetExt},
+    prelude::{ButtonExt, EventControllerExt, FrameExt, ListBoxRowExt, PopoverExt, WidgetExt},
     Button, EventControllerKey, GestureClick, SpinButton,
 };
 use libasampo::{samplesets::DrumkitLabel, sequences::StepSequenceOps};
@@ -170,6 +170,17 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
         AppMessage::DrumMachineSaveSampleSetClicked);
     connect!(button "sequences-editor-save-set-as-button",
         AppMessage::DrumMachineSaveSampleSetAsClicked);
+
+    let seq_popover = obj!(gtk::Popover, "-sequences-editor-seq-popover");
+    let set_popover = obj!(gtk::Popover, "-sequences-editor-set-popover");
+
+    obj!(Button, "sequences-editor-save-seq-button").connect_clicked(move |_: &gtk::Button| {
+        seq_popover.popdown();
+    });
+
+    obj!(Button, "sequences-editor-save-set-button").connect_clicked(move |_: &gtk::Button| {
+        set_popover.popdown();
+    });
 
     let mut pad_buttons: Vec<Button> = vec![];
     let mut part_buttons: Vec<Button> = vec![];
