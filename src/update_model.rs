@@ -298,7 +298,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
                 model
                     .add_sequence(sequence.clone())?
-                    .swap_drum_machine_sequence(sequence.clone())?
+                    .swap_drum_machine_sequence(sequence.clone())
                     .set_selected_sequence(Some(sequence.uuid()))
             }
         },

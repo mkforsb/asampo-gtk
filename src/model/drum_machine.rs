@@ -211,20 +211,13 @@ impl DrumMachineModel {
     ///
     /// This method will panic if the given sequence differs from the current drum
     /// machine sequence in any way other than name and/or UUID.
-    pub fn swap_to_saved_sequence(
-        self,
-        saved_seq: DrumkitSequence,
-    ) -> AnyhowResult<DrumMachineModel> {
-        if self.loaded_sequence.is_some() {
-            Self::assert_valid_swap(&self.sequence, &saved_seq);
+    pub fn swap_to_saved_sequence(self, saved_seq: DrumkitSequence) -> DrumMachineModel {
+        Self::assert_valid_swap(&self.sequence, &saved_seq);
 
-            Ok(DrumMachineModel {
-                loaded_sequence: Some(saved_seq.clone()),
-                sequence: saved_seq,
-                ..self
-            })
-        } else {
-            Err(anyhow!("No sequence loaded"))
+        DrumMachineModel {
+            loaded_sequence: Some(saved_seq.clone()),
+            sequence: saved_seq,
+            ..self
         }
     }
 
