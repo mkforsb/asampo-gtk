@@ -472,9 +472,15 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::DrumMachineSaveSequenceClicked => {
             let sequence = model.drum_machine_model().sequence().clone();
 
+            let position = model
+                .sequences_list()
+                .iter()
+                .position(|seq| seq.uuid() == sequence.uuid())
+                .ok_or(anyhow!("Sequence not found: UUID not present"))?;
+
             model
                 .remove_sequence(sequence.uuid())?
-                .add_sequence(sequence)?
+                .insert_sequence(sequence, position)?
                 .commit_drum_machine_sequence()
         }
 

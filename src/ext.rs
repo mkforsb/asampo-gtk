@@ -102,6 +102,7 @@ pub trait ClonedVecExt<T> {
         Self: Sized;
 
     fn clone_and_push(&self, item: T) -> Self;
+    fn clone_and_insert(&self, item: T, position: usize) -> Self;
 }
 
 impl<T> ClonedVecExt<T> for Vec<T>
@@ -124,6 +125,16 @@ where
         let mut result = self.clone();
         result.push(item);
         result
+    }
+
+    fn clone_and_insert(&self, item: T, position: usize) -> Self {
+        if position > self.len() {
+            self.clone_and_push(item)
+        } else {
+            let mut result = self.clone();
+            result.insert(position, item);
+            result
+        }
     }
 }
 

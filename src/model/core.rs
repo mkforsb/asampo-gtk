@@ -473,6 +473,24 @@ impl CoreModel {
         }
     }
 
+    pub fn insert_sequence(
+        self,
+        sequence: DrumkitSequence,
+        position: usize,
+    ) -> AnyhowResult<CoreModel> {
+        if self.sequences.contains_key(&sequence.uuid()) {
+            Err(anyhow!("Failed to insert sequence: UUID in use"))
+        } else {
+            let uuid = sequence.uuid();
+
+            Ok(CoreModel {
+                sequences: self.sequences.clone_and_insert(uuid, sequence),
+                sequences_order: self.sequences_order.clone_and_insert(uuid, position),
+                ..self
+            })
+        }
+    }
+
     pub fn set_selected_sequence(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<CoreModel> {
         if let Some(false) = maybe_uuid.map(|uuid| self.sequences.contains_key(&uuid)) {
             Err(anyhow!("Failed to set selected sequence: UUID not present"))

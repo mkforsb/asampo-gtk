@@ -322,6 +322,7 @@ impl AppModel {
     delegate!(core, sequences_list() -> Vec<&DrumkitSequence>);
     delegate!(core, sequences_map() -> &HashMap<Uuid, DrumkitSequence>);
     delegate!(core, add_sequence(seq: DrumkitSequence) -> Result);
+    delegate!(core, insert_sequence(seq: DrumkitSequence, position: usize) -> Result);
     delegate!(core, set_selected_sequence(maybe_uuid: Option<Uuid>) -> Result);
     delegate!(core, selected_sequence() -> Option<Uuid>);
     delegate!(core, remove_sequence(uuid: Uuid) -> Result);
