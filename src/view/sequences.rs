@@ -154,9 +154,9 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
     }
 
     connect!(spinner "sequences-editor-tempo-entry",
-        x => AppMessage::DrumMachineTempoChanged(x.value_as_int() as u16));
+        spinbut => AppMessage::DrumMachineTempoChanged(spinbut.value_as_int() as u16));
     connect!(spinner "sequences-editor-swing-entry",
-        x => AppMessage::DrumMachineSwingChanged(x.value_as_int() as u32));
+        spinbut => AppMessage::DrumMachineSwingChanged(spinbut.value_as_int() as u32));
 
     connect!(button "sequences-editor-play-button", AppMessage::DrumMachinePlayClicked);
     connect!(button "sequences-editor-stop-button", AppMessage::DrumMachineStopClicked);
