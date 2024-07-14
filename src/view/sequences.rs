@@ -276,10 +276,13 @@ pub fn update_drum_machine_view(model: &AppModel) {
     }
 
     if drum_machine_model.loaded_sequence().is_some() {
-        drum_machine_view.save_seq_button.set_label(format!(
-            "Save to '{}'",
-            drum_machine_model.loaded_sequence().unwrap().name()
-        ).as_str());
+        drum_machine_view.save_seq_button.set_label(
+            format!(
+                "Save to '{}'",
+                drum_machine_model.loaded_sequence().unwrap().name()
+            )
+            .as_str(),
+        );
 
         drum_machine_view.save_seq_button.set_sensitive(true);
     } else {
