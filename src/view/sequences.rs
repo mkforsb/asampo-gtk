@@ -5,7 +5,7 @@
 use gtk::{
     glib::clone,
     prelude::{ButtonExt, EventControllerExt, FrameExt, ListBoxRowExt, WidgetExt},
-    EventControllerKey, GestureClick,
+    Button, EventControllerKey, GestureClick, SpinButton,
 };
 use libasampo::{samplesets::DrumkitLabel, sequences::StepSequenceOps};
 
@@ -114,15 +114,15 @@ pub fn update_sequences_list(model_ptr: AppModelPtr, model: &AppModel, view: &As
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DrumMachineView {
-    tempo_spinbutton: gtk::SpinButton,
-    swing_spinbutton: gtk::SpinButton,
-    play_button: gtk::Button,
-    stop_button: gtk::Button,
-    back_button: gtk::Button,
-    save_seq_button: gtk::Button,
-    pad_buttons: [gtk::Button; 16],
-    part_buttons: [gtk::Button; 4],
-    step_buttons: [gtk::Button; 16],
+    tempo_spinbutton: SpinButton,
+    swing_spinbutton: SpinButton,
+    play_button: Button,
+    stop_button: Button,
+    back_button: Button,
+    save_seq_button: Button,
+    pad_buttons: [Button; 16],
+    part_buttons: [Button; 4],
+    step_buttons: [Button; 16],
 }
 
 fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
@@ -130,32 +130,39 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
 
     macro_rules! connect {
         (spinner $name:expr, $x:ident => $message:expr) => {
-            objects.object::<gtk::SpinButton>($name).unwrap().connect_value_changed(
-                clone!(@strong model_ptr, @strong view => move |$x: &gtk::SpinButton| {
+            objects.object::<SpinButton>($name).unwrap().connect_value_changed(
+                clone!(@strong model_ptr, @strong view => move |$x: &SpinButton| {
                     update(model_ptr.clone(), &view, $message);
                 })
             );
         };
 
         (button $name:expr, $message:expr) => {
-            objects.object::<gtk::Button>($name).unwrap().connect_clicked(
-                clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
+            objects.object::<Button>($name).unwrap().connect_clicked(
+                clone!(@strong model_ptr, @strong view => move |_: &Button| {
                     update(model_ptr.clone(), &view, $message);
                 })
             );
         };
     }
 
+    macro_rules! obj {
+        ($typ:ty, $name:expr) => {
+            objects.object::<$typ>($name).unwrap()
+        };
+    }
+
     connect!(spinner "sequences-editor-tempo-entry",
         x => AppMessage::DrumMachineTempoChanged(x.value_as_int() as u16));
-
     connect!(spinner "sequences-editor-swing-entry",
         x => AppMessage::DrumMachineSwingChanged(x.value_as_int() as u32));
 
     connect!(button "sequences-editor-play-button", AppMessage::DrumMachinePlayClicked);
     connect!(button "sequences-editor-stop-button", AppMessage::DrumMachineStopClicked);
     connect!(button "sequences-editor-back-button", AppMessage::DrumMachineBackClicked);
-    connect!(button "sequences-editor-save-seq-button", AppMessage::DrumMachineSaveSequenceClicked);
+
+    connect!(button "sequences-editor-save-seq-button",
+        AppMessage::DrumMachineSaveSequenceClicked);
     connect!(button "sequences-editor-save-seq-as-button",
         AppMessage::DrumMachineSaveSequenceAsClicked);
     connect!(button "sequences-editor-save-set-button",
@@ -163,67 +170,43 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
     connect!(button "sequences-editor-save-set-as-button",
         AppMessage::DrumMachineSaveSampleSetAsClicked);
 
-    let mut pad_buttons: Vec<gtk::Button> = vec![];
-    let mut part_buttons: Vec<gtk::Button> = vec![];
-    let mut step_buttons: Vec<gtk::Button> = vec![];
+    let mut pad_buttons: Vec<Button> = vec![];
+    let mut part_buttons: Vec<Button> = vec![];
+    let mut step_buttons: Vec<Button> = vec![];
 
     for (index, _label) in LABELS.into_iter().enumerate() {
         connect!(button format!("sequences-editor-pad-{}", index),
             AppMessage::DrumMachinePadClicked(index));
 
-        pad_buttons.push(
-            objects
-                .object::<gtk::Button>(format!("sequences-editor-pad-{}", index))
-                .unwrap(),
-        );
+        pad_buttons.push(obj!(Button, format!("sequences-editor-pad-{}", index)));
     }
 
     for index in 0..4 {
         connect!(button format!("sequences-editor-part-{}", index),
             AppMessage::DrumMachinePartClicked(index));
 
-        part_buttons.push(
-            objects
-                .object::<gtk::Button>(format!("sequences-editor-part-{}", index))
-                .unwrap(),
-        );
+        part_buttons.push(obj!(Button, format!("sequences-editor-part-{}", index)));
     }
 
     for index in 0..16 {
         connect!(button format!("sequences-editor-step-{}", index),
             AppMessage::DrumMachineStepClicked(index));
 
-        step_buttons.push(
-            objects
-                .object::<gtk::Button>(format!("sequences-editor-step-{}", index))
-                .unwrap(),
-        );
+        step_buttons.push(obj!(Button, format!("sequences-editor-step-{}", index)));
     }
 
-    let pad_buttons: [gtk::Button; 16] = pad_buttons.try_into().unwrap();
-    let part_buttons: [gtk::Button; 4] = part_buttons.try_into().unwrap();
-    let step_buttons: [gtk::Button; 16] = step_buttons.try_into().unwrap();
+    let pad_buttons: [Button; 16] = pad_buttons.try_into().unwrap();
+    let part_buttons: [Button; 4] = part_buttons.try_into().unwrap();
+    let step_buttons: [Button; 16] = step_buttons.try_into().unwrap();
 
     let mut model = model_ptr.take().unwrap();
     model = model.set_drum_machine_view(Some(DrumMachineView {
-        tempo_spinbutton: objects
-            .object::<gtk::SpinButton>("sequences-editor-tempo-entry")
-            .unwrap(),
-        swing_spinbutton: objects
-            .object::<gtk::SpinButton>("sequences-editor-swing-entry")
-            .unwrap(),
-        play_button: objects
-            .object::<gtk::Button>("sequences-editor-play-button")
-            .unwrap(),
-        stop_button: objects
-            .object::<gtk::Button>("sequences-editor-stop-button")
-            .unwrap(),
-        back_button: objects
-            .object::<gtk::Button>("sequences-editor-back-button")
-            .unwrap(),
-        save_seq_button: objects
-            .object::<gtk::Button>("sequences-editor-save-seq-button")
-            .unwrap(),
+        tempo_spinbutton: obj!(SpinButton, "sequences-editor-tempo-entry"),
+        swing_spinbutton: obj!(SpinButton, "sequences-editor-swing-entry"),
+        play_button: obj!(Button, "sequences-editor-play-button"),
+        stop_button: obj!(Button, "sequences-editor-stop-button"),
+        back_button: obj!(Button, "sequences-editor-back-button"),
+        save_seq_button: obj!(Button, "sequences-editor-save-seq-button"),
         pad_buttons,
         part_buttons,
         step_buttons,
