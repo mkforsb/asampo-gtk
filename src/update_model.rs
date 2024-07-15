@@ -540,7 +540,40 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::DrumMachineSaveSampleSetClicked => Ok(model),
         AppMessage::DrumMachineSaveSampleSetAsClicked => Ok(model),
         AppMessage::DrumMachineClearSampleSetClicked => Ok(model),
-        AppMessage::DrumMachinePadClicked(n) => model.set_activated_drum_machine_pad(n),
+
+        AppMessage::DrumMachinePadClicked(n) => {
+            let label = DRUM_MACHINE_VIEW_LABELS[n];
+
+            let labelling = match model.drum_machine_sampleset().labelling() {
+                Some(SampleSetLabelling::DrumkitLabelling(labelling)) => labelling,
+                _ => unimplemented!(),
+            };
+
+            let samples = model.drum_machine_sampleset().list();
+
+            let sample = samples
+                .iter()
+                .find(|sample| labelling.get(sample.uri()).is_some_and(|val| *val == label));
+
+            if let Some(sample) = sample {
+                let stream = model
+                    .source(
+                        *sample
+                            .source_uuid()
+                            .ok_or(anyhow!("Sample missing source UUID"))?,
+                    )?
+                    .stream(sample)?;
+
+                model
+                    .audiothread_send(audiothread::Message::PlaySymphoniaSource(
+                        audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
+                    ))
+                    .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
+            }
+
+            model.set_activated_drum_machine_pad(n)
+        }
+
         AppMessage::DrumMachinePartClicked(n) => model.set_activated_drum_machine_part(n),
         AppMessage::DrumMachineStepClicked(n) => {
             let amp = 0.5f32;
