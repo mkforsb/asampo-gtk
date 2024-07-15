@@ -306,6 +306,10 @@ impl DrumMachineModel {
         })
     }
 
+    pub fn sampleset(&self) -> &SampleSet {
+        &self.sampleset
+    }
+
     pub fn set_tempo(self, bpm: u16, mirroring: Mirroring) -> AnyhowResult<DrumMachineModel> {
         if mirroring == Mirroring::Mirror {
             self.render_thread_send(drumkit_render_thread::Message::SetTempo(bpm.try_into()?))?;

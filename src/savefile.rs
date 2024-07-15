@@ -8,7 +8,7 @@ use anyhow::anyhow;
 use libasampo::{
     errors::Error as LaError,
     samplesets::SampleSet as DomSampleSet,
-    sequences::DrumkitSequence,
+    sequences::{DrumkitSequence, StepSequenceOps},
     serialize::{
         SampleSet as SerSampleSet, Sequence as SerSequence, Source as SerSource, TryFromDomain,
         TryIntoDomain,
@@ -16,6 +16,7 @@ use libasampo::{
     sources::Source as DomSource,
 };
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 use crate::model::AppModel;
 
@@ -26,6 +27,10 @@ pub struct SavefileV1 {
     sources: Vec<SerSource>,
     samplesets: Vec<SerSampleSet>,
     sequences: Vec<SerSequence>,
+    drum_machine_sequence: SerSequence,
+    drum_machine_loaded_sequence: Option<Uuid>,
+    drum_machine_sampleset: SerSampleSet,
+    drum_machine_loaded_sampleset: Option<Uuid>,
 }
 
 impl SavefileV1 {
@@ -48,6 +53,11 @@ impl SavefileV1 {
                 .iter()
                 .map(|seq| SerSequence::try_from_domain(seq))
                 .collect::<Result<Vec<SerSequence>, LaError>>()?,
+
+            drum_machine_sequence: SerSequence::try_from_domain(model.drum_machine_sequence())?,
+            drum_machine_loaded_sequence: model.drum_machine_loaded_sequence().map(|s| s.uuid()),
+            drum_machine_sampleset: SerSampleSet::try_from_domain(model.drum_machine_sampleset())?,
+            drum_machine_loaded_sampleset: None,
         })
     }
 
@@ -82,6 +92,18 @@ impl SavefileV1 {
                     .map_err(|e| anyhow!("Failed to deserialize sequence: {e}"))
             })
             .collect()
+    }
+
+    pub fn drum_machine_sequence_domained(&self) -> AnyhowResult<DrumkitSequence> {
+        Ok(self.drum_machine_sequence.clone().try_into_domain()?)
+    }
+
+    pub fn drum_machine_loaded_sequence(&self) -> Option<Uuid> {
+        self.drum_machine_loaded_sequence
+    }
+
+    pub fn drum_machine_sampleset_domained(&self) -> AnyhowResult<DomSampleSet> {
+        Ok(self.drum_machine_sampleset.clone().try_into_domain()?)
     }
 }
 
@@ -132,6 +154,24 @@ impl Savefile {
     pub fn sequences_domained(&self) -> AnyhowResult<Vec<DrumkitSequence>> {
         match self {
             Savefile::V1(sf) => sf.sequences_domained(),
+        }
+    }
+
+    pub fn drum_machine_sequence_domained(&self) -> AnyhowResult<DrumkitSequence> {
+        match self {
+            Savefile::V1(sf) => sf.drum_machine_sequence_domained(),
+        }
+    }
+
+    pub fn drum_machine_loaded_sequence(&self) -> Option<Uuid> {
+        match self {
+            Savefile::V1(sf) => sf.drum_machine_loaded_sequence(),
+        }
+    }
+
+    pub fn drum_machine_sampleset_domained(&self) -> AnyhowResult<DomSampleSet> {
+        match self {
+            Savefile::V1(sf) => sf.drum_machine_sampleset_domained(),
         }
     }
 }

@@ -219,9 +219,7 @@ impl AppModel {
             let uuid = *source.uuid();
             let enabled = source.is_enabled();
 
-            result = result
-                .init_source_sample_count(uuid)?
-                .add_source(source)?;
+            result = result.init_source_sample_count(uuid)?.add_source(source)?;
 
             if enabled {
                 result = result.enable_source(uuid)?;
@@ -433,6 +431,11 @@ impl AppModel {
     delegate!(drum_machine, activated_part() as activated_drum_machine_part -> usize);
 
     delegate!(drum_machine, sequence() as drum_machine_sequence -> &DrumkitSequence);
+
+    delegate!(drum_machine, loaded_sequence()
+        as drum_machine_loaded_sequence -> Option<&DrumkitSequence>);
+
+    delegate!(drum_machine, sampleset() as drum_machine_sampleset -> &SampleSet);
 
     delegate!(drum_machine, load_sequence(sequence: DrumkitSequence)
         as load_drum_machine_sequence -> Result);

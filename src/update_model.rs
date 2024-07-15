@@ -15,7 +15,8 @@ use libasampo::{
     samples::SampleOps,
     samplesets::{
         export::{Conversion, ExportJob, ExportJobMessage},
-        BaseSampleSet, DrumkitLabelling, SampleSet, SampleSetLabelling, SampleSetOps,
+        BaseSampleSet, ConcreteSampleSetLabelling, DrumkitLabelling, SampleSet, SampleSetLabelling,
+        SampleSetOps,
     },
     sequences::{drumkit_render_thread, DrumkitSequence, NoteLength, StepSequenceOps, TimeSpec},
     sources::SourceOps,
@@ -215,14 +216,57 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             log::log!(log::Level::Info, "Loading from {filename}");
 
             match Savefile::load(&filename) {
-                Ok(loaded_savefile) => model
-                    .set_savefile_path(Some(filename))
-                    .clear_sources()
-                    .clear_sets()
-                    .clear_sequences()
-                    .load_sources(loaded_savefile.sources_domained()?)?
-                    .load_sets(loaded_savefile.sets_domained()?)?
-                    .load_sequences(loaded_savefile.sequences_domained()?),
+                Ok(loaded_savefile) => {
+                    let mut result = model
+                        .set_savefile_path(Some(filename))
+                        .clear_sources()
+                        .clear_sets()
+                        .clear_sequences()
+                        .load_sources(loaded_savefile.sources_domained()?)?
+                        .load_sets(loaded_savefile.sets_domained()?)?
+                        .load_sequences(loaded_savefile.sequences_domained()?)?
+                        .set_selected_sequence(loaded_savefile.drum_machine_loaded_sequence())?;
+
+                    if loaded_savefile.drum_machine_loaded_sequence().is_some() {
+                        let sequence = result
+                            .sequence(loaded_savefile.drum_machine_loaded_sequence().unwrap())?
+                            .clone();
+
+                        result = result.load_drum_machine_sequence(sequence)?;
+                    }
+
+                    result = result.set_drum_machine_sequence(
+                        loaded_savefile.drum_machine_sequence_domained()?,
+                        Mirroring::Mirror,
+                    )?;
+
+                    let sampleset = loaded_savefile.drum_machine_sampleset_domained()?;
+
+                    // TODO: implement and use `DrumMachineModel::set_sampleset`
+                    for sample in sampleset.list() {
+                        let source = result
+                            .source(
+                                *sample
+                                    .source_uuid()
+                                    .ok_or(anyhow!("Sample missing source UUID"))?,
+                            )?
+                            .clone();
+
+                        match sampleset.labelling() {
+                            Some(SampleSetLabelling::DrumkitLabelling(labels)) => {
+                                result = result.assign_drum_pad(
+                                    &source,
+                                    sample.clone(),
+                                    *labels.get(sample.uri()).unwrap(),
+                                )?;
+                            }
+
+                            None => unimplemented!(),
+                        }
+                    }
+
+                    Ok(result)
+                }
                 Err(e) => Err(anyhow::Error::new(ErrorWithEffect::AlertDialog {
                     text: "Error loading savefile".to_string(),
                     detail: e.to_string(),
