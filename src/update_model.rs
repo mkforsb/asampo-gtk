@@ -644,20 +644,22 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::LoadSequenceConfirmDialogError(e) => {
             log::log!(log::Level::Error, "{e}");
-            Ok(model)
+            Ok(model.set_main_view_sensitive(true))
         }
 
-        AppMessage::ClearSequenceConfirmDialogOpened => {
-            Ok(model.clear_signal_sequence_clear_show_confirm_dialog())
-        }
+        AppMessage::ClearSequenceConfirmDialogOpened => Ok(model
+            .set_main_view_sensitive(false)
+            .clear_signal_sequence_clear_show_confirm_dialog()),
 
         AppMessage::ClearSequenceConfirmDialogError(e) => {
             log::log!(log::Level::Error, "{e}");
-            Ok(model)
+            Ok(model.set_main_view_sensitive(true))
         }
 
-        AppMessage::ClearSequenceConfirm => Ok(model.clear_drum_machine_sequence()),
+        AppMessage::ClearSequenceConfirm => Ok(model
+            .clear_drum_machine_sequence()
+            .set_main_view_sensitive(true)),
 
-        AppMessage::ClearSequenceCancel => Ok(model),
+        AppMessage::ClearSequenceCancel => Ok(model.set_main_view_sensitive(true)),
     }
 }
