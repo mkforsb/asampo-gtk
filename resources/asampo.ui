@@ -978,7 +978,7 @@
                               </object>
                             </child>
                             <child>
-                              <object class="GtkPopover" id="assign-popover">
+                              <object class="GtkPopover" id="-assign-popover">
                                 <child>
                                   <object class="GtkFlowBox" id="samples-sidebar-assign-button-box">
                                     <property name="name">samples-sidebar-assign-button-box</property>
@@ -1093,7 +1093,7 @@
                                 <property name="label">Assign to</property>
                                 <property name="halign">start</property>
                                 <property name="hexpand">false</property>
-                                <property name="popover">assign-popover</property>
+                                <property name="popover">-assign-popover</property>
                               </object>
                             </child>
                           </object>

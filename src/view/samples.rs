@@ -179,6 +179,9 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
     );
 
     for i in 0..16 {
+        let popover =
+            gtk_find_child_by_builder_id::<gtk::Popover>(view, "-assign-popover").unwrap();
+
         gtk_find_child_by_builder_id::<gtk::Button>(
             view,
             &format!("samples-sidebar-assign-to-pad-button-{i}"),
@@ -187,6 +190,7 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
         .connect_clicked(
             clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
                 update(model_ptr.clone(), &view, AppMessage::AssignSampleToPadClicked(i));
+                popover.popdown();
             }),
         );
     }
