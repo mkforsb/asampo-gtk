@@ -113,6 +113,17 @@
                     <property name="label">Save As ..</property>
                   </object>
                 </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="sequences-editor-clear-seq-button">
+                    <property name="name">sequences-editor-clear-seq-button</property>
+                    <property name="label">Clear</property>
+                  </object>
+                </child>
               </object>
             </child>
           </object>
@@ -138,6 +149,17 @@
                   <object class="GtkButton" id="sequences-editor-save-set-as-button">
                     <property name="name">sequences-editor-save-set-as-button</property>
                     <property name="label">Save As ..</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSeparator">
+                    <property name="orientation">horizontal</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="sequences-editor-clear-set-button">
+                    <property name="name">sequences-editor-clear-set-button</property>
+                    <property name="label">Clear</property>
                   </object>
                 </child>
               </object>

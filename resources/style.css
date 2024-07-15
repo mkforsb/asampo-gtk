@@ -374,6 +374,42 @@ overlay#input-dialog {
   margin: 0.5em;
 }
 
+#sequences-editor-ops-row popover contents {
+  box-shadow: 0em 0em 1.5em #888;
+}
+
+#sequences-editor-ops-row popover separator {
+  margin: 1em;
+}
+
+#sequences-editor-clear-seq-button {
+  border: 2px solid red;
+}
+
+#sequences-editor-clear-seq-button:hover {
+  border: 2px solid red;
+  background: #faa;
+}
+
+#sequences-editor-clear-seq-button:active {
+  border: 2px solid red;
+  background: red;
+}
+
+#sequences-editor-clear-set-button {
+  border: 2px solid red;
+}
+
+#sequences-editor-clear-set-button:hover {
+  border: 2px solid red;
+  background: #faa;
+}
+
+#sequences-editor-clear-set-button:active {
+  border: 2px solid red;
+  background: red;
+}
+
 #sequences-page #sequences-editor-pads {
     margin-left: 2em;
     margin-right: 2em;
