@@ -217,11 +217,15 @@ impl AppModel {
 
         for source in sources {
             let uuid = *source.uuid();
+            let enabled = source.is_enabled();
 
             result = result
                 .init_source_sample_count(uuid)?
-                .add_source(source)?
-                .enable_source(uuid)?;
+                .add_source(source)?;
+
+            if enabled {
+                result = result.enable_source(uuid)?;
+            }
         }
 
         Ok(result)
