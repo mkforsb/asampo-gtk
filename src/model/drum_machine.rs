@@ -82,8 +82,6 @@ impl DrumMachineModel {
         render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
         event_rx: Option<single_value_channel::Receiver<Option<DrumkitSequenceEvent>>>,
     ) -> Self {
-        let empty_sequence = Self::default_sequence();
-
         let mut empty_sampleset = BaseSampleSet::new("Sampleset".to_string());
         empty_sampleset.set_labelling(Some(SampleSetLabelling::DrumkitLabelling(
             DrumkitLabelling::new(),
@@ -96,7 +94,7 @@ impl DrumMachineModel {
             event_rx: event_rx.map(|x| Arc::new(Mutex::new(x))),
             event_latest: None,
             loaded_sequence: None,
-            sequence: empty_sequence,
+            sequence: Self::default_sequence(),
             sampleset: SampleSet::BaseSampleSet(empty_sampleset),
             sources: Vec::new(),
             activated_pad: 8,
@@ -245,12 +243,11 @@ impl DrumMachineModel {
         &self.sequence
     }
 
-    pub fn clear_sequence(self) -> DrumMachineModel {
-        DrumMachineModel {
+    pub fn clear_sequence(self) -> AnyhowResult<DrumMachineModel> {
+        Ok(DrumMachineModel {
             loaded_sequence: None,
-            sequence: Self::default_sequence(),
-            ..self
-        }
+            ..self.set_sequence(Self::default_sequence(), Mirroring::Mirror)?
+        })
     }
 
     pub fn set_tempo(self, bpm: u16, mirroring: Mirroring) -> AnyhowResult<DrumMachineModel> {

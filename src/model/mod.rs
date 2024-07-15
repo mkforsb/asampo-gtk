@@ -434,7 +434,7 @@ impl AppModel {
         set_sequence(sequence: DrumkitSequence, mirroring: Mirroring)
         as set_drum_machine_sequence -> Result);
 
-    delegate!(drum_machine, clear_sequence() as clear_drum_machine_sequence -> Model);
+    delegate!(drum_machine, clear_sequence() as clear_drum_machine_sequence -> Result);
 
     delegate!(drum_machine, set_tempo(bpm: u16, mirroring: Mirroring)
         as set_drum_machine_tempo -> Result);

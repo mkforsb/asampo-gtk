@@ -657,7 +657,8 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         }
 
         AppMessage::ClearSequenceConfirm => Ok(model
-            .clear_drum_machine_sequence()
+            .clear_drum_machine_sequence()?
+            .set_selected_sequence(None)?
             .set_main_view_sensitive(true)),
 
         AppMessage::ClearSequenceCancel => Ok(model.set_main_view_sensitive(true)),
