@@ -96,7 +96,7 @@ dependencies = [
 [[package]]
 name = "audiothread"
 version = "0.0.0"
-source = "git+https://github.com/mkforsb/libasampo#a36ca0666803487d6aeaf3e66f04b290c9df8965"
+source = "git+https://github.com/mkforsb/libasampo#c4f528acf1b9d749154a88d72d72bf322b2090be"
 dependencies = [
  "libpulse-binding",
  "log",
@@ -758,7 +758,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 [[package]]
 name = "libasampo"
 version = "0.0.0"
-source = "git+https://github.com/mkforsb/libasampo#a36ca0666803487d6aeaf3e66f04b290c9df8965"
+source = "git+https://github.com/mkforsb/libasampo#c4f528acf1b9d749154a88d72d72bf322b2090be"
 dependencies = [
  "audiothread",
  "glob",

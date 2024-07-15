@@ -129,7 +129,7 @@ impl DrumMachineModel {
         let default_steps = (0..default.len())
             .map(|i| {
                 default
-                    .step(i, 44100.try_into().unwrap())
+                    .step(i)
                     .map(|info| info.triggers().clone())
                     .unwrap_or(vec![])
             })
@@ -137,7 +137,7 @@ impl DrumMachineModel {
 
         let seq_steps = (0..seq.len())
             .map(|i| {
-                seq.step(i, 44100.try_into().unwrap())
+                seq.step(i)
                     .map(|info| info.triggers().clone())
                     .unwrap_or(vec![])
             })
@@ -247,18 +247,16 @@ impl DrumMachineModel {
         assert_eq!(a.timespec(), b.timespec(), "Invalid swap");
         assert_eq!(a.step_base_len(), a.step_base_len(), "Invalid swap");
 
-        let sr = libasampo::sequences::Samplerate::try_from(44100).unwrap();
-
         for i in 0..a.len() {
-            if a.step(i, sr).is_some() {
-                assert!(b.step(i, sr).is_some(), "Invalid swap");
+            if a.step(i).is_some() {
+                assert!(b.step(i).is_some(), "Invalid swap");
 
-                let astep = a.step(i, sr).unwrap();
-                let bstep = b.step(i, sr).unwrap();
+                let astep = a.step(i).unwrap();
+                let bstep = b.step(i).unwrap();
 
                 assert_eq!(astep.triggers(), bstep.triggers(), "Invalid swap");
             } else {
-                assert!(b.step(i, sr).is_none(), "Invalid swap");
+                assert!(b.step(i).is_none(), "Invalid swap");
             }
         }
     }
