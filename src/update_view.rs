@@ -137,6 +137,21 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
+    if new.is_signalling_sequence_clear_show_confirm_dialog() {
+        dialogs::confirm(
+            model_ptr.clone(),
+            view,
+            "Clear sequence?",
+            "This action cannot be undone",
+            vec![
+                ButtonSpec::new("Ok", || AppMessage::ClearSequenceConfirm),
+                ButtonSpec::new("Cancel", || AppMessage::ClearSequenceCancel).set_as_cancel()
+            ],
+            AppMessage::ClearSequenceConfirmDialogOpened,
+            |e| AppMessage::ClearSequenceConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
+        )
+    }
+
     if new.is_signalling_export_show_dialog() {
         dialogs::sampleset_export(model_ptr.clone(), view, new.clone());
     }

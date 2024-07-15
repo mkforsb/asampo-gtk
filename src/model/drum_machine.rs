@@ -82,9 +82,7 @@ impl DrumMachineModel {
         render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
         event_rx: Option<single_value_channel::Receiver<Option<DrumkitSequenceEvent>>>,
     ) -> Self {
-        let mut empty_sequence =
-            DrumkitSequence::new(TimeSpec::new(120, 4, 4).unwrap(), NoteLength::Sixteenth);
-        empty_sequence.set_len(16);
+        let empty_sequence = Self::default_sequence();
 
         let mut empty_sampleset = BaseSampleSet::new("Sampleset".to_string());
         empty_sampleset.set_labelling(Some(SampleSetLabelling::DrumkitLabelling(
@@ -112,6 +110,14 @@ impl DrumMachineModel {
         let _ = drumkit_render_thread::spawn(audiothread_tx.clone(), render_rx, Some(event_tx));
 
         Self::new(Some(render_tx), Some(event_rx))
+    }
+
+    pub fn default_sequence() -> DrumkitSequence {
+        let mut sequence =
+            DrumkitSequence::new(TimeSpec::new(120, 4, 4).unwrap(), NoteLength::Sixteenth);
+        sequence.set_len(16);
+
+        sequence
     }
 
     pub fn is_render_thread_active(&self) -> bool {
@@ -237,6 +243,14 @@ impl DrumMachineModel {
 
     pub fn sequence(&self) -> &DrumkitSequence {
         &self.sequence
+    }
+
+    pub fn clear_sequence(self) -> DrumMachineModel {
+        DrumMachineModel {
+            loaded_sequence: None,
+            sequence: Self::default_sequence(),
+            ..self
+        }
     }
 
     pub fn set_tempo(self, bpm: u16, mirroring: Mirroring) -> AnyhowResult<DrumMachineModel> {

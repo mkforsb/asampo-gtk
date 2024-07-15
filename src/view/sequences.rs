@@ -166,20 +166,34 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
         AppMessage::DrumMachineSaveSequenceClicked);
     connect!(button "sequences-editor-save-seq-as-button",
         AppMessage::DrumMachineSaveSequenceAsClicked);
+    connect!(button "sequences-editor-clear-seq-button",
+        AppMessage::DrumMachineClearSequenceClicked);
     connect!(button "sequences-editor-save-set-button",
         AppMessage::DrumMachineSaveSampleSetClicked);
     connect!(button "sequences-editor-save-set-as-button",
         AppMessage::DrumMachineSaveSampleSetAsClicked);
+    connect!(button "sequences-editor-clear-set-button",
+        AppMessage::DrumMachineClearSampleSetClicked);
 
-    let seq_popover = obj!(gtk::Popover, "-sequences-editor-seq-popover");
-    let set_popover = obj!(gtk::Popover, "-sequences-editor-set-popover");
+    let seq_popover1 = obj!(gtk::Popover, "-sequences-editor-seq-popover");
+    let seq_popover2 = obj!(gtk::Popover, "-sequences-editor-seq-popover");
+    let set_popover1 = obj!(gtk::Popover, "-sequences-editor-set-popover");
+    let set_popover2 = obj!(gtk::Popover, "-sequences-editor-set-popover");
 
-    obj!(Button, "sequences-editor-save-seq-button").connect_clicked(move |_: &gtk::Button| {
-        seq_popover.popdown();
+    obj!(Button, "sequences-editor-save-seq-button").connect_clicked(move |_: &Button| {
+        seq_popover1.popdown();
     });
 
-    obj!(Button, "sequences-editor-save-set-button").connect_clicked(move |_: &gtk::Button| {
-        set_popover.popdown();
+    obj!(Button, "sequences-editor-clear-seq-button").connect_clicked(move |_: &Button| {
+        seq_popover2.popdown();
+    });
+
+    obj!(Button, "sequences-editor-save-set-button").connect_clicked(move |_: &Button| {
+        set_popover1.popdown();
+    });
+
+    obj!(Button, "sequences-editor-clear-set-button").connect_clicked(move |_: &Button| {
+        set_popover2.popdown();
     });
 
     let mut pad_buttons: Vec<Button> = vec![];

@@ -487,8 +487,13 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::DrumMachineSaveSequenceAsClicked => {
             Ok(model.signal_sequence_save_as_show_dialog())
         }
+
+        AppMessage::DrumMachineClearSequenceClicked => {
+            Ok(model.signal_sequence_clear_show_confirm_dialog())
+        }
         AppMessage::DrumMachineSaveSampleSetClicked => Ok(model),
         AppMessage::DrumMachineSaveSampleSetAsClicked => Ok(model),
+        AppMessage::DrumMachineClearSampleSetClicked => Ok(model),
         AppMessage::DrumMachinePadClicked(n) => Ok(model.set_activated_drum_machine_pad(n)?),
         AppMessage::DrumMachinePartClicked(_n) => Ok(model),
         AppMessage::DrumMachineStepClicked(n) => {
@@ -641,5 +646,18 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             log::log!(log::Level::Error, "{e}");
             Ok(model)
         }
+
+        AppMessage::ClearSequenceConfirmDialogOpened => {
+            Ok(model.clear_signal_sequence_clear_show_confirm_dialog())
+        }
+
+        AppMessage::ClearSequenceConfirmDialogError(e) => {
+            log::log!(log::Level::Error, "{e}");
+            Ok(model)
+        }
+
+        AppMessage::ClearSequenceConfirm => Ok(model.clear_drum_machine_sequence()),
+
+        AppMessage::ClearSequenceCancel => Ok(model),
     }
 }

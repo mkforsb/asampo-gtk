@@ -356,6 +356,7 @@ impl AppModel {
     delegate!(viewflags, signal_create_sequence_show_dialog() -> Model);
     delegate!(viewflags, signal_sequence_save_as_show_dialog() -> Model);
     delegate!(viewflags, signal_sequence_load_show_confirm_dialog() -> Model);
+    delegate!(viewflags, signal_sequence_clear_show_confirm_dialog() -> Model);
     delegate!(viewflags, is_signalling_add_fs_source_begin_browse() -> bool);
     delegate!(viewflags, is_signalling_add_sample_to_set_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_add_set_show_dialog() -> bool);
@@ -364,6 +365,7 @@ impl AppModel {
     delegate!(viewflags, is_signalling_create_sequence_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_sequence_save_as_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_sequence_load_show_confirm_dialog() -> bool);
+    delegate!(viewflags, is_signalling_sequence_clear_show_confirm_dialog() -> bool);
     delegate!(viewflags, clear_signal_add_fs_source_begin_browse() -> Model);
     delegate!(viewflags, clear_signal_add_sample_to_set_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_add_set_show_dialog() -> Model);
@@ -372,6 +374,7 @@ impl AppModel {
     delegate!(viewflags, clear_signal_create_sequence_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_sequence_save_as_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_sequence_load_show_confirm_dialog() -> Model);
+    delegate!(viewflags, clear_signal_sequence_clear_show_confirm_dialog() -> Model);
 
     delegate!(viewvalues, set_latency_approx_label_by_config(config: &AppConfig) -> Model);
     delegate!(viewvalues, latency_approx_label() -> &String);
@@ -430,6 +433,8 @@ impl AppModel {
         drum_machine,
         set_sequence(sequence: DrumkitSequence, mirroring: Mirroring)
         as set_drum_machine_sequence -> Result);
+
+    delegate!(drum_machine, clear_sequence() as clear_drum_machine_sequence -> Model);
 
     delegate!(drum_machine, set_tempo(bpm: u16, mirroring: Mirroring)
         as set_drum_machine_tempo -> Result);
