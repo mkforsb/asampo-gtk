@@ -145,7 +145,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             "This action cannot be undone",
             vec![
                 ButtonSpec::new("Ok", || AppMessage::ClearSequenceConfirm),
-                ButtonSpec::new("Cancel", || AppMessage::ClearSequenceCancel).set_as_cancel()
+                ButtonSpec::new("Cancel", || AppMessage::ClearSequenceCancel).set_as_cancel(),
             ],
             AppMessage::ClearSequenceConfirmDialogOpened,
             |e| AppMessage::ClearSequenceConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
