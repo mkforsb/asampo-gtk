@@ -621,9 +621,15 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 )?
                 .clone();
 
+            let position = model
+                .sequences_list()
+                .iter()
+                .position(|seq| seq.uuid() == sequence_to_save.uuid())
+                .ok_or(anyhow!("Sequence not found: UUID not present"))?;
+
             Ok(model
                 .remove_sequence(sequence_to_save.uuid())?
-                .add_sequence(sequence_to_save)?
+                .insert_sequence(sequence_to_save, position)?
                 .load_drum_machine_sequence(sequence_to_load)?
                 .set_main_view_sensitive(true))
         }
