@@ -496,20 +496,22 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::DrumMachineSaveSampleSetClicked => Ok(model),
         AppMessage::DrumMachineSaveSampleSetAsClicked => Ok(model),
         AppMessage::DrumMachineClearSampleSetClicked => Ok(model),
-        AppMessage::DrumMachinePadClicked(n) => Ok(model.set_activated_drum_machine_pad(n)?),
-        AppMessage::DrumMachinePartClicked(_n) => Ok(model),
+        AppMessage::DrumMachinePadClicked(n) => model.set_activated_drum_machine_pad(n),
+        AppMessage::DrumMachinePartClicked(n) => model.set_activated_drum_machine_part(n),
         AppMessage::DrumMachineStepClicked(n) => {
             let amp = 0.5f32;
             let mut new_sequence = model.drum_machine_sequence().clone();
             let label = DRUM_MACHINE_VIEW_LABELS[model.activated_drum_machine_pad()];
+            let offset = model.activated_drum_machine_part() * 16;
+            let target_step = n + offset;
 
             if new_sequence
-                .labels_at_step(n)
-                .ok_or(anyhow!("Drum machine sequence has no step {n}"))?
+                .labels_at_step(target_step)
+                .ok_or(anyhow!("Drum machine sequence has no step {target_step}"))?
                 .contains(&label)
             {
                 new_sequence.unset_step_trigger(
-                    n,
+                    target_step,
                     DRUM_MACHINE_VIEW_LABELS[model.activated_drum_machine_pad()],
                 );
 
@@ -517,7 +519,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                     model
                         .drum_machine_render_thread_send(
                             drumkit_render_thread::Message::EditSequenceUnsetStepTrigger {
-                                step: n,
+                                step: target_step,
                                 label,
                             },
                         )
@@ -528,13 +530,13 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                         })?;
                 }
             } else {
-                new_sequence.set_step_trigger(n, label, amp);
+                new_sequence.set_step_trigger(target_step, label, amp);
 
                 if model.is_drum_machine_render_thread_active() {
                     model
                         .drum_machine_render_thread_send(
                             drumkit_render_thread::Message::EditSequenceSetStepTrigger {
-                                step: n,
+                                step: target_step,
                                 label,
                                 amp,
                             },

@@ -438,6 +438,22 @@ overlay#input-dialog {
     box-shadow: 0px 2px 3px 0px #555;
 }
 
+#sequences-editor-parts button.activated {
+    background: #f99;
+}
+
+#sequences-editor-parts button:not(.activated).allocated {
+    background: #fcc;
+}
+
+#sequences-editor-parts button.playing {
+    border: 2px solid red;
+}
+
+#sequences-editor-parts button.activated.playing {
+    border: 2px solid red;
+}
+
 #sequences-page #sequences-editor-steps {
     margin-left: 2em;
     margin-right: 2em;

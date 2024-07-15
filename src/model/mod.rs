@@ -422,6 +422,12 @@ impl AppModel {
         as set_activated_drum_machine_pad -> Result);
 
     delegate!(drum_machine, activated_pad() as activated_drum_machine_pad -> usize);
+
+    delegate!(drum_machine, set_activated_part(n: usize)
+        as set_activated_drum_machine_part -> Result);
+
+    delegate!(drum_machine, activated_part() as activated_drum_machine_part -> usize);
+
     delegate!(drum_machine, sequence() as drum_machine_sequence -> &DrumkitSequence);
 
     delegate!(drum_machine, load_sequence(sequence: DrumkitSequence)

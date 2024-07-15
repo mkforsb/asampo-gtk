@@ -302,21 +302,37 @@ pub fn update_drum_machine_view(model: &AppModel) {
     if drum_machine_model.is_waiting()
         || drum_machine_model.playback_state() == DrumMachinePlaybackState::Stopped
     {
-        for (i, _) in LABELS.iter().enumerate() {
+        for i in 0..4 {
+            drum_machine_view.part_buttons[i].remove_css_class("playing");
+        }
+
+        for i in 0..16 {
             drum_machine_view.step_buttons[i].remove_css_class("playing");
         }
     } else if let Some(event) = drum_machine_model.latest_event() {
         for (i, label) in LABELS.iter().enumerate() {
-            if i == event.step {
-                drum_machine_view.step_buttons[i].add_css_class("playing");
-            } else {
-                drum_machine_view.step_buttons[i].remove_css_class("playing");
-            }
-
             if event.labels.contains(label) {
                 drum_machine_view.pad_buttons[i].add_css_class("playing");
             } else {
                 drum_machine_view.pad_buttons[i].remove_css_class("playing");
+            }
+        }
+
+        let offset = drum_machine_model.activated_part() * 16;
+
+        for i in 0..4 {
+            if i == event.step / 16 {
+                drum_machine_view.part_buttons[i].add_css_class("playing");
+            } else {
+                drum_machine_view.part_buttons[i].remove_css_class("playing");
+            }
+        }
+
+        for i in 0..16 {
+            if i + offset == event.step {
+                drum_machine_view.step_buttons[i].add_css_class("playing");
+            } else {
+                drum_machine_view.step_buttons[i].remove_css_class("playing");
             }
         }
     }
@@ -329,8 +345,24 @@ pub fn update_drum_machine_view(model: &AppModel) {
         }
     }
 
+    for i in 0..4 {
+        if i == drum_machine_model.activated_part() {
+            drum_machine_view.part_buttons[i].add_css_class("activated");
+        } else {
+            drum_machine_view.part_buttons[i].remove_css_class("activated");
+        }
+
+        if (i + 1) * 16 <= drum_machine_model.sequence().len() {
+            drum_machine_view.part_buttons[i].add_css_class("allocated");
+        } else {
+            drum_machine_view.part_buttons[i].remove_css_class("allocated");
+        }
+    }
+
+    let offset = drum_machine_model.activated_part() * 16;
+
     for i in 0..16 {
-        if let Some(labels) = drum_machine_model.sequence().labels_at_step(i) {
+        if let Some(labels) = drum_machine_model.sequence().labels_at_step(i + offset) {
             if labels.contains(&LABELS[drum_machine_model.activated_pad()]) {
                 drum_machine_view.step_buttons[i].add_css_class("activated");
             } else {

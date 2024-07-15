@@ -51,6 +51,7 @@ pub struct DrumMachineModel {
     sampleset: SampleSet,
     sources: Vec<Source>,
     activated_pad: usize,
+    activated_part: usize,
 }
 
 impl PartialEq for DrumMachineModel {
@@ -69,7 +70,10 @@ impl PartialEq for DrumMachineModel {
             _ => return false,
         }
 
-        if self.activated_pad != other.activated_pad || self.sequence != other.sequence {
+        if self.activated_pad != other.activated_pad
+            || self.activated_part != other.activated_part
+            || self.sequence != other.sequence
+        {
             return false;
         }
 
@@ -98,6 +102,7 @@ impl DrumMachineModel {
             sampleset: SampleSet::BaseSampleSet(empty_sampleset),
             sources: Vec::new(),
             activated_pad: 8,
+            activated_part: 0,
         }
     }
 
@@ -177,9 +182,37 @@ impl DrumMachineModel {
         self.activated_pad
     }
 
+    pub fn set_activated_part(self, part: usize) -> AnyhowResult<DrumMachineModel> {
+        if part < 4 {
+            let needed_len = (part + 1) * 16;
+
+            if needed_len > self.sequence.len() {
+                let mut sequence = self.sequence.clone();
+                sequence.set_len(needed_len);
+
+                Ok(DrumMachineModel {
+                    activated_part: part,
+                    ..self.set_sequence(sequence, Mirroring::Mirror)?
+                })
+            } else {
+                Ok(DrumMachineModel {
+                    activated_part: part,
+                    ..self
+                })
+            }
+        } else {
+            Err(anyhow!("Value out of range [0,3]"))
+        }
+    }
+
+    pub fn activated_part(&self) -> usize {
+        self.activated_part
+    }
+
     pub fn load_sequence(self, sequence: DrumkitSequence) -> AnyhowResult<DrumMachineModel> {
         Ok(DrumMachineModel {
             loaded_sequence: Some(sequence.clone()),
+            activated_part: 0,
             ..self.set_sequence(sequence, Mirroring::Mirror)?
         })
     }
