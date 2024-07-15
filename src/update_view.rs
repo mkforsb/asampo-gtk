@@ -109,7 +109,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling_sequence_load_show_confirm_dialog() {
+    if new.is_signalling_sequence_load_show_confirm_save_dialog() {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -130,11 +130,26 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                 ButtonSpec::new("Discard changes", || {
                     AppMessage::LoadSequenceConfirmDiscardChanges
                 }),
-                ButtonSpec::new("Cancel", || AppMessage::LoadSequenceCancel).set_as_cancel(),
+                ButtonSpec::new("Cancel", || AppMessage::LoadSequenceCancelSave).set_as_cancel(),
             ],
-            AppMessage::LoadSequenceConfirmDialogOpened,
+            AppMessage::LoadSequenceConfirmSaveDialogOpened,
             |e| AppMessage::LoadSequenceConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
         );
+    }
+
+    if new.is_signalling_sequence_load_show_confirm_abandon_dialog() {
+        dialogs::confirm(
+            model_ptr.clone(),
+            view,
+            "Abandon unnamed sequence?",
+            "This action cannot be undone",
+            vec![
+                ButtonSpec::new("Ok", || AppMessage::LoadSequenceConfirmAbandon),
+                ButtonSpec::new("Cancel", || AppMessage::LoadSequenceCancelAbandon).set_as_cancel(),
+            ],
+            AppMessage::LoadSequenceConfirmAbandonDialogOpened,
+            |e| AppMessage::LoadSequenceConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
+        )
     }
 
     if new.is_signalling_sequence_clear_show_confirm_dialog() {

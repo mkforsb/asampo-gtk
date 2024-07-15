@@ -118,6 +118,31 @@ impl DrumMachineModel {
         sequence
     }
 
+    pub fn is_equiv_default_sequence(seq: &DrumkitSequence) -> bool {
+        let default = Self::default_sequence();
+
+        let default_steps = (0..default.len())
+            .map(|i| {
+                default
+                    .step(i, 44100.try_into().unwrap())
+                    .map(|info| info.triggers().clone())
+                    .unwrap_or(vec![])
+            })
+            .collect::<Vec<_>>();
+
+        let seq_steps = (0..seq.len())
+            .map(|i| {
+                seq.step(i, 44100.try_into().unwrap())
+                    .map(|info| info.triggers().clone())
+                    .unwrap_or(vec![])
+            })
+            .collect::<Vec<_>>();
+
+        !(default_steps != seq_steps
+            || default.timespec() != seq.timespec()
+            || default.step_base_len() != seq.step_base_len())
+    }
+
     pub fn is_render_thread_active(&self) -> bool {
         self.render_thread_tx.is_some()
     }

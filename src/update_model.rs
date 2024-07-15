@@ -25,7 +25,9 @@ use crate::{
     appmessage::AppMessage,
     config::SamplePlaybackBehavior,
     configfile::ConfigFile,
-    model::{AppModel, DrumMachinePlaybackState, ExportKind, ExportState, Mirroring},
+    model::{
+        AppModel, DrumMachineModel, DrumMachinePlaybackState, ExportKind, ExportState, Mirroring,
+    },
     savefile::Savefile,
     view::{
         dialogs::{InputDialogContext, SelectFolderDialogContext},
@@ -574,7 +576,15 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         }
 
         AppMessage::SequenceSelected(uuid) => {
-            if model
+            if model.drum_machine_model().loaded_sequence().is_none()
+                && !DrumMachineModel::is_equiv_default_sequence(
+                    model.drum_machine_model().sequence(),
+                )
+            {
+                Ok(model
+                    .set_selected_sequence(Some(uuid))?
+                    .signal_sequence_load_show_confirm_abandon_dialog())
+            } else if model
                 .drum_machine_model()
                 .loaded_sequence()
                 .is_some_and(|seq| seq.uuid() == uuid)
@@ -583,7 +593,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             } else if model.drum_machine_model().is_sequence_modified() {
                 Ok(model
                     .set_selected_sequence(Some(uuid))?
-                    .signal_sequence_load_show_confirm_dialog())
+                    .signal_sequence_load_show_confirm_save_dialog())
             } else {
                 let sequence = model.sequence(uuid)?.clone();
 
@@ -595,9 +605,9 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::AddSequenceClicked => Ok(model.signal_create_sequence_show_dialog()),
 
-        AppMessage::LoadSequenceConfirmDialogOpened => Ok(model
+        AppMessage::LoadSequenceConfirmSaveDialogOpened => Ok(model
             .set_main_view_sensitive(false)
-            .clear_signal_sequence_load_show_confirm_dialog()),
+            .clear_signal_sequence_load_show_confirm_save_dialog()),
 
         AppMessage::LoadSequenceConfirmSaveChanges => {
             let sequence_to_save = model.drum_machine_model().sequence().clone();
@@ -630,7 +640,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .set_main_view_sensitive(true))
         }
 
-        AppMessage::LoadSequenceCancel => {
+        AppMessage::LoadSequenceCancelSave => {
             let loaded_uuid = model
                 .drum_machine_model()
                 .loaded_sequence()
@@ -641,6 +651,28 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .set_selected_sequence(Some(loaded_uuid))?
                 .set_main_view_sensitive(true))
         }
+
+        AppMessage::LoadSequenceConfirmAbandonDialogOpened => Ok(model
+            .set_main_view_sensitive(false)
+            .clear_signal_sequence_load_show_confirm_abandon_dialog()),
+
+        AppMessage::LoadSequenceConfirmAbandon => {
+            let sequence_to_load = model
+                .sequence(
+                    model
+                        .selected_sequence()
+                        .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?,
+                )?
+                .clone();
+
+            Ok(model
+                .load_drum_machine_sequence(sequence_to_load)?
+                .set_main_view_sensitive(true))
+        }
+
+        AppMessage::LoadSequenceCancelAbandon => Ok(model
+            .set_selected_sequence(None)?
+            .set_main_view_sensitive(true)),
 
         AppMessage::LoadSequenceConfirmDialogError(e) => {
             log::log!(log::Level::Error, "{e}");
