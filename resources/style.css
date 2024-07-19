@@ -269,10 +269,17 @@ overlay#input-dialog {
 }
 
 #sets-page #sets-details-sample-list row {
-    padding: 0.5em;
     border-style: solid;
     border-width: 0px 0px 1px 0px;
     border-color: #ddd;
+}
+
+#sets-page #sets-details-sample-list row label {
+    padding: 0.25em;
+}
+
+#sets-page #sets-details-sample-list row button {
+    margin: 0.25em;
 }
 
 #sets-page #sets-details-sample-list row button {

@@ -105,14 +105,11 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
 
                 let clicked = GestureClick::new();
 
-                clicked.connect_pressed(
-                    clone!(@strong model_ptr, @strong view => move |gst: &GestureClick, _, _, _| {
-                        gst.widget().activate();
+                clicked.connect_pressed(clone!(@strong row => move |_: &GestureClick, _, _, _| {
+                    row.activate();
+                }));
 
-                    }),
-                );
-
-                row.add_controller(clicked);
+                name_label.add_controller(clicked);
 
                 let bound_sample = (*sample).clone();
 
