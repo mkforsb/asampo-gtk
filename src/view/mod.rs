@@ -148,9 +148,6 @@ pub struct AsampoViewState {
     #[template_child(id = "sets-details-sample-list")]
     pub sets_details_sample_list: gtk::TemplateChild<gtk::ListBox>,
 
-    #[template_child(id = "sets-details-labelling-kind-entry")]
-    pub sets_details_labelling_kind_entry: gtk::TemplateChild<gtk::DropDown>,
-
     #[template_child(id = "sets-details-export-button")]
     pub sets_details_export_button: gtk::TemplateChild<gtk::Button>,
 
