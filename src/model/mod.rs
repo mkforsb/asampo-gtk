@@ -13,7 +13,7 @@ use std::{
 use anyhow::anyhow;
 use libasampo::{
     samples::Sample,
-    samplesets::{export::ExportJobMessage, DrumkitLabel, SampleSet, SampleSetLabelling},
+    samplesets::{export::ExportJobMessage, DrumkitLabel, SampleSet},
     sequences::{drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent},
     sources::{file_system_source::FilesystemSource, Source, SourceOps},
 };
@@ -315,7 +315,6 @@ impl AppModel {
     delegate!(core, set_most_recently_added_to() -> Option<Uuid>);
     delegate!(core, set_selected_set(maybe_uuid: Option<Uuid>) -> Result);
     delegate!(core, selected_set() -> Option<Uuid>);
-    delegate!(core, set_labelling(set_uuid: Uuid, labelling: Option<SampleSetLabelling>) -> Result);
     delegate!(core, set_export_state(maybe_state: Option<ExportState>) -> Model);
     delegate!(core, export_state() -> Option<ExportState>);
     delegate!(core, set_export_job_rx(rx: Option<mpsc::Receiver<ExportJobMessage>>) -> Model);

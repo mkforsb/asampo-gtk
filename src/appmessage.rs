@@ -5,10 +5,7 @@
 use libasampo::{samples::Sample, sequences::DrumkitSequenceEvent};
 use uuid::Uuid;
 
-use crate::view::{
-    dialogs::{self, InputDialogContext, SelectFolderDialogContext},
-    sets::LabellingKind,
-};
+use crate::view::dialogs::{self, InputDialogContext, SelectFolderDialogContext};
 
 #[derive(Debug)]
 pub enum AppMessage {
@@ -43,7 +40,6 @@ pub enum AppMessage {
     InputDialogCanceled(InputDialogContext),
     SelectFolderDialogOpened(SelectFolderDialogContext),
     SampleSetSelected(Uuid),
-    SampleSetLabellingKindChanged(LabellingKind),
     SampleSetDetailsExportClicked,
     ExportDialogOpened(dialogs::ExportDialogView),
     ExportDialogClosed,

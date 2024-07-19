@@ -9,11 +9,8 @@ use std::sync::{
 
 use anyhow::anyhow;
 use libasampo::{
-    samples::{Sample, SampleOps},
-    samplesets::{
-        BaseSampleSet, ConcreteSampleSetLabelling, DrumkitLabel, DrumkitLabelling, SampleSet,
-        SampleSetLabelling, SampleSetOps,
-    },
+    samples::Sample,
+    samplesets::{BaseSampleSet, DrumkitLabel, SampleSet, SampleSetOps},
     sequences::{
         drumkit_render_thread, DrumkitSequence, DrumkitSequenceEvent, NoteLength,
         SampleSetSampleLoader, StepSequenceOps, TimeSpec,
@@ -86,11 +83,6 @@ impl DrumMachineModel {
         render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
         event_rx: Option<single_value_channel::Receiver<Option<DrumkitSequenceEvent>>>,
     ) -> Self {
-        let mut empty_sampleset = BaseSampleSet::new("Sampleset".to_string());
-        empty_sampleset.set_labelling(Some(SampleSetLabelling::DrumkitLabelling(
-            DrumkitLabelling::new(),
-        )));
-
         Self {
             playback_state: PlaybackState::Stopped,
             waiting: false,
@@ -99,7 +91,7 @@ impl DrumMachineModel {
             event_latest: None,
             loaded_sequence: None,
             sequence: Self::default_sequence(),
-            sampleset: SampleSet::BaseSampleSet(empty_sampleset),
+            sampleset: SampleSet::BaseSampleSet(BaseSampleSet::new("Sampleset".to_string())),
             sources: Vec::new(),
             activated_pad: 8,
             activated_part: 0,
@@ -131,7 +123,7 @@ impl DrumMachineModel {
                 default
                     .step(i)
                     .map(|info| info.triggers().clone())
-                    .unwrap_or(vec![])
+                    .unwrap_or_default()
             })
             .collect::<Vec<_>>();
 
@@ -139,7 +131,7 @@ impl DrumMachineModel {
             .map(|i| {
                 seq.step(i)
                     .map(|info| info.triggers().clone())
-                    .unwrap_or(vec![])
+                    .unwrap_or_default()
             })
             .collect::<Vec<_>>();
 
@@ -425,19 +417,16 @@ impl DrumMachineModel {
         sample: Sample,
         label: DrumkitLabel,
     ) -> AnyhowResult<DrumMachineModel> {
-        let uri = sample.uri().clone();
-
         let mut new_sampleset = self.sampleset.clone();
 
-        // TODO: make a better pattern for label types in libasampo
         // TODO: sampleset.remove_matching_label() in libasampo
         let mut samples_to_remove = Vec::<Sample>::new();
 
-        if let Some(SampleSetLabelling::DrumkitLabelling(labelling)) = new_sampleset.labelling() {
-            for sample in new_sampleset.list() {
-                if *labelling.get(sample.uri()).unwrap() == label {
-                    samples_to_remove.push(sample.clone());
-                }
+        for sample in new_sampleset.list() {
+            let sample = sample.clone();
+
+            if new_sampleset.get_label::<DrumkitLabel>(&sample).unwrap() == Some(label) {
+                samples_to_remove.push(sample);
             }
         }
 
@@ -445,18 +434,14 @@ impl DrumMachineModel {
             new_sampleset.remove(&sample).unwrap();
         }
 
-        new_sampleset.add(source, sample)?;
+        new_sampleset.add(source, sample.clone())?;
+        new_sampleset.set_label(&sample, label).unwrap();
 
         let new_sources = if !self.sources.contains(source) {
             self.sources.clone_and_push(source.clone())
         } else {
             self.sources.clone()
         };
-
-        match new_sampleset.labelling_mut() {
-            Some(SampleSetLabelling::DrumkitLabelling(labelling)) => labelling.set(uri, label),
-            _ => panic!("This should not be possible"),
-        }
 
         self.render_thread_send(drumkit_render_thread::Message::LoadSampleSet(
             SampleSetSampleLoader::new(new_sampleset.clone(), new_sources.clone()),

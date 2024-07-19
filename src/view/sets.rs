@@ -3,59 +3,21 @@
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
 use gtk::{glib::clone, prelude::*, EventControllerKey, GestureClick};
-use libasampo::{
-    samples::SampleOps,
-    samplesets::{SampleSetLabelling, SampleSetOps},
-};
+use libasampo::{samples::SampleOps, samplesets::SampleSetOps};
 
 use crate::{
-    ext::OptionMapExt,
     model::{AppModel, AppModelPtr},
     update,
-    util::{
-        idize_builder_template, resource_as_string, set_dropdown_choice,
-        strs_dropdown_get_selected, uuidize_builder_template,
-    },
+    util::{idize_builder_template, resource_as_string, uuidize_builder_template},
     view::AsampoView,
     AppMessage,
 };
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum LabellingKind {
-    None,
-    Drumkit,
-}
-
-pub const LABELLING_OPTIONS: [(&str, LabellingKind); 2] = [
-    ("None", LabellingKind::None),
-    ("Drumkit", LabellingKind::Drumkit),
-];
 
 pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
     view.sets_add_set_button
         .connect_clicked(clone!(@strong model_ptr, @strong view => move |_| {
             update(model_ptr.clone(), &view, AppMessage::AddSampleSetClicked);
         }));
-
-    let labelling_model = gtk::StringList::new(&LABELLING_OPTIONS.keys());
-
-    view.sets_details_labelling_kind_entry
-        .set_model(Some(&labelling_model));
-
-    view.sets_details_labelling_kind_entry
-        .connect_selected_item_notify(
-            clone!(@strong model_ptr, @strong view => move |e: &gtk::DropDown| {
-                let kind = LABELLING_OPTIONS
-                    .value_for(&strs_dropdown_get_selected(e))
-                    .expect("Key should be valid");
-
-                update(
-                    model_ptr.clone(),
-                    &view,
-                    AppMessage::SampleSetLabellingKindChanged(kind.clone())
-                );
-            }),
-        );
 
     view.sets_details_export_button.connect_clicked(
         clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
@@ -75,7 +37,7 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
 
         let objects = gtk::Builder::from_string(&uuidize_builder_template(
             &resource_as_string("/sets-list-row.ui").unwrap(),
-            *uuid,
+            uuid,
         ));
 
         let row = objects
@@ -86,7 +48,7 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
             .object::<gtk::Label>(format!("{uuid}-name-label"))
             .unwrap();
 
-        name_label.set_text(model.set(*uuid).unwrap().name());
+        name_label.set_text(model.set(uuid).unwrap().name());
 
         let clicked = GestureClick::new();
 
@@ -122,15 +84,6 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
     match model.selected_set().and_then(|uuid| model.set(uuid).ok()) {
         Some(set) => {
             view.sets_details_name_label.set_text(set.name());
-
-            set_dropdown_choice(
-                &view.sets_details_labelling_kind_entry,
-                &LABELLING_OPTIONS,
-                &match set.labelling() {
-                    Some(SampleSetLabelling::DrumkitLabelling(_)) => LabellingKind::Drumkit,
-                    None => LabellingKind::None,
-                },
-            );
 
             view.sets_details_sample_list_frame
                 .set_label(Some(&format!("Samples ({})", set.len())));

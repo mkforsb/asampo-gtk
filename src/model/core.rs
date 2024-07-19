@@ -7,9 +7,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::mpsc, time::Instant
 use anyhow::anyhow;
 use libasampo::{
     samples::{Sample, SampleOps},
-    samplesets::{
-        export::ExportJobMessage, BaseSampleSet, SampleSet, SampleSetLabelling, SampleSetOps,
-    },
+    samplesets::{export::ExportJobMessage, BaseSampleSet, SampleSet, SampleSetOps},
     sequences::{DrumkitSequence, StepSequenceOps},
     sources::{Source, SourceOps},
 };
@@ -302,10 +300,10 @@ impl CoreModel {
     }
 
     pub fn add_set(self, set: SampleSet) -> AnyhowResult<CoreModel> {
-        if self.sets.contains_key(set.uuid()) {
+        if self.sets.contains_key(&set.uuid()) {
             Err(anyhow!("Failed to add set: UUID in use"))
         } else {
-            let uuid = *set.uuid();
+            let uuid = set.uuid();
 
             Ok(CoreModel {
                 sets: self.sets.clone_and_insert(uuid, set),
@@ -330,7 +328,7 @@ impl CoreModel {
             Some(uuid) => Ok((model, uuid)),
             None => {
                 let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new(name));
-                let new_uuid = *new_set.uuid();
+                let new_uuid = new_set.uuid();
 
                 Ok((model.add_set(new_set)?, new_uuid))
             }
@@ -399,22 +397,6 @@ impl CoreModel {
 
     pub fn selected_set(&self) -> Option<Uuid> {
         self.sets_selected_set
-    }
-
-    pub fn set_labelling(
-        self,
-        set_uuid: Uuid,
-        labelling: Option<SampleSetLabelling>,
-    ) -> AnyhowResult<CoreModel> {
-        let mut result = self.clone();
-
-        result
-            .sets
-            .get_mut(&set_uuid)
-            .ok_or(anyhow!("Failed to set labelling: UUID not present"))?
-            .set_labelling(labelling);
-
-        Ok(result)
     }
 
     pub fn set_export_state(self, maybe_state: Option<ExportState>) -> CoreModel {
@@ -538,14 +520,14 @@ mod tests {
             .add_set(SampleSet::BaseSampleSet(set.clone()))
             .unwrap();
 
-        assert!(model.sets_map().contains_key(set.uuid()));
+        assert!(model.sets_map().contains_key(&set.uuid()));
         assert_eq!(
-            model.sets_map().get(set.uuid()).unwrap().name(),
+            model.sets_map().get(&set.uuid()).unwrap().name(),
             "Favorites"
         );
 
-        let model = model.remove_set(*set.uuid()).unwrap();
+        let model = model.remove_set(set.uuid()).unwrap();
 
-        assert!(!model.sets_map().contains_key(set.uuid()));
+        assert!(!model.sets_map().contains_key(&set.uuid()));
     }
 }
