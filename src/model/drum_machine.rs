@@ -218,7 +218,7 @@ impl DrumMachineModel {
             loaded_sequence: None,
             ..self
         }
-    } 
+    }
 
     pub fn is_sequence_modified(&self) -> bool {
         self.loaded_sequence
