@@ -213,6 +213,13 @@ impl DrumMachineModel {
         self.loaded_sequence.as_ref()
     }
 
+    pub fn clear_loaded_sequence(self) -> DrumMachineModel {
+        DrumMachineModel {
+            loaded_sequence: None,
+            ..self
+        }
+    } 
+
     pub fn is_sequence_modified(&self) -> bool {
         self.loaded_sequence
             .as_ref()

@@ -434,6 +434,8 @@ impl AppModel {
     delegate!(drum_machine, loaded_sequence()
         as drum_machine_loaded_sequence -> Option<&DrumkitSequence>);
 
+    delegate!(drum_machine, clear_loaded_sequence() as clear_drum_machine_loaded_sequence -> Model);
+
     delegate!(drum_machine, sampleset() as drum_machine_sampleset -> &SampleSet);
 
     delegate!(drum_machine, load_sequence(sequence: DrumkitSequence)

@@ -217,6 +217,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 Ok(loaded_savefile) => {
                     let mut result = model
                         .set_savefile_path(Some(filename))
+                        .drum_machine_stop()?
                         .clear_sources()
                         .clear_sets()
                         .clear_sequences()
@@ -231,6 +232,8 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                             .clone();
 
                         result = result.load_drum_machine_sequence(sequence)?;
+                    } else {
+                        result = result.clear_drum_machine_loaded_sequence();
                     }
 
                     result = result.set_drum_machine_sequence(
