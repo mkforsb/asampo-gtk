@@ -355,11 +355,16 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         },
 
         AppMessage::SampleSetSelected(uuid) => {
-            let len = model.set(uuid)?.len();
+            if Some(uuid) != model.selected_set() {
+                let len = model.set(uuid)?.len();
 
-            model
-                .set_set_export_enabled(len > 0)
-                .set_selected_set(Some(uuid))
+                Ok(model
+                    .set_set_export_enabled(len > 0)
+                    .set_selected_set(Some(uuid))?
+                    .set_selected_set_member(None))
+            } else {
+                Ok(model)
+            }
         }
 
         AppMessage::SampleSetSampleSelected(sample) => {
