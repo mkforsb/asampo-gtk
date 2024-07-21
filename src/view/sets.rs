@@ -6,11 +6,15 @@ use gtk::{glib::clone, prelude::*, EventControllerKey, GestureClick};
 use libasampo::{samples::SampleOps, samplesets::SampleSetOps};
 
 use crate::{
+    appmessage::AppMessage,
+    ext::OptionMapExt,
+    labels::DRUM_LABELS,
     model::{AppModel, AppModelPtr},
     update,
-    util::{idize_builder_template, resource_as_string, uuidize_builder_template},
+    util::{
+        idize_builder_template, resource_as_string, set_dropdown_choice, uuidize_builder_template,
+    },
     view::AsampoView,
-    AppMessage,
 };
 
 pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
@@ -89,6 +93,8 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
                 .set_label(Some(&format!("Samples ({})", set.len())));
 
             for (row_index, sample) in set.list().iter().enumerate() {
+                let sample = (*sample).clone();
+
                 let objects = gtk::Builder::from_string(&idize_builder_template(
                     &resource_as_string("/sets-details-sample-list-row.ui").unwrap(),
                     row_index,
@@ -111,19 +117,49 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
 
                 name_label.add_controller(clicked);
 
-                let bound_sample = (*sample).clone();
+                let label_select = objects
+                    .object::<gtk::DropDown>(format!("{row_index}-label-select"))
+                    .unwrap();
 
-                row.connect_activate(
-                    clone!(@strong model_ptr, @strong view => move |_: &gtk::ListBoxRow| {
-                        update(
-                            model_ptr.clone(),
-                            &view,
-                            AppMessage::SampleSetSampleSelected(bound_sample.clone())
-                        );
+                label_select.set_model(Some(&gtk::StringList::new(
+                    &["(None)"]
+                        .iter()
+                        .chain(DRUM_LABELS.keys().iter())
+                        .copied()
+                        .collect::<Vec<_>>(),
+                )));
+
+                if let Ok(Some(label)) = set.get_label(&sample) {
+                    set_dropdown_choice(&label_select, &DRUM_LABELS, &label);
+                }
+
+                label_select.connect_selected_item_notify(
+                    clone!(@strong model_ptr, @strong view, @strong sample => move |e: &gtk::DropDown| {
+                        if e.selected() > 0 {
+                            update(model_ptr.clone(), &view, AppMessage::SampleSetSampleLabelChanged(sample.clone(), Some(DRUM_LABELS[e.selected() as usize - 1].1)));
+                        } else {
+                            update(model_ptr.clone(), &view, AppMessage::SampleSetSampleLabelChanged(sample.clone(), None));
+                        }
                     }),
                 );
 
                 view.sets_details_sample_list.append(&row);
+
+                if Some(&sample) == model.selected_set_member()
+                    || (row_index == 0 && model.selected_set_member().is_none())
+                {
+                    row.activate();
+                }
+
+                row.connect_activate(
+                    clone!(@strong model_ptr, @strong view, @strong sample => move |_: &gtk::ListBoxRow| {
+                        update(
+                            model_ptr.clone(),
+                            &view,
+                            AppMessage::SampleSetSampleSelected(sample.clone())
+                        );
+                    }),
+                );
             }
         }
         None => {

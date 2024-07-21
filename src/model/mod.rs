@@ -312,8 +312,15 @@ impl AppModel {
     }
 
     delegate!(core, add_to_set(sample: Sample, set_uuid: Uuid) -> Result);
+
+    delegate!(core,
+        set_set_sample_label(set_uuid: Uuid, sample: Sample, label: Option<DrumkitLabel>)
+        -> Result);
+
     delegate!(core, set_most_recently_added_to() -> Option<Uuid>);
     delegate!(core, set_selected_set(maybe_uuid: Option<Uuid>) -> Result);
+    delegate!(core, set_selected_set_member(maybe_sample: Option<Sample>) -> Model);
+    delegate!(core, selected_set_member() -> Option<&Sample>);
     delegate!(core, selected_set() -> Option<Uuid>);
     delegate!(core, set_export_state(maybe_state: Option<ExportState>) -> Model);
     delegate!(core, export_state() -> Option<ExportState>);

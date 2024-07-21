@@ -7,7 +7,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::mpsc, time::Instant
 use anyhow::anyhow;
 use libasampo::{
     samples::{Sample, SampleOps},
-    samplesets::{export::ExportJobMessage, BaseSampleSet, SampleSet, SampleSetOps},
+    samplesets::{export::ExportJobMessage, BaseSampleSet, DrumkitLabel, SampleSet, SampleSetOps},
     sequences::{DrumkitSequence, StepSequenceOps},
     sources::{Source, SourceOps},
 };
@@ -40,6 +40,7 @@ pub struct CoreModel {
     sets: HashMap<Uuid, SampleSet>,
     sets_order: Vec<Uuid>,
     sets_selected_set: Option<Uuid>,
+    sets_selected_sample: Option<Sample>,
     sets_most_recently_used_uuid: Option<Uuid>,
     sets_export_state: Option<ExportState>,
     sequences: HashMap<Uuid, DrumkitSequence>,
@@ -62,6 +63,7 @@ impl CoreModel {
             sets: HashMap::new(),
             sets_order: Vec::new(),
             sets_selected_set: None,
+            sets_selected_sample: None,
             sets_most_recently_used_uuid: None,
             sets_export_state: None,
             sequences: HashMap::new(),
@@ -370,6 +372,22 @@ impl CoreModel {
         result.set_set_most_recently_added_to(Some(set_uuid))
     }
 
+    // TODO: use "sset" for referring to sample sets?
+    pub fn set_set_sample_label(
+        self,
+        set_uuid: Uuid,
+        sample: Sample,
+        label: Option<DrumkitLabel>,
+    ) -> AnyhowResult<CoreModel> {
+        let mut result = self.clone();
+
+        result
+            .set_mut(set_uuid)?
+            .set_label::<DrumkitLabel, Option<DrumkitLabel>>(&sample, label)?;
+
+        Ok(result)
+    }
+
     fn set_set_most_recently_added_to(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<CoreModel> {
         match maybe_uuid.and_then(|uuid| self.set(uuid).err()) {
             Some(err) => Err(err),
@@ -393,6 +411,17 @@ impl CoreModel {
                 ..self
             })
         }
+    }
+
+    pub fn set_selected_set_member(self, maybe_sample: Option<Sample>) -> CoreModel {
+        CoreModel {
+            sets_selected_sample: maybe_sample,
+            ..self
+        }
+    }
+
+    pub fn selected_set_member(&self) -> Option<&Sample> {
+        self.sets_selected_sample.as_ref()
     }
 
     pub fn selected_set(&self) -> Option<Uuid> {

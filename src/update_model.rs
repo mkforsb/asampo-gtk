@@ -222,7 +222,8 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                         .load_sources(loaded_savefile.sources_domained()?)?
                         .load_sets(loaded_savefile.sets_domained()?)?
                         .load_sequences(loaded_savefile.sequences_domained()?)?
-                        .set_selected_sequence(loaded_savefile.drum_machine_loaded_sequence())?;
+                        .set_selected_sequence(loaded_savefile.drum_machine_loaded_sequence())?
+                        .set_selected_set_member(None);
 
                     if loaded_savefile.drum_machine_loaded_sequence().is_some() {
                         let sequence = result
@@ -376,7 +377,12 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 ))
                 .map_err(|e| anyhow!("Send error on audio thread control channel: {e}"))?;
 
-            Ok(model)
+            Ok(model.set_selected_set_member(Some(sample)))
+        }
+
+        AppMessage::SampleSetSampleLabelChanged(sample, label) => {
+            let set_uuid = model.selected_set().ok_or(anyhow!("No set selected"))?;
+            model.set_set_sample_label(set_uuid, sample, label)
         }
 
         AppMessage::SampleSetDetailsExportClicked => Ok(model.signal_export_show_dialog()),

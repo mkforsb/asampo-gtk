@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-use libasampo::{samples::Sample, sequences::DrumkitSequenceEvent};
+use libasampo::{samples::Sample, samplesets::DrumkitLabel, sequences::DrumkitSequenceEvent};
 use uuid::Uuid;
 
 use crate::view::dialogs::{self, InputDialogContext, SelectFolderDialogContext};
@@ -40,6 +40,7 @@ pub enum AppMessage {
     InputDialogCanceled(InputDialogContext),
     SelectFolderDialogOpened(SelectFolderDialogContext),
     SampleSetSelected(Uuid),
+    SampleSetSampleLabelChanged(Sample, Option<DrumkitLabel>),
     SampleSetDetailsExportClicked,
     ExportDialogOpened(dialogs::ExportDialogView),
     ExportDialogClosed,
