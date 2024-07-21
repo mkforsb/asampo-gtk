@@ -25,14 +25,12 @@ use crate::{
     appmessage::AppMessage,
     config::SamplePlaybackBehavior,
     configfile::ConfigFile,
+    labels::DRUM_LABELS,
     model::{
         AppModel, DrumMachineModel, DrumMachinePlaybackState, ExportKind, ExportState, Mirroring,
     },
     savefile::Savefile,
-    view::{
-        dialogs::{InputDialogContext, SelectFolderDialogContext},
-        sequences::LABELS as DRUM_MACHINE_VIEW_LABELS,
-    },
+    view::dialogs::{InputDialogContext, SelectFolderDialogContext},
     ErrorWithEffect,
 };
 
@@ -521,7 +519,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::DrumMachineClearSampleSetClicked => Ok(model),
 
         AppMessage::DrumMachinePadClicked(n) => {
-            let label = DRUM_MACHINE_VIEW_LABELS[n];
+            let label = DRUM_LABELS[n].1;
             let samples = model.drum_machine_sampleset().list();
 
             let sample = samples
@@ -558,7 +556,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::DrumMachineStepClicked(n) => {
             let amp = 0.5f32;
             let mut new_sequence = model.drum_machine_sequence().clone();
-            let label = DRUM_MACHINE_VIEW_LABELS[model.activated_drum_machine_pad()];
+            let label = DRUM_LABELS[model.activated_drum_machine_pad()].1;
             let offset = model.activated_drum_machine_part() * 16;
             let target_step = n + offset;
 
@@ -569,7 +567,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             {
                 new_sequence.unset_step_trigger(
                     target_step,
-                    DRUM_MACHINE_VIEW_LABELS[model.activated_drum_machine_pad()],
+                    DRUM_LABELS[model.activated_drum_machine_pad()].1,
                 );
 
                 if model.is_drum_machine_render_thread_active() {
@@ -627,11 +625,9 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 )?
                 .clone();
 
-            let label = DRUM_MACHINE_VIEW_LABELS
-                .get(n)
-                .ok_or(anyhow!("No such label"))?;
+            let label = DRUM_LABELS.get(n).ok_or(anyhow!("No such label"))?.1;
 
-            model.assign_drum_pad(&source, sample, *label)
+            model.assign_drum_pad(&source, sample, label)
         }
 
         AppMessage::SequenceSelected(uuid) => {

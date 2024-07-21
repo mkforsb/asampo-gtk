@@ -142,11 +142,12 @@ pub trait OptionMapExt<T> {
     fn value_for(&self, key: &str) -> Option<&T>;
     fn key_for(&self, value: &T) -> Option<&str>;
     fn keys(&self) -> Vec<&'static str>;
+    fn values(&self) -> Vec<T>;
 }
 
 impl<T> OptionMapExt<T> for [(&'static str, T)]
 where
-    T: std::cmp::PartialEq,
+    T: std::cmp::PartialEq + Copy,
 {
     fn value_for(&self, key: &str) -> Option<&T> {
         self.iter().find(|(k, _v)| *k == key).map(|(_k, v)| v)
@@ -158,5 +159,9 @@ where
 
     fn keys(&self) -> Vec<&'static str> {
         self.iter().map(|(key, _)| *key).collect()
+    }
+
+    fn values(&self) -> Vec<T> {
+        self.iter().map(|(_, val)| *val).collect()
     }
 }

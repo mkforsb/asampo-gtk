@@ -113,7 +113,7 @@ pub fn strs_dropdown_get_selected(e: &gtk::DropDown) -> String {
         .to_string()
 }
 
-pub fn set_dropdown_choice<T: PartialEq>(
+pub fn set_dropdown_choice<T: PartialEq + Copy>(
     dropdown: &gtk::DropDown,
     options: &[(&'static str, T)],
     choice: &T,

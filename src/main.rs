@@ -18,6 +18,7 @@ mod appmessage;
 mod config;
 mod configfile;
 mod ext;
+mod labels;
 mod model;
 mod savefile;
 mod testutils;

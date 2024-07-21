@@ -7,34 +7,16 @@ use gtk::{
     prelude::{ButtonExt, EventControllerExt, FrameExt, ListBoxRowExt, PopoverExt, WidgetExt},
     Button, EventControllerKey, GestureClick, SpinButton,
 };
-use libasampo::{samplesets::DrumkitLabel, sequences::StepSequenceOps};
+use libasampo::sequences::StepSequenceOps;
 
 use crate::{
-    ext::WithModel,
+    ext::{OptionMapExt, WithModel},
+    labels::DRUM_LABELS,
     model::{AppModel, DrumMachinePlaybackState},
     update,
     util::{resource_as_string, uuidize_builder_template},
     AppMessage, AppModelPtr, AsampoView,
 };
-
-pub const LABELS: [DrumkitLabel; 16] = [
-    DrumkitLabel::RimShot,
-    DrumkitLabel::Clap,
-    DrumkitLabel::ClosedHihat,
-    DrumkitLabel::OpenHihat,
-    DrumkitLabel::CrashCymbal,
-    DrumkitLabel::RideCymbal,
-    DrumkitLabel::Shaker,
-    DrumkitLabel::Perc1,
-    DrumkitLabel::BassDrum,
-    DrumkitLabel::SnareDrum,
-    DrumkitLabel::LowTom,
-    DrumkitLabel::MidTom,
-    DrumkitLabel::HighTom,
-    DrumkitLabel::Perc2,
-    DrumkitLabel::Perc3,
-    DrumkitLabel::Perc4,
-];
 
 pub fn setup_sequences_page(model_ptr: AppModelPtr, view: &AsampoView) {
     setup_drum_machine_view(model_ptr.clone(), view);
@@ -200,7 +182,7 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
     let mut part_buttons: Vec<Button> = vec![];
     let mut step_buttons: Vec<Button> = vec![];
 
-    for (index, _label) in LABELS.into_iter().enumerate() {
+    for index in 0..DRUM_LABELS.len() {
         connect!(button format!("sequences-editor-pad-{}", index),
             AppMessage::DrumMachinePadClicked(index));
 
@@ -310,7 +292,7 @@ pub fn update_drum_machine_view(model: &AppModel) {
             drum_machine_view.step_buttons[i].remove_css_class("playing");
         }
     } else if let Some(event) = drum_machine_model.latest_event() {
-        for (i, label) in LABELS.iter().enumerate() {
+        for (i, label) in DRUM_LABELS.values().iter().enumerate() {
             if event.labels.contains(label) {
                 drum_machine_view.pad_buttons[i].add_css_class("playing");
             } else {
@@ -363,7 +345,7 @@ pub fn update_drum_machine_view(model: &AppModel) {
 
     for i in 0..16 {
         if let Some(labels) = drum_machine_model.sequence().labels_at_step(i + offset) {
-            if labels.contains(&LABELS[drum_machine_model.activated_pad()]) {
+            if labels.contains(&DRUM_LABELS[drum_machine_model.activated_pad()].1) {
                 drum_machine_view.step_buttons[i].add_css_class("activated");
             } else {
                 drum_machine_view.step_buttons[i].remove_css_class("activated");

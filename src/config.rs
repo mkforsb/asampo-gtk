@@ -4,7 +4,7 @@
 
 use crate::{configfile::ConfigFile, ext::OptionMapExt};
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SamplePlaybackBehavior {
     PlaySingleSample,
     PlayUntilEnd,

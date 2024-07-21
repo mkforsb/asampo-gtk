@@ -62,7 +62,7 @@ impl ConfigFileV1 {
             buffer_size_samples: config.buffer_size_frames,
             sample_rate_conversion_quality: config.sample_rate_conversion_quality,
             config_save_path: config.config_save_path.clone(),
-            sample_playback_behavior: config.sample_playback_behavior.clone(),
+            sample_playback_behavior: config.sample_playback_behavior,
         }
     }
 }
