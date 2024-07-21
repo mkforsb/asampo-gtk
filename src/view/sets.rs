@@ -72,13 +72,17 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
 
         row.add_controller(keyup);
 
+        view.sets_list.append(&row);
+
+        if Some(uuid) == model.selected_set() {
+            row.activate();
+        }
+
         row.connect_activate(
             clone!(@strong model_ptr, @strong view, @strong uuid => move |_: &gtk::ListBoxRow| {
                 update(model_ptr.clone(), &view, AppMessage::SampleSetSelected(uuid));
             }),
         );
-
-        view.sets_list.append(&row);
     }
 }
 
