@@ -23,6 +23,12 @@ pub fn setup_sets_page(model_ptr: AppModelPtr, view: &AsampoView) {
             update(model_ptr.clone(), &view, AppMessage::AddSampleSetClicked);
         }));
 
+    view.sets_details_load_drum_machine_button.connect_clicked(
+        clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
+            update(model_ptr.clone(), &view, AppMessage::SampleSetDetailsLoadInDrumMachineClicked);
+        }),
+    );
+
     view.sets_details_export_button.connect_clicked(
         clone!(@strong model_ptr, @strong view => move |_: &gtk::Button| {
             update(model_ptr.clone(), &view, AppMessage::SampleSetDetailsExportClicked);

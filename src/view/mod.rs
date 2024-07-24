@@ -148,6 +148,9 @@ pub struct AsampoViewState {
     #[template_child(id = "sets-details-sample-list")]
     pub sets_details_sample_list: gtk::TemplateChild<gtk::ListBox>,
 
+    #[template_child(id = "sets-details-load-drum-machine-button")]
+    pub sets_details_load_drum_machine_button: gtk::TemplateChild<gtk::Button>,
+
     #[template_child(id = "sets-details-export-button")]
     pub sets_details_export_button: gtk::TemplateChild<gtk::Button>,
 

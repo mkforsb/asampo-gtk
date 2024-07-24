@@ -7,7 +7,7 @@ use std::{io::Write, path::Path};
 use anyhow::anyhow;
 use libasampo::{
     errors::Error as LaError,
-    samplesets::SampleSet as DomSampleSet,
+    samplesets::{SampleSet as DomSampleSet, SampleSetOps},
     sequences::{DrumkitSequence, StepSequenceOps},
     serialize::{
         SampleSet as SerSampleSet, Sequence as SerSequence, Source as SerSource, TryFromDomain,
@@ -57,7 +57,7 @@ impl SavefileV1 {
             drum_machine_sequence: SerSequence::try_from_domain(model.drum_machine_sequence())?,
             drum_machine_loaded_sequence: model.drum_machine_loaded_sequence().map(|s| s.uuid()),
             drum_machine_sampleset: SerSampleSet::try_from_domain(model.drum_machine_sampleset())?,
-            drum_machine_loaded_sampleset: None,
+            drum_machine_loaded_sampleset: model.drum_machine_loaded_sampleset().map(|s| s.uuid()),
         })
     }
 
@@ -104,6 +104,10 @@ impl SavefileV1 {
 
     pub fn drum_machine_sampleset_domained(&self) -> AnyhowResult<DomSampleSet> {
         Ok(self.drum_machine_sampleset.clone().try_into_domain()?)
+    }
+
+    pub fn drum_machine_loaded_sampleset(&self) -> Option<Uuid> {
+        self.drum_machine_loaded_sampleset
     }
 }
 
@@ -172,6 +176,12 @@ impl Savefile {
     pub fn drum_machine_sampleset_domained(&self) -> AnyhowResult<DomSampleSet> {
         match self {
             Savefile::V1(sf) => sf.drum_machine_sampleset_domained(),
+        }
+    }
+
+    pub fn drum_machine_loaded_sampleset(&self) -> Option<Uuid> {
+        match self {
+            Savefile::V1(sf) => sf.drum_machine_loaded_sampleset(),
         }
     }
 }

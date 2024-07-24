@@ -45,6 +45,7 @@ pub struct DrumMachineModel {
     event_latest: Option<DrumkitSequenceEvent>,
     loaded_sequence: Option<DrumkitSequence>,
     sequence: DrumkitSequence,
+    loaded_sampleset: Option<SampleSet>,
     sampleset: SampleSet,
     sources: Vec<Source>,
     activated_pad: usize,
@@ -91,6 +92,7 @@ impl DrumMachineModel {
             event_latest: None,
             loaded_sequence: None,
             sequence: Self::default_sequence(),
+            loaded_sampleset: None,
             sampleset: SampleSet::BaseSampleSet(BaseSampleSet::new("Sampleset".to_string())),
             sources: Vec::new(),
             activated_pad: 8,
@@ -302,6 +304,47 @@ impl DrumMachineModel {
         Ok(DrumMachineModel {
             loaded_sequence: None,
             ..self.set_sequence(Self::default_sequence(), Mirroring::Mirror)?
+        })
+    }
+
+    pub fn load_sampleset(
+        self,
+        sampleset: SampleSet,
+        sources: Vec<Source>,
+    ) -> AnyhowResult<DrumMachineModel> {
+        Ok(DrumMachineModel {
+            loaded_sampleset: Some(sampleset.clone()),
+            ..self.set_sampleset(sampleset, sources, Mirroring::Mirror)?
+        })
+    }
+
+    pub fn loaded_sampleset(&self) -> Option<&SampleSet> {
+        self.loaded_sampleset.as_ref()
+    }
+
+    pub fn clear_loaded_sampleset(self) -> DrumMachineModel {
+        DrumMachineModel {
+            loaded_sampleset: None,
+            ..self
+        }
+    }
+
+    pub fn set_sampleset(
+        self,
+        sampleset: SampleSet,
+        sources: Vec<Source>,
+        mirroring: Mirroring,
+    ) -> AnyhowResult<DrumMachineModel> {
+        if mirroring == Mirroring::Mirror {
+            self.render_thread_send(drumkit_render_thread::Message::LoadSampleSet(
+                SampleSetSampleLoader::new(sampleset.clone(), sources.clone()),
+            ))?;
+        }
+
+        Ok(DrumMachineModel {
+            sampleset,
+            sources,
+            ..self
         })
     }
 

@@ -41,6 +41,7 @@ pub enum AppMessage {
     SelectFolderDialogOpened(SelectFolderDialogContext),
     SampleSetSelected(Uuid),
     SampleSetSampleLabelChanged(Sample, Option<DrumkitLabel>),
+    SampleSetDetailsLoadInDrumMachineClicked,
     SampleSetDetailsExportClicked,
     ExportDialogOpened(dialogs::ExportDialogView),
     ExportDialogClosed,

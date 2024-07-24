@@ -352,6 +352,8 @@ impl AppModel {
     delegate!(viewflags, are_add_fs_source_fields_valid() -> bool);
     delegate!(viewflags, set_export_fields_valid(valid: bool) -> Model);
     delegate!(viewflags, are_export_fields_valid() -> bool);
+    delegate!(viewflags, set_set_load_in_drum_machine_enabled(state: bool) -> Model);
+    delegate!(viewflags, is_set_load_in_drum_machine_enabled() -> bool);
     delegate!(viewflags, set_set_export_enabled(state: bool) -> Model);
     delegate!(viewflags, is_set_export_enabled() -> bool);
     delegate!(viewflags, set_add_to_prev_set_enabled(state: bool) -> Model);
@@ -442,6 +444,21 @@ impl AppModel {
         as drum_machine_loaded_sequence -> Option<&DrumkitSequence>);
 
     delegate!(drum_machine, clear_loaded_sequence() as clear_drum_machine_loaded_sequence -> Model);
+
+    delegate!(drum_machine, load_sampleset(set: SampleSet, sources: Vec<Source>)
+        as load_drum_machine_sampleset -> Result);
+
+    delegate!(drum_machine, loaded_sampleset()
+        as drum_machine_loaded_sampleset -> Option<&SampleSet>);
+
+    delegate!(drum_machine, clear_loaded_sampleset()
+        as clear_drum_machine_loaded_sampleset -> Model);
+
+    delegate!(
+        drum_machine,
+        set_sampleset(set: SampleSet, sources: Vec<Source>, mirroring: Mirroring)
+        as set_drum_machine_sampleset -> Result
+    );
 
     delegate!(drum_machine, sampleset() as drum_machine_sampleset -> &SampleSet);
 

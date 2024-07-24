@@ -10,6 +10,7 @@ pub struct ViewFlags {
     add_to_set_show_dialog: bool,
     add_to_prev_enabled: bool,
     sets_add_set_show_dialog: bool,
+    sets_load_in_drum_machine_enabled: bool,
     sets_export_enabled: bool,
     sets_export_show_dialog: bool,
     sets_export_begin_browse: bool,
@@ -30,6 +31,7 @@ impl Default for ViewFlags {
             add_to_set_show_dialog: false,
             add_to_prev_enabled: false,
             sets_add_set_show_dialog: false,
+            sets_load_in_drum_machine_enabled: false,
             sets_export_enabled: false,
             sets_export_show_dialog: false,
             sets_export_begin_browse: false,
@@ -47,6 +49,7 @@ impl ViewFlags {
     get_set!(are add_fs_source_fields_valid, sources_add_fs_fields_valid);
     get_set!(are export_fields_valid, sets_export_fields_valid);
     get_set!(is main_view_sensitive, view_sensitive);
+    get_set!(is set_load_in_drum_machine_enabled, sets_load_in_drum_machine_enabled);
     get_set!(is set_export_enabled, sets_export_enabled);
     get_set!(is add_to_prev_set_enabled, add_to_prev_enabled);
 

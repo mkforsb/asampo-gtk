@@ -240,24 +240,24 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                         Mirroring::Mirror,
                     )?;
 
-                    let sampleset = loaded_savefile.drum_machine_sampleset_domained()?;
-
-                    // TODO: implement and use `DrumMachineModel::set_sampleset`
-                    for sample in sampleset.list() {
-                        let sample = sample.clone();
-
-                        let source = result
-                            .source(
-                                *sample
-                                    .source_uuid()
-                                    .ok_or(anyhow!("Sample missing source UUID"))?,
-                            )?
+                    if loaded_savefile.drum_machine_loaded_sampleset().is_some() {
+                        let set = result
+                            .set(loaded_savefile.drum_machine_loaded_sampleset().unwrap())?
                             .clone();
 
-                        if let Some(label) = sampleset.get_label::<DrumkitLabel>(&sample).unwrap() {
-                            result = result.assign_drum_pad(&source, sample, label)?;
-                        }
+                        result = result.load_drum_machine_sampleset(
+                            set,
+                            loaded_savefile.sources_domained()?,
+                        )?;
+                    } else {
+                        result = result.clear_drum_machine_loaded_sampleset();
                     }
+
+                    result = result.set_drum_machine_sampleset(
+                        loaded_savefile.drum_machine_sampleset_domained()?,
+                        loaded_savefile.sources_domained()?,
+                        Mirroring::Mirror,
+                    )?;
 
                     Ok(result)
                 }
@@ -360,6 +360,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
                 Ok(model
                     .set_set_export_enabled(len > 0)
+                    .set_set_load_in_drum_machine_enabled(len > 0)
                     .set_selected_set(Some(uuid))?
                     .set_selected_set_member(None))
             } else {
@@ -404,6 +405,14 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             }
         }
 
+        AppMessage::SampleSetDetailsLoadInDrumMachineClicked => {
+            let set = model
+                .set(model.selected_set().ok_or(anyhow!("No set selected"))?)?
+                .clone();
+            let sources = model.sources_list().iter().cloned().cloned().collect();
+
+            model.load_drum_machine_sampleset(set, sources)
+        }
         AppMessage::SampleSetDetailsExportClicked => Ok(model.signal_export_show_dialog()),
 
         AppMessage::ExportDialogOpened(dialogview) => Ok(model

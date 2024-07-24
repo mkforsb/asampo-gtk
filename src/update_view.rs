@@ -234,6 +234,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         }
     }
 
+    if old.is_set_load_in_drum_machine_enabled() != new.is_set_load_in_drum_machine_enabled() {
+        view.sets_details_load_drum_machine_button
+            .set_sensitive(new.is_set_load_in_drum_machine_enabled());
+    }
+
     if old.is_set_export_enabled() != new.is_set_export_enabled() {
         view.sets_details_export_button
             .set_sensitive(new.is_set_export_enabled());

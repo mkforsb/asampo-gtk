@@ -1176,6 +1176,13 @@
                                 <property name="name">sets-details-below-list-box</property>
                                 <property name="orientation">horizontal</property>
                                 <child>
+                                  <object class="GtkButton" id="sets-details-load-drum-machine-button">
+                                    <property name="name">sets-details-load-drum-machine-button</property>
+                                    <property name="label">Load in Drum Machine</property>
+                                    <property name="sensitive">false</property>
+                                  </object>
+                                </child>
+                                <child>
                                   <object class="GtkButton" id="sets-details-export-button">
                                     <property name="name">sets-details-export-button</property>
                                     <property name="label">Export</property>
