@@ -387,7 +387,21 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::SampleSetSampleLabelChanged(sample, label) => {
             let set_uuid = model.selected_set().ok_or(anyhow!("No set selected"))?;
-            model.set_set_sample_label(set_uuid, sample, label)
+            let set = model.set(set_uuid)?;
+
+            if let Some(prev_assigned_label) = set
+                .list()
+                .iter()
+                .find(|s| set.get_label::<DrumkitLabel>(s).is_ok_and(|sl| sl == label))
+            {
+                let prev_sample = (*prev_assigned_label).clone();
+
+                model
+                    .set_set_sample_label(set_uuid, prev_sample, None)?
+                    .set_set_sample_label(set_uuid, sample, label)
+            } else {
+                model.set_set_sample_label(set_uuid, sample, label)
+            }
         }
 
         AppMessage::SampleSetDetailsExportClicked => Ok(model.signal_export_show_dialog()),
