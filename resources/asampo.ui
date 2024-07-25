@@ -817,6 +817,7 @@
                                         </style>
                                         <property name="name">samples-sidebar-format-label</property>
                                         <property name="label">-</property>
+                                        <property name="wrap">true</property>
                                       </object>
                                     </child>
                                   </object>
