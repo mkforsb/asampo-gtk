@@ -2,7 +2,11 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-use gtk::{glib::clone, prelude::*, EventControllerKey, GestureClick};
+use gtk::{
+    glib::{self, clone},
+    prelude::*,
+    EventControllerKey, GestureClick,
+};
 use libasampo::{samples::SampleOps, samplesets::SampleSetOps};
 
 use crate::{
@@ -121,7 +125,7 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
 
                 let clicked = GestureClick::new();
 
-                clicked.connect_pressed(clone!(@strong row => move |_: &GestureClick, _, _, _| {
+                clicked.connect_pressed(clone!(@weak row => move |_: &GestureClick, _, _, _| {
                     row.activate();
                 }));
 
