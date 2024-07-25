@@ -2,6 +2,7 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
+use gtk::gdk::ModifierType;
 use libasampo::{samples::Sample, samplesets::DrumkitLabel, sequences::DrumkitSequenceEvent};
 use uuid::Uuid;
 
@@ -67,7 +68,7 @@ pub enum AppMessage {
     DrumMachineSaveSampleSetAsClicked,
     DrumMachineClearSampleSetClicked,
     DrumMachinePadClicked(usize),
-    DrumMachinePartClicked(usize),
+    DrumMachinePartClicked(usize, ModifierType),
     DrumMachineStepClicked(usize),
     DrumMachinePlaybackEvent(DrumkitSequenceEvent),
     AssignSampleToPadClicked(usize),

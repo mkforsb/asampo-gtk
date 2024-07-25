@@ -190,10 +190,23 @@ fn setup_drum_machine_view(model_ptr: AppModelPtr, view: &AsampoView) {
     }
 
     for index in 0..4 {
-        connect!(button format!("sequences-editor-part-{}", index),
-            AppMessage::DrumMachinePartClicked(index));
+        let partbut = obj!(Button, format!("sequences-editor-part-{}", index));
 
-        part_buttons.push(obj!(Button, format!("sequences-editor-part-{}", index)));
+        let gest = GestureClick::new();
+        gest.set_propagation_phase(gtk::PropagationPhase::Capture);
+
+        gest.connect_pressed(
+            clone!(@strong model_ptr, @strong view => move |e: &GestureClick, _, _, _| {
+                update(
+                    model_ptr.clone(),
+                    &view,
+                    AppMessage::DrumMachinePartClicked(index, e.current_event_state())
+                );
+            }),
+        );
+
+        partbut.add_controller(gest);
+        part_buttons.push(partbut);
     }
 
     for index in 0..16 {

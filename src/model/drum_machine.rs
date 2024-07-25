@@ -200,6 +200,22 @@ impl DrumMachineModel {
         }
     }
 
+    pub fn truncate_parts_to(self, part: usize) -> AnyhowResult<DrumMachineModel> {
+        if part < 4 {
+            let needed_len = (part + 1) * 16;
+
+            if needed_len < self.sequence.len() {
+                let mut sequence = self.sequence.clone();
+                sequence.set_len(needed_len);
+                self.set_sequence(sequence, Mirroring::Mirror)
+            } else {
+                Ok(self)
+            }
+        } else {
+            Err(anyhow!("Value out of range [0,3]"))
+        }
+    }
+
     pub fn activated_part(&self) -> usize {
         self.activated_part
     }

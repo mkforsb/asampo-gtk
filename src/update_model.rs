@@ -10,7 +10,7 @@ use std::{
 
 use anyhow::anyhow;
 use audiothread::{SourceMatcher, SourceType};
-use gtk::DialogError;
+use gtk::{gdk::ModifierType, DialogError};
 use libasampo::{
     samples::SampleOps,
     samplesets::{
@@ -631,7 +631,15 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             model.set_activated_drum_machine_pad(n)
         }
 
-        AppMessage::DrumMachinePartClicked(n) => model.set_activated_drum_machine_part(n),
+        AppMessage::DrumMachinePartClicked(n, mods) => {
+            if mods.contains(ModifierType::SHIFT_MASK) {
+                model
+                    .truncate_drum_machine_parts_to(n)?
+                    .set_activated_drum_machine_part(n)
+            } else {
+                model.set_activated_drum_machine_part(n)
+            }
+        }
         AppMessage::DrumMachineStepClicked(n) => {
             let amp = 0.5f32;
             let mut new_sequence = model.drum_machine_sequence().clone();

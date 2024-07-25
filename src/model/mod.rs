@@ -442,6 +442,9 @@ impl AppModel {
     delegate!(drum_machine, set_activated_part(n: usize)
         as set_activated_drum_machine_part -> Result);
 
+    delegate!(drum_machine, truncate_parts_to(n: usize)
+        as truncate_drum_machine_parts_to -> Result);
+
     delegate!(drum_machine, activated_part() as activated_drum_machine_part -> usize);
 
     delegate!(drum_machine, sequence() as drum_machine_sequence -> &DrumkitSequence);
