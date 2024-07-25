@@ -307,6 +307,10 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             InputDialogContext::SaveDrumMachineSequenceAs => {
                 Ok(model.clear_signal_sequence_save_as_show_dialog())
             }
+
+            InputDialogContext::SaveDrumMachineSampleSetAs => {
+                Ok(model.clear_signal_sampleset_save_as_show_dialog())
+            }
         },
 
         AppMessage::InputDialogCanceled(_context) => Ok(model),
@@ -340,6 +344,31 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                     .add_sequence(sequence.clone())?
                     .swap_drum_machine_sequence(sequence.clone())
                     .set_selected_sequence(Some(sequence.uuid()))
+            }
+
+            InputDialogContext::SaveDrumMachineSampleSetAs => {
+                let mut set = SampleSet::BaseSampleSet(BaseSampleSet::new(text.clone()));
+
+                for sample in model.drum_machine_sampleset().list() {
+                    set.add(
+                        model.source(
+                            *sample
+                                .source_uuid()
+                                .ok_or(anyhow!("Sample missing source UUID"))?,
+                        )?,
+                        sample.clone(),
+                    )?;
+                    set.set_label::<DrumkitLabel, Option<DrumkitLabel>>(
+                        sample,
+                        model
+                            .drum_machine_sampleset()
+                            .get_label::<DrumkitLabel>(sample)?,
+                    )?;
+                }
+
+                Ok(model
+                    .add_set(set.clone())?
+                    .swap_drum_machine_sampleset(set.clone()))
             }
         },
 
@@ -548,8 +577,24 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::DrumMachineClearSequenceClicked => {
             Ok(model.signal_sequence_clear_show_confirm_dialog())
         }
-        AppMessage::DrumMachineSaveSampleSetClicked => Ok(model),
-        AppMessage::DrumMachineSaveSampleSetAsClicked => Ok(model),
+        AppMessage::DrumMachineSaveSampleSetClicked => {
+            let set = model.drum_machine_model().sampleset().clone();
+
+            let position = model
+                .sets_list()
+                .iter()
+                .position(|x| x.uuid() == set.uuid())
+                .ok_or(anyhow!("Sample set not found: UUID not present"))?;
+
+            model
+                .remove_set(set.uuid())?
+                .insert_set(set, position)?
+                .commit_drum_machine_sampleset()
+        }
+        AppMessage::DrumMachineSaveSampleSetAsClicked => {
+            Ok(model.signal_sampleset_save_as_show_dialog())
+        }
+
         AppMessage::DrumMachineClearSampleSetClicked => Ok(model),
 
         AppMessage::DrumMachinePadClicked(n) => {

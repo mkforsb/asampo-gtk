@@ -20,6 +20,7 @@ pub enum InputDialogContext {
     CreateSampleSet,
     CreateEmptySequence,
     SaveDrumMachineSequenceAs,
+    SaveDrumMachineSampleSetAs,
 }
 
 #[derive(Debug, Clone)]

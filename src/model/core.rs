@@ -315,6 +315,20 @@ impl CoreModel {
         }
     }
 
+    pub fn insert_set(self, set: SampleSet, position: usize) -> AnyhowResult<CoreModel> {
+        if self.sets.contains_key(&set.uuid()) {
+            Err(anyhow!("Failed to insert sample set: UUID in use"))
+        } else {
+            let uuid = set.uuid();
+
+            Ok(CoreModel {
+                sets: self.sets.clone_and_insert(uuid, set),
+                sets_order: self.sets_order.clone_and_insert(uuid, position),
+                ..self
+            })
+        }
+    }
+
     pub fn get_or_create_set(
         model: CoreModel,
         name: impl Into<String>,
@@ -337,7 +351,6 @@ impl CoreModel {
         }
     }
 
-    #[cfg(test)]
     pub fn remove_set(self, uuid: Uuid) -> AnyhowResult<CoreModel> {
         Ok(CoreModel {
             sets_order: self.sets_order.clone_and_remove(&uuid)?,

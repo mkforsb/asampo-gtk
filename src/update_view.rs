@@ -109,6 +109,18 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
+    if new.is_signalling_sampleset_save_as_show_dialog() {
+        dialogs::input(
+            model_ptr.clone(),
+            view,
+            InputDialogContext::SaveDrumMachineSampleSetAs,
+            "Save sample set as",
+            "Name of set:",
+            "Name",
+            "Save",
+        );
+    }
+
     if new.is_signalling_sequence_load_show_confirm_save_dialog() {
         dialogs::confirm(
             model_ptr.clone(),

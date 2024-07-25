@@ -311,6 +311,9 @@ impl AppModel {
             .reset_export_progress()
     }
 
+    delegate!(core, remove_set(uuid: Uuid) -> Result);
+    delegate!(core, insert_set(set: SampleSet, position: usize) -> Result);
+
     delegate!(core, add_to_set(sample: Sample, set_uuid: Uuid) -> Result);
 
     delegate!(core,
@@ -365,6 +368,7 @@ impl AppModel {
     delegate!(viewflags, signal_export_show_dialog() -> Model);
     delegate!(viewflags, signal_create_sequence_show_dialog() -> Model);
     delegate!(viewflags, signal_sequence_save_as_show_dialog() -> Model);
+    delegate!(viewflags, signal_sampleset_save_as_show_dialog() -> Model);
     delegate!(viewflags, signal_sequence_load_show_confirm_save_dialog() -> Model);
     delegate!(viewflags, signal_sequence_load_show_confirm_abandon_dialog() -> Model);
     delegate!(viewflags, signal_sequence_clear_show_confirm_dialog() -> Model);
@@ -375,6 +379,7 @@ impl AppModel {
     delegate!(viewflags, is_signalling_export_begin_browse() -> bool);
     delegate!(viewflags, is_signalling_create_sequence_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_sequence_save_as_show_dialog() -> bool);
+    delegate!(viewflags, is_signalling_sampleset_save_as_show_dialog() -> bool);
     delegate!(viewflags, is_signalling_sequence_load_show_confirm_save_dialog() -> bool);
     delegate!(viewflags, is_signalling_sequence_load_show_confirm_abandon_dialog() -> bool);
     delegate!(viewflags, is_signalling_sequence_clear_show_confirm_dialog() -> bool);
@@ -385,6 +390,7 @@ impl AppModel {
     delegate!(viewflags, clear_signal_export_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_create_sequence_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_sequence_save_as_show_dialog() -> Model);
+    delegate!(viewflags, clear_signal_sampleset_save_as_show_dialog() -> Model);
     delegate!(viewflags, clear_signal_sequence_load_show_confirm_save_dialog() -> Model);
     delegate!(viewflags, clear_signal_sequence_load_show_confirm_abandon_dialog() -> Model);
     delegate!(viewflags, clear_signal_sequence_clear_show_confirm_dialog() -> Model);
@@ -459,6 +465,11 @@ impl AppModel {
         set_sampleset(set: SampleSet, sources: Vec<Source>, mirroring: Mirroring)
         as set_drum_machine_sampleset -> Result
     );
+
+    delegate!(drum_machine, commit_sampleset() as commit_drum_machine_sampleset -> Result);
+
+    delegate!(drum_machine, swap_to_saved_sampleset(saved_set: SampleSet)
+        as swap_drum_machine_sampleset -> Model);
 
     delegate!(drum_machine, sampleset() as drum_machine_sampleset -> &SampleSet);
 

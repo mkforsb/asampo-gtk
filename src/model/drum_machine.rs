@@ -71,6 +71,7 @@ impl PartialEq for DrumMachineModel {
         if self.activated_pad != other.activated_pad
             || self.activated_part != other.activated_part
             || self.sequence != other.sequence
+            || self.sampleset != other.sampleset
         {
             return false;
         }
@@ -350,6 +351,57 @@ impl DrumMachineModel {
 
     pub fn sampleset(&self) -> &SampleSet {
         &self.sampleset
+    }
+
+    pub fn is_sampleset_modified(&self) -> bool {
+        self.loaded_sampleset
+            .as_ref()
+            .is_some_and(|set| *set != self.sampleset)
+    }
+
+    /// Reset the change-tracking for the loaded sampleset.
+    ///
+    /// Intended to be called after the sampleset has been saved externally, in order to
+    /// clear any 'changed' status.
+    pub fn commit_sampleset(self) -> AnyhowResult<DrumMachineModel> {
+        if self.loaded_sampleset.is_some() {
+            Ok(DrumMachineModel {
+                loaded_sampleset: Some(self.sampleset.clone()),
+                ..self
+            })
+        } else {
+            Err(anyhow!("No sample set loaded"))
+        }
+    }
+
+    fn assert_valid_sampleset_swap(a: &SampleSet, b: &SampleSet) -> bool {
+        let list_a = a.list();
+        let list_b = b.list();
+
+        if list_a.len() != list_b.len() {
+            return false;
+        }
+
+        for i in 0..list_a.len() {
+            if list_a[i] != list_b[i]
+                || a.get_label::<DrumkitLabel>(list_a[i]).ok()
+                    != b.get_label::<DrumkitLabel>(list_b[i]).ok()
+            {
+                return false;
+            }
+        }
+
+        true
+    }
+
+    pub fn swap_to_saved_sampleset(self, saved_set: SampleSet) -> DrumMachineModel {
+        Self::assert_valid_sampleset_swap(&saved_set, &self.sampleset);
+
+        DrumMachineModel {
+            loaded_sampleset: Some(saved_set.clone()),
+            sampleset: saved_set,
+            ..self
+        }
     }
 
     pub fn set_tempo(self, bpm: u16, mirroring: Mirroring) -> AnyhowResult<DrumMachineModel> {

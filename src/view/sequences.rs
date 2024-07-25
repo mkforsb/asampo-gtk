@@ -7,7 +7,7 @@ use gtk::{
     prelude::{ButtonExt, EventControllerExt, FrameExt, ListBoxRowExt, PopoverExt, WidgetExt},
     Button, EventControllerKey, GestureClick, SpinButton,
 };
-use libasampo::sequences::StepSequenceOps;
+use libasampo::{samplesets::SampleSetOps, sequences::StepSequenceOps};
 
 use crate::{
     ext::{OptionMapExt, WithModel},
@@ -276,9 +276,31 @@ pub fn update_drum_machine_view(model: &AppModel) {
             .as_str(),
         );
 
-        drum_machine_view.save_seq_button.set_sensitive(true);
+        if drum_machine_model.is_sequence_modified() {
+            drum_machine_view.save_seq_button.set_sensitive(true);
+        } else {
+            drum_machine_view.save_seq_button.set_sensitive(false);
+        }
     } else {
         drum_machine_view.save_seq_button.set_sensitive(false);
+    }
+
+    if drum_machine_model.loaded_sampleset().is_some() {
+        drum_machine_view.save_set_button.set_label(
+            format!(
+                "Save to '{}'",
+                drum_machine_model.loaded_sampleset().unwrap().name()
+            )
+            .as_str(),
+        );
+
+        if drum_machine_model.is_sampleset_modified() {
+            drum_machine_view.save_set_button.set_sensitive(true);
+        } else {
+            drum_machine_view.save_set_button.set_sensitive(false);
+        }
+    } else {
+        drum_machine_view.save_set_button.set_sensitive(false);
     }
 
     if drum_machine_model.is_waiting()
