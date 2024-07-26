@@ -295,6 +295,7 @@ pub fn update_drum_machine_view(model: &AppModel) {
             drum_machine_view.save_seq_button.set_sensitive(false);
         }
     } else {
+        drum_machine_view.save_seq_button.set_label("Save");
         drum_machine_view.save_seq_button.set_sensitive(false);
     }
 
@@ -313,6 +314,7 @@ pub fn update_drum_machine_view(model: &AppModel) {
             drum_machine_view.save_set_button.set_sensitive(false);
         }
     } else {
+        drum_machine_view.save_set_button.set_label("Save");
         drum_machine_view.save_set_button.set_sensitive(false);
     }
 
