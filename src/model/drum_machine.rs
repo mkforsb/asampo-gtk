@@ -346,6 +346,17 @@ impl DrumMachineModel {
         }
     }
 
+    pub fn clear_sampleset(self) -> AnyhowResult<DrumMachineModel> {
+        Ok(DrumMachineModel {
+            loaded_sampleset: None,
+            ..self.set_sampleset(
+                SampleSet::BaseSampleSet(BaseSampleSet::new("Unnamed")),
+                Vec::new(),
+                Mirroring::Mirror,
+            )?
+        })
+    }
+
     pub fn set_sampleset(
         self,
         sampleset: SampleSet,

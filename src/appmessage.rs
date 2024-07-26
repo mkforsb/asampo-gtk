@@ -86,4 +86,8 @@ pub enum AppMessage {
     ClearSequenceConfirmDialogError(anyhow::Error),
     ClearSequenceConfirm,
     ClearSequenceCancel,
+    ClearSampleSetConfirmDialogOpened,
+    ClearSampleSetConfirmDialogError(anyhow::Error),
+    ClearSampleSetConfirm,
+    ClearSampleSetCancel,
 }

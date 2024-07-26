@@ -179,6 +179,23 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
+    if new.is_signalling_sampleset_clear_show_confirm_dialog() {
+        dialogs::confirm(
+            model_ptr.clone(),
+            view,
+            "Clear sample set?",
+            "This action cannot be undone",
+            vec![
+                ButtonSpec::new("Ok", || AppMessage::ClearSampleSetConfirm),
+                ButtonSpec::new("Cancel", || AppMessage::ClearSampleSetCancel).set_as_cancel(),
+            ],
+            AppMessage::ClearSampleSetConfirmDialogOpened,
+            |e| {
+                AppMessage::ClearSampleSetConfirmDialogError(anyhow!("Confirm dialog error: {e:?}"))
+            },
+        )
+    }
+
     if new.is_signalling_export_show_dialog() {
         dialogs::sampleset_export(model_ptr.clone(), view, new.clone());
     }

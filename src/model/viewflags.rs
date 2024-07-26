@@ -21,6 +21,7 @@ pub struct ViewFlags {
     sequences_load_sequence_show_confirm_save_dialog: bool,
     sequences_load_sequence_show_confirm_abandon_dialog: bool,
     sequences_clear_sequence_show_confirm_dialog: bool,
+    sequences_clear_sampleset_show_confirm_dialog: bool,
 }
 
 impl Default for ViewFlags {
@@ -43,6 +44,7 @@ impl Default for ViewFlags {
             sequences_load_sequence_show_confirm_save_dialog: false,
             sequences_load_sequence_show_confirm_abandon_dialog: false,
             sequences_clear_sequence_show_confirm_dialog: false,
+            sequences_clear_sampleset_show_confirm_dialog: false,
         }
     }
 }
@@ -83,6 +85,10 @@ impl ViewFlags {
     signal!(
         sequence_clear_show_confirm_dialog,
         sequences_clear_sequence_show_confirm_dialog
+    );
+    signal!(
+        sampleset_clear_show_confirm_dialog,
+        sequences_clear_sampleset_show_confirm_dialog
     );
 }
 

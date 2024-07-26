@@ -577,6 +577,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::DrumMachineClearSequenceClicked => {
             Ok(model.signal_sequence_clear_show_confirm_dialog())
         }
+
         AppMessage::DrumMachineSaveSampleSetClicked => {
             let set = model.drum_machine_model().sampleset().clone();
 
@@ -595,7 +596,9 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             Ok(model.signal_sampleset_save_as_show_dialog())
         }
 
-        AppMessage::DrumMachineClearSampleSetClicked => Ok(model),
+        AppMessage::DrumMachineClearSampleSetClicked => {
+            Ok(model.signal_sampleset_clear_show_confirm_dialog())
+        }
 
         AppMessage::DrumMachinePadClicked(n) => {
             let label = DRUM_LABELS[n].1;
@@ -842,5 +845,21 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             .set_main_view_sensitive(true)),
 
         AppMessage::ClearSequenceCancel => Ok(model.set_main_view_sensitive(true)),
+
+        AppMessage::ClearSampleSetConfirmDialogOpened => Ok(model
+            .set_main_view_sensitive(false)
+            .clear_signal_sampleset_clear_show_confirm_dialog()),
+
+        AppMessage::ClearSampleSetConfirmDialogError(e) => {
+            log::log!(log::Level::Error, "{e}");
+            Ok(model.set_main_view_sensitive(true))
+        }
+
+        AppMessage::ClearSampleSetConfirm => Ok(model
+            .clear_drum_machine_sampleset()?
+            .set_selected_sequence(None)?
+            .set_main_view_sensitive(true)),
+
+        AppMessage::ClearSampleSetCancel => Ok(model.set_main_view_sensitive(true)),
     }
 }
