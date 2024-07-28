@@ -59,10 +59,10 @@ macro_rules! delegate {
 
     // delegate!(field, f0(...) [as renamed0] -> ret0, f1(...) [as renamed1] -> ret1, ...)
     ($subm:ident, $($fname:ident ( $($param:ident : $tp:ty),* ) $(as $name:ident)?
-        -> $rt:ident $(< $($gen:ty),* >)?),*) =>
+        $(: $re:ident)? $(-> $rt:ty)?),*) =>
     {
         $(
-            delegate!($subm, $fname( $($param: $tp)* ) $(as $name)? -> $rt $(< $($gen),* >)?);
+            delegate!($subm, $fname( $($param: $tp),* ) $(as $name)? -> $($re)? $($rt)?);
         )*
     };
 }
@@ -124,10 +124,10 @@ macro_rules! delegate_priv {
 
     // delegate!(field, f0(...) [as renamed0] -> ret0, f1(...) [as renamed1] -> ret1, ...)
     ($subm:ident, $($fname:ident ( $($param:ident : $tp:ty),* ) $(as $name:ident)?
-        -> $rt:ident $(< $($gen:ty),* >)?),*) =>
+        $(: $re:ident)? $(-> $rt:ty)?),*) =>
     {
         $(
-            delegate!($subm, $fname( $($param: $tp)* ) $(as $name)? -> $rt $(< $($gen),* >)?);
+            delegate_priv!($subm, $fname( $($param: $tp),* ) $(as $name)? -> $($re)? $($rt)?);
         )*
     };
 }
