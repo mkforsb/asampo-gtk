@@ -12,7 +12,7 @@ use anyhow::anyhow;
 use audiothread::{SourceMatcher, SourceType};
 use gtk::{gdk::ModifierType, DialogError};
 use libasampo::{
-    samples::SampleOps,
+    samples::{Sample, SampleOps},
     samplesets::{
         export::{Conversion, ExportJob, ExportJobMessage},
         BaseSampleSet, DrumkitLabel, SampleSet, SampleSetOps,
@@ -33,6 +33,32 @@ use crate::{
     view::dialogs::{InputDialogContext, SelectFolderDialogContext},
     ErrorWithEffect,
 };
+
+fn play_sample(model: &AppModel, sample: &Sample) -> Result<(), anyhow::Error> {
+    let stream = model
+        .source(
+            *sample
+                .source_uuid()
+                .ok_or(anyhow!("Sample missing source UUID"))?,
+        )?
+        .stream(&sample)?;
+
+    if model.config().sample_playback_behavior == SamplePlaybackBehavior::PlaySingleSample {
+        model
+            .audiothread_send(audiothread::Message::DropAllMatching(
+                SourceMatcher::new().match_type(SourceType::SymphoniaSource),
+            ))
+            .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
+    }
+
+    model
+        .audiothread_send(audiothread::Message::PlaySymphoniaSource(
+            audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
+        ))
+        .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
+
+    Ok(())
+}
 
 pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow::Error> {
     match message {
@@ -148,28 +174,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::SampleListSampleSelected(index) => {
             let sample = model.get_listed_sample(index)?;
-
-            let stream = model
-                .source(
-                    *sample
-                        .source_uuid()
-                        .ok_or(anyhow!("Sample missing source UUID"))?,
-                )?
-                .stream(&sample)?;
-
-            if model.config().sample_playback_behavior == SamplePlaybackBehavior::PlaySingleSample {
-                model
-                    .audiothread_send(audiothread::Message::DropAllMatching(
-                        SourceMatcher::new().match_type(SourceType::SymphoniaSource),
-                    ))
-                    .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
-            }
-
-            model
-                .audiothread_send(audiothread::Message::PlaySymphoniaSource(
-                    audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
-                ))
-                .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
+            play_sample(&model, &sample)?;
 
             Ok(model.set_selected_sample(Some(sample)))
         }
@@ -398,20 +403,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         }
 
         AppMessage::SampleSetSampleSelected(sample) => {
-            let stream = model
-                .source(
-                    *sample
-                        .source_uuid()
-                        .ok_or(anyhow!("Sample missing source UUID"))?,
-                )?
-                .stream(&sample)?;
-
-            model
-                .audiothread_send(audiothread::Message::PlaySymphoniaSource(
-                    audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
-                ))
-                .map_err(|e| anyhow!("Send error on audio thread control channel: {e}"))?;
-
+            play_sample(&model, &sample)?;
             Ok(model.set_selected_set_member(Some(sample)))
         }
 
@@ -616,19 +608,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .cloned();
 
             if let Some(sample) = sample {
-                let stream = model
-                    .source(
-                        *sample
-                            .source_uuid()
-                            .ok_or(anyhow!("Sample missing source UUID"))?,
-                    )?
-                    .stream(&sample)?;
-
-                model
-                    .audiothread_send(audiothread::Message::PlaySymphoniaSource(
-                        audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
-                    ))
-                    .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
+                play_sample(&model, &sample)?;
             }
 
             model.set_activated_drum_machine_pad(n)
