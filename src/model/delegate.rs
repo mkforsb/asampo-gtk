@@ -2,95 +2,133 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-#![allow(unused_macros, unused_imports)]
-
 macro_rules! delegate {
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) -> Result) => {
-        pub fn $fname(self $(, $param0: $tp0 $(, $param: $tp)*)?) -> Result<AppModel, anyhow::Error> {
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) -> Result)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) -> Result) => {
+        pub fn $fname(self, $($parm: $tp),*) -> Result<AppModel, anyhow::Error> {
             Ok(AppModel {
-                $subm: self.$subm.$fname($($param0 $(, $param)*)?)?,
+                $subm: self.$subm.$fname($($parm),*)?,
                 ..self
             })
         }
     };
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) -> Model) => {
-        pub fn $fname(self $(, $param0: $tp0 $(, $param: $tp)*)?) -> AppModel {
+
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) -> Model)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) -> Model) => {
+        pub fn $fname(self, $($parm: $tp),*) -> AppModel {
             AppModel {
-                $subm: self.$subm.$fname($($param0 $(, $param)*)?),
+                $subm: self.$subm.$fname($($parm),*),
                 ..self
             }
         }
     };
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) -> $rt:ty) => {
-        pub fn $fname(&self $(, $param0: $tp0 $(, $param: $tp)*)?) -> $rt {
-            self.$subm.$fname($($param0 $(, $param)*)?)
+
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) -> arbitrary type)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) -> $rt:ty) => {
+        pub fn $fname(&self, $($parm: $tp),*) -> $rt {
+            self.$subm.$fname($($parm),*)
         }
     };
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) as $name:ident -> Result) => {
-        pub fn $name(self $(, $param0: $tp0 $(, $param: $tp)*)?) -> Result<AppModel, anyhow::Error> {
+
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) as renamed -> Result)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) as $name:ident -> Result) => {
+        pub fn $name(self, $($parm: $tp),*) -> Result<AppModel, anyhow::Error> {
             Ok(AppModel {
-                $subm: self.$subm.$fname($($param0 $(, $param)*)?)?,
+                $subm: self.$subm.$fname($($parm),*)?,
                 ..self
             })
         }
     };
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) as $name:ident -> Model) => {
-        pub fn $name(self $(, $param0: $tp0 $(, $param: $tp)*)?) -> AppModel {
+
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) as renamed -> Model)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) as $name:ident -> Model) => {
+        pub fn $name(self, $($parm: $tp),*) -> AppModel {
             AppModel {
-                $subm: self.$subm.$fname($($param0 $(, $param)*)?),
+                $subm: self.$subm.$fname($($parm),*),
                 ..self
             }
         }
     };
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) as $name:ident -> $rt:ty) => {
-        pub fn $name(&self $(, $param0: $tp0 $(, $param: $tp)*)?) -> $rt {
-            self.$subm.$fname($($param0 $(, $param)*)?)
+
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) as renamed -> arbitrary type)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) as $name:ident -> $rt:ty) => {
+        pub fn $name(&self, $($parm: $tp),*) -> $rt {
+            self.$subm.$fname($($parm),*)
         }
+    };
+
+    // delegate!(field, f0(...) [as renamed0] -> ret0, f1(...) [as renamed1] -> ret1, ...)
+    ($subm:ident, $($fname:ident ( $($param:ident : $tp:ty),* ) $(as $name:ident)?
+        -> $rt:ident $(< $($gen:ty),* >)?),*) =>
+    {
+        $(
+            delegate!($subm, $fname( $($param: $tp)* ) $(as $name)? -> $rt $(< $($gen),* >)?);
+        )*
     };
 }
 
 macro_rules! delegate_priv {
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) -> Result) => {
-        fn $fname(self $(, $param0: $tp0 $(, $param: $tp)*)?) -> Result<AppModel, anyhow::Error> {
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) -> Result)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) -> Result) => {
+        fn $fname(self, $($parm: $tp),*) -> Result<AppModel, anyhow::Error> {
             Ok(AppModel {
-                $subm: self.$subm.$fname($($param0 $(, $param)*)?)?,
+                $subm: self.$subm.$fname($($parm),*)?,
                 ..self
             })
         }
     };
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) -> Model) => {
-        fn $fname(self $(, $param0: $tp0 $(, $param: $tp)*)?) -> AppModel {
+
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) -> Model)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) -> Model) => {
+        fn $fname(self, $($parm: $tp),*) -> AppModel {
             AppModel {
-                $subm: self.$subm.$fname($($param0 $(, $param)*)?),
+                $subm: self.$subm.$fname($($parm),*),
                 ..self
             }
         }
     };
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) -> $rt:ty) => {
-        fn $fname(&self $(, $param0: $tp0 $(, $param: $tp)*)?) -> $rt {
-            self.$subm.$fname($($param0 $(, $param)*)?)
+
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) -> arbitrary type)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) -> $rt:ty) => {
+        fn $fname(&self, $($parm: $tp),*) -> $rt {
+            self.$subm.$fname($($parm),*)
         }
     };
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) as $name:ident -> Result) => {
-        fn $name(self $(, $param0: $tp0 $(, $param: $tp)*)?) -> Result<AppModel, anyhow::Error> {
+
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) as renamed -> Result)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) as $name:ident -> Result) => {
+        fn $name(self, $($parm: $tp),*) -> Result<AppModel, anyhow::Error> {
             Ok(AppModel {
-                $subm: self.$subm.$fname($($param0 $(, $param)*)?)?,
+                $subm: self.$subm.$fname($($parm),*)?,
                 ..self
             })
         }
     };
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) as $name:ident -> Model) => {
-        fn $name(self $(, $param0: $tp0 $(, $param: $tp)*)?) -> AppModel {
+
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) as renamed -> Model)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) as $name:ident -> Model) => {
+        fn $name(self, $($parm: $tp),*) -> AppModel {
             AppModel {
-                $subm: self.$subm.$fname($($param0 $(, $param)*)?),
+                $subm: self.$subm.$fname($($parm),*),
                 ..self
             }
         }
     };
-    ($subm:ident, $fname:ident ($($param0:ident: $tp0:ty $(, $param:ident: $tp:ty)*)?) as $name:ident -> $rt:ty) => {
-        fn $name(&self $(, $param0: $tp0 $(, $param: $tp)*)?) -> $rt {
-            self.$subm.$fname($($param0 $(, $param)*)?)
+
+    // delegate!(field, fname(p0: t0, p1: t1, ..., pn: tn) as renamed -> arbitrary type)
+    ($subm:ident, $fname:ident ($($parm:ident: $tp:ty),*) as $name:ident -> $rt:ty) => {
+        fn $name(&self, $($parm: $tp),*) -> $rt {
+            self.$subm.$fname($($parm),*)
         }
+    };
+
+    // delegate!(field, f0(...) [as renamed0] -> ret0, f1(...) [as renamed1] -> ret1, ...)
+    ($subm:ident, $($fname:ident ( $($param:ident : $tp:ty),* ) $(as $name:ident)?
+        -> $rt:ident $(< $($gen:ty),* >)?),*) =>
+    {
+        $(
+            delegate!($subm, $fname( $($param: $tp)* ) $(as $name)? -> $rt $(< $($gen),* >)?);
+        )*
     };
 }
 
