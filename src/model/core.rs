@@ -386,7 +386,7 @@ impl CoreModel {
     }
 
     // TODO: use "sset" for referring to sample sets?
-    pub fn set_set_sample_label(
+    pub fn set_sample_label(
         self,
         set_uuid: Uuid,
         sample: Sample,

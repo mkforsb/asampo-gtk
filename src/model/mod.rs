@@ -317,7 +317,7 @@ impl AppModel {
     delegate!(core, add_to_set(sample: Sample, set_uuid: Uuid) -> Result);
 
     delegate!(core,
-        set_set_sample_label(set_uuid: Uuid, sample: Sample, label: Option<DrumkitLabel>)
+        set_sample_label(set_uuid: Uuid, sample: Sample, label: Option<DrumkitLabel>)
         -> Result);
 
     delegate!(core, set_most_recently_added_to() -> Option<Uuid>);

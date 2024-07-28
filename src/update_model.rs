@@ -427,10 +427,10 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 let prev_sample = (*prev_assigned_label).clone();
 
                 model
-                    .set_set_sample_label(set_uuid, prev_sample, None)?
-                    .set_set_sample_label(set_uuid, sample, label)
+                    .set_sample_label(set_uuid, prev_sample, None)?
+                    .set_sample_label(set_uuid, sample, label)
             } else {
-                model.set_set_sample_label(set_uuid, sample, label)
+                model.set_sample_label(set_uuid, sample, label)
             }
         }
 
