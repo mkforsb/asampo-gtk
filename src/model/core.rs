@@ -19,7 +19,7 @@ use crate::{
     model::AnyhowResult,
 };
 
-pub type SourceLoaderMessage = Result<Sample, libasampo::errors::Error>;
+pub type SourceLoadMsg = Result<Sample, libasampo::errors::Error>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ExportState {
@@ -34,7 +34,7 @@ pub struct CoreModel {
     savefile: Option<String>,
     sources: HashMap<Uuid, Source>,
     sources_order: Vec<Uuid>,
-    sources_loading: HashMap<Uuid, Rc<mpsc::Receiver<SourceLoaderMessage>>>,
+    sources_loading: HashMap<Uuid, Rc<mpsc::Receiver<SourceLoadMsg>>>,
     samples: Rc<RefCell<Vec<Sample>>>,
     samplelist_selected_sample: Option<Sample>,
     sets: HashMap<Uuid, SampleSet>,
@@ -201,8 +201,8 @@ impl CoreModel {
         }
     }
 
-    fn spawn_source_loader(source: Source) -> mpsc::Receiver<SourceLoaderMessage> {
-        let (tx, rx) = mpsc::channel::<SourceLoaderMessage>();
+    fn spawn_source_loader(source: Source) -> mpsc::Receiver<SourceLoadMsg> {
+        let (tx, rx) = mpsc::channel::<SourceLoadMsg>();
 
         std::thread::spawn(move || {
             source.list_async(tx);
@@ -220,7 +220,7 @@ impl CoreModel {
     pub fn add_source_loader(
         self,
         source_uuid: Uuid,
-        loader_rx: mpsc::Receiver<SourceLoaderMessage>,
+        loader_rx: mpsc::Receiver<SourceLoadMsg>,
     ) -> AnyhowResult<CoreModel> {
         if self.sources_loading.contains_key(&source_uuid) {
             Err(anyhow!("Failed to add source loader: UUID in use"))
@@ -234,7 +234,7 @@ impl CoreModel {
         }
     }
 
-    pub fn handle_source_loader(&self, messages: Vec<SourceLoaderMessage>) {
+    pub fn handle_source_loader(&self, messages: Vec<SourceLoadMsg>) {
         let mut samples = self.samples.borrow_mut();
 
         for message in messages {

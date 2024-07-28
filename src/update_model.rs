@@ -662,7 +662,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
                 if model.is_drum_machine_render_thread_active() {
                     model
-                        .drum_machine_render_thread_send(
+                        .drum_machine_send(
                             drumkit_render_thread::Message::EditSequenceUnsetStepTrigger {
                                 step: target_step,
                                 label,
@@ -679,7 +679,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
                 if model.is_drum_machine_render_thread_active() {
                     model
-                        .drum_machine_render_thread_send(
+                        .drum_machine_send(
                             drumkit_render_thread::Message::EditSequenceSetStepTrigger {
                                 step: target_step,
                                 label,
