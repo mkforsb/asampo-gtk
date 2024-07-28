@@ -147,15 +147,31 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
                     set_dropdown_choice(&label_select, &DRUM_LABELS, &label);
                 }
 
-                label_select.connect_selected_item_notify(
-                    clone!(@strong model_ptr, @strong view, @strong sample => move |e: &gtk::DropDown| {
+                label_select.connect_selected_item_notify(clone!(
+                    @strong model_ptr,
+                    @strong view,
+                    @strong sample => move |e: &gtk::DropDown| {
                         if e.selected() > 0 {
-                            update(model_ptr.clone(), &view, AppMessage::SampleSetSampleLabelChanged(sample.clone(), Some(DRUM_LABELS[e.selected() as usize - 1].1)));
+                            update(
+                                model_ptr.clone(),
+                                &view,
+                                AppMessage::SampleSetSampleLabelChanged(
+                                    sample.clone(),
+                                    Some(DRUM_LABELS[e.selected() as usize - 1].1)
+                                )
+                            );
                         } else {
-                            update(model_ptr.clone(), &view, AppMessage::SampleSetSampleLabelChanged(sample.clone(), None));
+                            update(
+                                model_ptr.clone(),
+                                &view,
+                                AppMessage::SampleSetSampleLabelChanged(
+                                    sample.clone(),
+                                    None
+                                )
+                            );
                         }
-                    }),
-                );
+                    }
+                ));
 
                 view.sets_details_sample_list.append(&row);
 
@@ -165,15 +181,17 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
                     row.activate();
                 }
 
-                row.connect_activate(
-                    clone!(@strong model_ptr, @strong view, @strong sample => move |_: &gtk::ListBoxRow| {
+                row.connect_activate(clone!(
+                    @strong model_ptr,
+                    @strong view,
+                    @strong sample => move |_: &gtk::ListBoxRow| {
                         update(
                             model_ptr.clone(),
                             &view,
                             AppMessage::SampleSetSampleSelected(sample.clone())
                         );
-                    }),
-                );
+                    }
+                ));
             }
         }
         None => {

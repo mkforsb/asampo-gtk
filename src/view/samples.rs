@@ -158,7 +158,11 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
 
     view.samples_list_filter_entry.connect_changed(
         clone!(@strong model_ptr, @strong view => move |e: &gtk::Entry| {
-            update(model_ptr.clone(), &view, AppMessage::SamplesFilterChanged(e.text().to_string()));
+            update(
+                model_ptr.clone(),
+                &view,
+                AppMessage::SamplesFilterChanged(e.text().to_string())
+            );
         }),
     );
 

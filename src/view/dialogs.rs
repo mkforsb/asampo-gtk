@@ -104,8 +104,11 @@ pub fn input(
 
     let cancelbutton = objects.object::<gtk::Button>("cancel-button").unwrap();
 
-    okbutton.connect_clicked(
-        clone!(@strong model_ptr, @strong view, @strong dialogwin, @strong context => move |_: &gtk::Button| {
+    okbutton.connect_clicked(clone!(
+        @strong model_ptr,
+        @strong view,
+        @strong dialogwin,
+        @strong context => move |_: &gtk::Button| {
             update(model_ptr.clone(), &view, AppMessage::InputDialogSubmitted(
                 context.clone(),
                 util::gtk_find_child_by_builder_id::<gtk::Entry>(&dialogwin, "input")
@@ -116,20 +119,23 @@ pub fn input(
 
             view.set_sensitive(true);
             dialogwin.destroy();
-        }),
-    );
+        }
+    ));
 
     input.connect_activate(clone!(@strong okbutton => move |_| {
         okbutton.emit_clicked();
     }));
 
-    cancelbutton.connect_clicked(
-        clone!(@strong model_ptr, @strong view, @strong dialogwin, @strong context => move |_: &gtk::Button| {
+    cancelbutton.connect_clicked(clone!(
+        @strong model_ptr,
+        @strong view,
+        @strong dialogwin,
+        @strong context => move |_: &gtk::Button| {
             update(model_ptr.clone(), &view, AppMessage::InputDialogCanceled(context.clone()));
             view.set_sensitive(true);
             dialogwin.destroy();
-        }),
-    );
+        }
+    ));
 
     dialogwin.connect_show(
         clone!(@strong model_ptr, @strong view, @strong context => move |_: &gtk::Window| {
