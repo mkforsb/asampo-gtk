@@ -34,7 +34,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rustup.sh \
     && chmod +x /tmp/rustup.sh \
     && /tmp/rustup.sh -y
 
-RUN git clone https://github.com/mkforsb/asampo-gtk.git
+RUN git clone --depth 1 --branch prerelease_v1 https://github.com/mkforsb/asampo-gtk.git
 
 RUN cd ninja-1.12.1 && cmake . && make
 USER root
