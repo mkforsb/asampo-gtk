@@ -100,7 +100,7 @@ fn main() -> ExitCode {
         .expect("Should be able to register compiled GTK resources.");
 
     let app = Application::builder()
-        .application_id("se.neode.Asampo")
+        .application_id("io.github.mkforsb.asampo_gtk")
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 

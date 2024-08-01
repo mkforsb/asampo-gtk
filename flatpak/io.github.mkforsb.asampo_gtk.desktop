@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Asampo
+Exec=asampo-gtk
+Comment=Audio Sample Organizer
+Icon=io.github.mkforsb.asampo_gtk
+Categories=Audio;AudioVideo;
+Terminal=false

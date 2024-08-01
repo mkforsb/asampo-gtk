@@ -1,0 +1,38 @@
+{
+    "app-id": "io.github.mkforsb.asampo_gtk",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "46",
+    "sdk": "org.gnome.Sdk",
+    "sdk-extensions": ["org.freedesktop.Sdk.Extension.rust-stable"],
+    "command": "asampo-gtk",
+    "finish-args": [
+        "--share=ipc",
+        "--socket=fallback-x11",
+        "--socket=wayland",
+        "--socket=pulseaudio",
+        "--device=dri"
+    ],
+    "build-options": {
+        "append-path": "/usr/lib/sdk/rust-stable/bin"
+    },
+    "modules": [{
+        "name": "asampo_gtk",
+        "buildsystem": "simple",
+        "build-options": {
+            "env": {
+                "CARGO_HOME": "/run/build/asampo_gtk/cargo"
+            }
+        },
+        "build-commands": [
+            "cargo --offline fetch --manifest-path Cargo.toml",
+            "cargo --offline build --release",
+            "install -Dm755 ./target/release/asampo-gtk -t /app/bin/"
+        ],
+        "sources": [{
+                "type": "dir",
+                "path": "../"
+            },
+            "generated-sources.json"
+        ]
+    }]
+}

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.mkforsb.asampo_gtk</id>
+  <name>Asampo</name>
+  <summary>Audio Sample Organizer</summary>
+  <url type="homepage">https://www.github.com/mkforsb/asampo-gtk</url>
+  <developer id="io.github.mkforsb">
+    <name>Mikael Forsberg</name>
+  </developer>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>
+      Quickly browse, filter and preview large collections of audio samples. Collect samples in named sets, label them with drum kit labels and preview entire sets using a simple drum machine. Export sample sets either by plain copy or by applying a conversion.
+    </p>
+  </description>
+  <content_rating type="oars-1.1" />
+  <launchable type="desktop-id">asampo_gtk.desktop</launchable>
+</component>
