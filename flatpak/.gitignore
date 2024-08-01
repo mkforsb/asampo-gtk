@@ -1,0 +1,5 @@
+*.flatpak
+/builddir
+/.flatpak-builder
+generated-sources.json
+/repo
