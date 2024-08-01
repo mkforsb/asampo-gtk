@@ -34,8 +34,6 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rustup.sh \
     && chmod +x /tmp/rustup.sh \
     && /tmp/rustup.sh -y
 
-RUN git clone --depth 1 --branch prerelease_v1 https://github.com/mkforsb/asampo-gtk.git
-
 RUN cd ninja-1.12.1 && cmake . && make
 USER root
 RUN cd ninja-1.12.1 && make install
@@ -61,6 +59,7 @@ USER root
 RUN cd gtk-4.12.5 && meson install -C build
 
 USER user
+RUN git clone --depth 1 --branch prerelease_v1 https://github.com/mkforsb/asampo-gtk.git
 RUN . .cargo/env && cd asampo-gtk && cargo build --release
 
 RUN mkdir -p asampo-appimage/usr/bin
