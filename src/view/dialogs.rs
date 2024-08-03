@@ -3,8 +3,9 @@
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
 use gtk::{
-    glib::{clone, Propagation},
+    glib::{self, clone, Propagation},
     prelude::*,
+    EventControllerKey,
 };
 
 use crate::{
@@ -151,6 +152,15 @@ pub fn input(
             Propagation::Proceed
         }),
     );
+
+    let key_ctrl = EventControllerKey::new();
+    key_ctrl.connect_key_released(clone!(@weak dialogwin => move |_, key, _, _| {
+        if key == gtk::gdk::Key::Escape {
+            dialogwin.close();
+        }
+    }));
+
+    dialogwin.add_controller(key_ctrl);
 
     dialogwin.set_modal(true);
     dialogwin.set_transient_for(Some(view));
