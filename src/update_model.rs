@@ -210,7 +210,10 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
             let model = model.add_to_set(sample, set_uuid)?;
 
-            if model.drum_machine_loaded_sampleset().is_some_and(|set| set.uuid() == set_uuid) {
+            if model
+                .drum_machine_loaded_sampleset()
+                .is_some_and(|set| set.uuid() == set_uuid)
+            {
                 Ok(model.signal_sampleset_loaded_edit_show_dialog())
             } else {
                 Ok(model)
