@@ -59,7 +59,7 @@ USER root
 RUN cd gtk-4.12.5 && meson install -C build
 
 USER user
-RUN git clone --depth 1 --branch prerelease_v1 https://github.com/mkforsb/asampo-gtk.git
+RUN git clone --depth 1 --branch prerelease_v2 https://github.com/mkforsb/asampo-gtk.git
 RUN . .cargo/env && cd asampo-gtk && cargo build --release
 
 RUN mkdir -p asampo-appimage/usr/bin
