@@ -713,12 +713,6 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 Ok(model
                     .set_selected_sequence(Some(uuid))?
                     .signal_sequence_load_show_confirm_abandon_dialog())
-            } else if model
-                .drum_machine_model()
-                .loaded_sequence()
-                .is_some_and(|seq| seq.uuid() == uuid)
-            {
-                Ok(model)
             } else if model.drum_machine_model().is_sequence_modified() {
                 Ok(model
                     .set_selected_sequence(Some(uuid))?
@@ -740,13 +734,6 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::LoadSequenceConfirmSaveChanges => {
             let sequence_to_save = model.drum_machine_model().sequence().clone();
-            let sequence_to_load = model
-                .sequence(
-                    model
-                        .selected_sequence()
-                        .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?,
-                )?
-                .clone();
 
             let position = model
                 .sequences_list()
@@ -754,9 +741,17 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .position(|seq| seq.uuid() == sequence_to_save.uuid())
                 .ok_or(anyhow!("Sequence not found: UUID not present"))?;
 
-            Ok(model
+            let model = model
                 .remove_sequence(sequence_to_save.uuid())?
-                .insert_sequence(sequence_to_save, position)?
+                .insert_sequence(sequence_to_save, position)?;
+
+            let sequence_uuid_to_load = model
+                .selected_sequence()
+                .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?;
+
+            let sequence_to_load = model.sequence(sequence_uuid_to_load)?.clone();
+
+            Ok(model
                 .load_drum_machine_sequence(sequence_to_load)?
                 .set_main_view_sensitive(true))
         }
