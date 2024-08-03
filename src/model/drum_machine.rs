@@ -240,9 +240,11 @@ impl DrumMachineModel {
     }
 
     pub fn is_sequence_modified(&self) -> bool {
-        self.loaded_sequence
-            .as_ref()
-            .is_some_and(|seq| *seq != self.sequence)
+        if let Some(seq) = self.loaded_sequence() {
+            *seq != self.sequence
+        } else {
+            !Self::is_equiv_default_sequence(&self.sequence)
+        }
     }
 
     /// Reset the change-tracking for the loaded sequence.
@@ -381,9 +383,11 @@ impl DrumMachineModel {
     }
 
     pub fn is_sampleset_modified(&self) -> bool {
-        self.loaded_sampleset
-            .as_ref()
-            .is_some_and(|set| *set != self.sampleset)
+        if let Some(set) = self.loaded_sampleset() {
+            *set != self.sampleset
+        } else {
+            self.sampleset.len() > 0
+        }
     }
 
     /// Reset the change-tracking for the loaded sampleset.

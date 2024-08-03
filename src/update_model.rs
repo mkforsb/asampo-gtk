@@ -26,9 +26,7 @@ use crate::{
     config::SamplePlaybackBehavior,
     configfile::ConfigFile,
     labels::DRUM_LABELS,
-    model::{
-        AppModel, DrumMachineModel, DrumMachinePlaybackState, ExportKind, ExportState, Mirroring,
-    },
+    model::{AppModel, DrumMachinePlaybackState, ExportKind, ExportState, Mirroring},
     savefile::Savefile,
     view::dialogs::{InputDialogContext, SelectFolderDialogContext},
     ErrorWithEffect,
@@ -438,6 +436,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
             model.load_drum_machine_sampleset(set, sources)
         }
+
         AppMessage::SampleSetDetailsExportClicked => Ok(model.signal_export_show_dialog()),
 
         AppMessage::ExportDialogOpened(dialogview) => Ok(model
@@ -705,24 +704,17 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         }
 
         AppMessage::SequenceSelected(uuid) => {
-            if model.drum_machine_model().loaded_sequence().is_none()
-                && !DrumMachineModel::is_equiv_default_sequence(
-                    model.drum_machine_model().sequence(),
-                )
-            {
-                Ok(model
-                    .set_selected_sequence(Some(uuid))?
-                    .signal_sequence_load_show_confirm_abandon_dialog())
-            } else if model.drum_machine_model().is_sequence_modified() {
-                Ok(model
-                    .set_selected_sequence(Some(uuid))?
-                    .signal_sequence_load_show_confirm_save_dialog())
+            let model = model.set_selected_sequence(Some(uuid))?;
+
+            if model.drum_machine_model().is_sequence_modified() {
+                if model.drum_machine_loaded_sequence().is_some() {
+                    Ok(model.signal_sequence_load_show_confirm_save_dialog())
+                } else {
+                    Ok(model.signal_sequence_load_show_confirm_abandon_dialog())
+                }
             } else {
                 let sequence = model.sequence(uuid)?.clone();
-
-                model
-                    .set_selected_sequence(Some(uuid))?
-                    .load_drum_machine_sequence(sequence)
+                Ok(model.load_drum_machine_sequence(sequence)?)
             }
         }
 
