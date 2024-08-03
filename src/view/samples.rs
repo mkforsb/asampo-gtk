@@ -200,7 +200,7 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
     }
 }
 
-pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
+pub fn update_samples_sidebar(model_ptr: AppModelPtr, model: AppModel, view: &AsampoView) {
     match model.selected_sample() {
         Some(sample) => {
             view.samples_sidebar_name_label.set_text(sample.name());
@@ -252,6 +252,22 @@ pub fn update_samples_sidebar(_model_ptr: AppModelPtr, model: AppModel, view: &A
                     .object::<gtk::Button>(format!("{uuid}-combo-button-label"))
                     .unwrap()
                     .set_label(set.name());
+
+                stuff
+                    .object::<gtk::Button>(format!("{uuid}-combo-button-ear"))
+                    .unwrap()
+                    .connect_clicked(clone!(
+                        @strong model_ptr,
+                        @strong view,
+                        @strong sample,
+                        @strong uuid => move |_| {
+                            update(
+                                model_ptr.clone(),
+                                &view,
+                                AppMessage::DeleteSampleFromSetClicked(sample.clone(), uuid)
+                            );
+                        }
+                    ));
 
                 view.samples_sidebar_sets_list.append(
                     &stuff

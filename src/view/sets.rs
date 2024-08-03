@@ -173,6 +173,23 @@ pub fn update_samplesets_detail(model_ptr: AppModelPtr, model: AppModel, view: &
                     }
                 ));
 
+                let delete_button = objects
+                    .object::<gtk::Button>(format!("{row_index}-delete-button"))
+                    .unwrap();
+
+                delete_button.connect_clicked(clone!(
+                    @strong model_ptr,
+                    @strong view,
+                    @strong sample,
+                    @strong set => move |_| {
+                        update(
+                            model_ptr.clone(),
+                            &view,
+                            AppMessage::DeleteSampleFromSetClicked(sample.clone(), set.uuid())
+                        )
+                    }
+                ));
+
                 view.sets_details_sample_list.append(&row);
 
                 if Some(&sample) == model.selected_set_member()

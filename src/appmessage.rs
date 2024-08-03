@@ -26,6 +26,7 @@ pub enum AppMessage {
     SampleSetSampleSelected(Sample),
     SamplesFilterChanged(String),
     SampleSidebarAddToSetClicked,
+    DeleteSampleFromSetClicked(Sample, Uuid),
     SampleSidebarAddToMostRecentlyUsedSetClicked,
     SourceEnabled(Uuid),
     SourceDisabled(Uuid),

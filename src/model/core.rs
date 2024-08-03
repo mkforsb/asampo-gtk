@@ -385,6 +385,17 @@ impl CoreModel {
         result.set_set_most_recently_added_to(Some(set_uuid))
     }
 
+    pub fn remove_from_set(self, sample: &Sample, set_uuid: Uuid) -> AnyhowResult<CoreModel> {
+        let mut result = self.clone();
+
+        result
+            .set_mut(set_uuid)?
+            .remove(sample)
+            .map_err(|e| anyhow!("Could not remove sample: {e}"))?;
+
+        Ok(result)
+    }
+
     // TODO: use "sset" for referring to sample sets?
     pub fn set_sample_label(
         self,

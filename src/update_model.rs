@@ -41,7 +41,7 @@ fn play_sample(model: &AppModel, sample: &Sample) -> Result<(), anyhow::Error> {
                 .source_uuid()
                 .ok_or(anyhow!("Sample missing source UUID"))?,
         )?
-        .stream(&sample)?;
+        .stream(sample)?;
 
     if model.config().sample_playback_behavior == SamplePlaybackBehavior::PlaySingleSample {
         model
@@ -185,6 +185,10 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::SampleSidebarAddToSetClicked => {
             Ok(model.signal_add_sample_to_set_show_dialog())
+        }
+
+        AppMessage::DeleteSampleFromSetClicked(sample, set_uuid) => {
+            Ok(model.remove_from_set(&sample, set_uuid)?)
         }
 
         AppMessage::SampleSidebarAddToMostRecentlyUsedSetClicked => {
