@@ -186,7 +186,16 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         }
 
         AppMessage::DeleteSampleFromSetClicked(sample, set_uuid) => {
-            Ok(model.remove_from_set(&sample, set_uuid)?)
+            let model = model.remove_from_set(&sample, set_uuid)?;
+
+            if model
+                .drum_machine_loaded_sampleset()
+                .is_some_and(|set| set.uuid() == set_uuid)
+            {
+                Ok(model.signal_sampleset_loaded_edit_show_dialog())
+            } else {
+                Ok(model)
+            }
         }
 
         AppMessage::SampleSidebarAddToMostRecentlyUsedSetClicked => {
@@ -413,7 +422,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             let set_uuid = model.selected_set().ok_or(anyhow!("No set selected"))?;
             let set = model.set(set_uuid)?;
 
-            if let Some(prev_assigned_label) = set
+            let model = if let Some(prev_assigned_label) = set
                 .list()
                 .iter()
                 .find(|s| set.get_label::<DrumkitLabel>(s).is_ok_and(|sl| sl == label))
@@ -425,6 +434,15 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                     .set_sample_label(set_uuid, sample, label)
             } else {
                 model.set_sample_label(set_uuid, sample, label)
+            }?;
+
+            if model
+                .drum_machine_loaded_sampleset()
+                .is_some_and(|set| set.uuid() == set_uuid)
+            {
+                Ok(model.signal_sampleset_loaded_edit_show_dialog())
+            } else {
+                Ok(model)
             }
         }
 
@@ -899,6 +917,39 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::LoadSampleSetConfirmDialogError(e) => {
             log::log!(log::Level::Error, "Confirm dialog error: {e}");
             Ok(model)
+        }
+
+        AppMessage::SynchronizeSampleSetDialogOpened => {
+            Ok(model.clear_signal_sampleset_loaded_edit_show_dialog())
+        }
+
+        AppMessage::SynchronizeSampleSetDialogError(e) => {
+            log::log!(log::Level::Error, "Dialog error: {e}");
+            Ok(model)
+        }
+
+        AppMessage::SynchronizeSampleSetConfirm => {
+            let set = model
+                .set(model.selected_set().ok_or(anyhow!("No set selected"))?)?
+                .clone();
+            let sources = model.sources_list().iter().cloned().cloned().collect();
+
+            Ok(model.load_drum_machine_sampleset(set, sources)?)
+        }
+
+        AppMessage::SynchronizeSampleSetUnlink => Ok(model.clear_drum_machine_loaded_sampleset()),
+
+        AppMessage::SynchronizeSampleSetCancel => {
+            let set = model.drum_machine_sampleset().clone();
+            let uuid = set.uuid();
+
+            let position = model
+                .sets_list()
+                .iter()
+                .position(|set| set.uuid() == uuid)
+                .ok_or(anyhow!("Set not found: UUID not present"))?;
+
+            Ok(model.remove_set(uuid)?.insert_set(set, position)?)
         }
     }
 }

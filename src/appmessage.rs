@@ -99,4 +99,9 @@ pub enum AppMessage {
     LoadSampleSetConfirmAbandon,
     LoadSampleSetCancelAbandon,
     LoadSampleSetConfirmDialogError(anyhow::Error),
+    SynchronizeSampleSetDialogOpened,
+    SynchronizeSampleSetDialogError(anyhow::Error),
+    SynchronizeSampleSetConfirm,
+    SynchronizeSampleSetUnlink,
+    SynchronizeSampleSetCancel,
 }

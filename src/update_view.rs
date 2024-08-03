@@ -85,6 +85,26 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
+    if new.is_signalling_sampleset_loaded_edit_show_dialog() {
+        dialogs::confirm(
+            model_ptr.clone(),
+            view,
+            "Synchronize changes with drum machine?",
+            "A change was made to the sample set loaded in the drum machine. Unlink \
+                if you want to treat these as two different sets. Cancel to roll back \
+                the change.",
+            vec![
+                ButtonSpec::new("Synchronize", || AppMessage::SynchronizeSampleSetConfirm)
+                    .set_as_default(),
+                ButtonSpec::new("Unlink", || AppMessage::SynchronizeSampleSetUnlink),
+                ButtonSpec::new("Cancel", || AppMessage::SynchronizeSampleSetCancel)
+                    .set_as_cancel(),
+            ],
+            AppMessage::SynchronizeSampleSetDialogOpened,
+            |e| AppMessage::SynchronizeSampleSetDialogError(anyhow!("Confirm dialog error: {e:?}")),
+        );
+    }
+
     if new.is_signalling_create_sequence_show_dialog() {
         dialogs::input(
             model_ptr.clone(),
