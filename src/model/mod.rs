@@ -365,6 +365,8 @@ impl AppModel {
         signal_sampleset_save_as_show_dialog(): Model,
         signal_sequence_load_show_confirm_save_dialog(): Model,
         signal_sequence_load_show_confirm_abandon_dialog(): Model,
+        signal_sampleset_load_show_confirm_save_dialog(): Model,
+        signal_sampleset_load_show_confirm_abandon_dialog(): Model,
         signal_sequence_clear_show_confirm_dialog(): Model,
         signal_sampleset_clear_show_confirm_dialog(): Model,
         is_signalling_add_fs_source_begin_browse() -> bool,
@@ -377,6 +379,8 @@ impl AppModel {
         is_signalling_sampleset_save_as_show_dialog() -> bool,
         is_signalling_sequence_load_show_confirm_save_dialog() -> bool,
         is_signalling_sequence_load_show_confirm_abandon_dialog() -> bool,
+        is_signalling_sampleset_load_show_confirm_save_dialog() -> bool,
+        is_signalling_sampleset_load_show_confirm_abandon_dialog() -> bool,
         is_signalling_sequence_clear_show_confirm_dialog() -> bool,
         is_signalling_sampleset_clear_show_confirm_dialog() -> bool,
         clear_signal_add_fs_source_begin_browse(): Model,
@@ -389,6 +393,8 @@ impl AppModel {
         clear_signal_sampleset_save_as_show_dialog(): Model,
         clear_signal_sequence_load_show_confirm_save_dialog(): Model,
         clear_signal_sequence_load_show_confirm_abandon_dialog(): Model,
+        clear_signal_sampleset_load_show_confirm_save_dialog(): Model,
+        clear_signal_sampleset_load_show_confirm_abandon_dialog(): Model,
         clear_signal_sequence_clear_show_confirm_dialog(): Model,
         clear_signal_sampleset_clear_show_confirm_dialog(): Model);
 

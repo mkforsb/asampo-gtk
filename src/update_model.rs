@@ -429,12 +429,20 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         }
 
         AppMessage::SampleSetDetailsLoadInDrumMachineClicked => {
-            let set = model
-                .set(model.selected_set().ok_or(anyhow!("No set selected"))?)?
-                .clone();
-            let sources = model.sources_list().iter().cloned().cloned().collect();
+            if model.drum_machine_model().is_sampleset_modified() {
+                if model.drum_machine_loaded_sampleset().is_some() {
+                    Ok(model.signal_sampleset_load_show_confirm_save_dialog())
+                } else {
+                    Ok(model.signal_sampleset_load_show_confirm_abandon_dialog())
+                }
+            } else {
+                let set = model
+                    .set(model.selected_set().ok_or(anyhow!("No set selected"))?)?
+                    .clone();
+                let sources = model.sources_list().iter().cloned().cloned().collect();
 
-            model.load_drum_machine_sampleset(set, sources)
+                Ok(model.load_drum_machine_sampleset(set, sources)?)
+            }
         }
 
         AppMessage::SampleSetDetailsExportClicked => Ok(model.signal_export_show_dialog()),
@@ -832,5 +840,65 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             .set_main_view_sensitive(true)),
 
         AppMessage::ClearSampleSetCancel => Ok(model.set_main_view_sensitive(true)),
+
+        AppMessage::LoadSampleSetConfirmSaveDialogOpened => {
+            Ok(model.clear_signal_sampleset_load_show_confirm_save_dialog())
+        }
+
+        AppMessage::LoadSampleSetConfirmAbandonDialogOpened => {
+            Ok(model.clear_signal_sampleset_load_show_confirm_abandon_dialog())
+        }
+
+        AppMessage::LoadSampleSetCancelSave => Ok(model),
+
+        AppMessage::LoadSampleSetCancelAbandon => Ok(model),
+
+        AppMessage::LoadSampleSetConfirmAbandon => {
+            let set = model
+                .set(model.selected_set().ok_or(anyhow!("No set selected"))?)?
+                .clone();
+            let sources = model.sources_list().iter().cloned().cloned().collect();
+
+            Ok(model.load_drum_machine_sampleset(set, sources)?)
+        }
+
+        AppMessage::LoadSampleSetConfirmDiscardChanges => {
+            let set = model
+                .set(model.selected_set().ok_or(anyhow!("No set selected"))?)?
+                .clone();
+            let sources = model.sources_list().iter().cloned().cloned().collect();
+
+            Ok(model.load_drum_machine_sampleset(set, sources)?)
+        }
+
+        AppMessage::LoadSampleSetConfirmSaveChanges => {
+            let set_to_save = model.drum_machine_model().sampleset().clone();
+
+            let position = model
+                .sets_list()
+                .iter()
+                .position(|set| set.uuid() == set_to_save.uuid())
+                .ok_or(anyhow!("Set not found: UUID not present"))?;
+
+            let model = model
+                .remove_set(set_to_save.uuid())?
+                .insert_set(set_to_save, position)?;
+
+            let set_uuid_to_load = model
+                .selected_set()
+                .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?;
+
+            let set_to_load = model.set(set_uuid_to_load)?.clone();
+            let sources = model.sources_list().iter().cloned().cloned().collect();
+
+            Ok(model
+                .load_drum_machine_sampleset(set_to_load, sources)?
+                .set_main_view_sensitive(true))
+        }
+
+        AppMessage::LoadSampleSetConfirmDialogError(e) => {
+            log::log!(log::Level::Error, "Confirm dialog error: {e}");
+            Ok(model)
+        }
     }
 }

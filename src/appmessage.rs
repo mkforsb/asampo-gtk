@@ -91,4 +91,12 @@ pub enum AppMessage {
     ClearSampleSetConfirmDialogError(anyhow::Error),
     ClearSampleSetConfirm,
     ClearSampleSetCancel,
+    LoadSampleSetConfirmSaveDialogOpened,
+    LoadSampleSetConfirmSaveChanges,
+    LoadSampleSetConfirmDiscardChanges,
+    LoadSampleSetCancelSave,
+    LoadSampleSetConfirmAbandonDialogOpened,
+    LoadSampleSetConfirmAbandon,
+    LoadSampleSetCancelAbandon,
+    LoadSampleSetConfirmDialogError(anyhow::Error),
 }

@@ -164,6 +164,51 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
+    if new.is_signalling_sampleset_load_show_confirm_save_dialog() {
+        dialogs::confirm(
+            model_ptr.clone(),
+            view,
+            format!(
+                "Save changes to sample set {}?",
+                new.drum_machine_model()
+                    .loaded_sampleset()
+                    .expect("There should be a loaded sampleset")
+                    .name()
+            )
+            .as_str(),
+            "The sample set was loaded into the drum machine, and has been modified there",
+            vec![
+                ButtonSpec::new("Save changes", || {
+                    AppMessage::LoadSampleSetConfirmSaveChanges
+                })
+                .set_as_default(),
+                ButtonSpec::new("Discard changes", || {
+                    AppMessage::LoadSampleSetConfirmDiscardChanges
+                }),
+                ButtonSpec::new("Cancel", || AppMessage::LoadSampleSetCancelSave).set_as_cancel(),
+            ],
+            AppMessage::LoadSampleSetConfirmSaveDialogOpened,
+            |e| AppMessage::LoadSampleSetConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
+        );
+    }
+
+    if new.is_signalling_sampleset_load_show_confirm_abandon_dialog() {
+        dialogs::confirm(
+            model_ptr.clone(),
+            view,
+            "Abandon unnamed sample set?",
+            "The drum machine contains an unnamed and unsaved sample set. \
+                Abandoning this set cannot be undone.",
+            vec![
+                ButtonSpec::new("Ok", || AppMessage::LoadSampleSetConfirmAbandon),
+                ButtonSpec::new("Cancel", || AppMessage::LoadSampleSetCancelAbandon)
+                    .set_as_cancel(),
+            ],
+            AppMessage::LoadSampleSetConfirmAbandonDialogOpened,
+            |e| AppMessage::LoadSampleSetConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
+        )
+    }
+
     if new.is_signalling_sequence_clear_show_confirm_dialog() {
         dialogs::confirm(
             model_ptr.clone(),
