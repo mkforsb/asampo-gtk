@@ -208,7 +208,13 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .set_most_recently_added_to()
                 .ok_or(anyhow!("No sample set recently added to"))?;
 
-            model.add_to_set(sample, set_uuid)
+            let model = model.add_to_set(sample, set_uuid)?;
+
+            if model.drum_machine_loaded_sampleset().is_some_and(|set| set.uuid() == set_uuid) {
+                Ok(model.signal_sampleset_loaded_edit_show_dialog())
+            } else {
+                Ok(model)
+            }
         }
 
         AppMessage::SourceEnabled(uuid) => Ok(model
@@ -339,9 +345,18 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                     .ok_or(anyhow!("No sample selected"))?
                     .clone();
 
-                Ok(model
+                let model = model
                     .add_to_set(sample, set_uuid)?
-                    .set_add_to_prev_set_enabled(true))
+                    .set_add_to_prev_set_enabled(true);
+
+                if model
+                    .drum_machine_loaded_sampleset()
+                    .is_some_and(|set| set.uuid() == set_uuid)
+                {
+                    Ok(model.signal_sampleset_loaded_edit_show_dialog())
+                } else {
+                    Ok(model)
+                }
             }
 
             InputDialogContext::CreateSampleSet => {
@@ -684,6 +699,14 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                         })?;
                 }
             } else {
+                let set = model.drum_machine_sampleset();
+                if let Some(sample) = set.list().iter().find(|s| {
+                    set.get_label::<DrumkitLabel>(s)
+                        .is_ok_and(|lb| lb == Some(label))
+                }) {
+                    play_sample(&model, sample)?;
+                }
+
                 new_sequence.set_step_trigger(target_step, label, amp);
 
                 if model.is_drum_machine_render_thread_active() {
