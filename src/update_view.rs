@@ -413,6 +413,6 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
     }
 
     if new.is_signalling(Signal::QuitConfirmed) {
-        view.close();
+        view.destroy()
     }
 }
