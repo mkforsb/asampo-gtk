@@ -296,7 +296,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             model_ptr.clone(),
             view,
             AppMessage::SaveBeforeQuitSaveDialogOpened,
-            |s| AppMessage::SaveAndQuitFinish(s),
+            AppMessage::SaveAndQuitFinish,
             |e| AppMessage::LogError(anyhow!("Save dialog error: {e}")),
         )
     }

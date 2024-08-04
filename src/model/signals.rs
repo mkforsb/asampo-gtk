@@ -77,18 +77,15 @@ mod tests {
         let model = model.signal(Signal::ShowExportDialog);
         let model = model.signal(Signal::ShowSampleSetSaveAsDialog);
 
-        assert_eq!(model.is_signalling(Signal::ShowExportDialog), true);
-        assert_eq!(model.is_signalling(Signal::ShowSampleSetSaveAsDialog), true);
+        assert!(model.is_signalling(Signal::ShowExportDialog));
+        assert!(model.is_signalling(Signal::ShowSampleSetSaveAsDialog));
 
-        assert_eq!(
-            model.is_signalling(Signal::ShowSequenceConfirmClearDialog),
-            false
-        );
+        assert!(!model.is_signalling(Signal::ShowSequenceConfirmClearDialog));
 
         let model = model.clear_signal(Signal::ShowExportDialog).unwrap();
 
-        assert_eq!(model.is_signalling(Signal::ShowExportDialog), false);
-        assert_eq!(model.is_signalling(Signal::ShowSampleSetSaveAsDialog), true);
+        assert!(!model.is_signalling(Signal::ShowExportDialog));
+        assert!(model.is_signalling(Signal::ShowSampleSetSaveAsDialog));
 
         assert!(model.clear_signal(Signal::ShowExportDialog).is_err());
     }
