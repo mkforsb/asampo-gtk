@@ -894,7 +894,6 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::ClearSampleSetConfirm => Ok(model
             .clear_drum_machine_sampleset()?
-            .set_selected_sequence(None)?
             .set_main_view_sensitive(true)),
 
         AppMessage::ClearSampleSetCancel => Ok(model.set_main_view_sensitive(true)),
