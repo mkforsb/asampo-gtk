@@ -31,6 +31,26 @@ pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
             &config::SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS.keys(),
         )));
 
+    view.settings_save_on_quit_behavior_entry
+        .set_model(Some(&StringList::new(
+            &config::SAVE_ON_QUIT_BEHAVIOR_OPTIONS.keys(),
+        )));
+
+    view.settings_save_changed_sequence_behavior_entry
+        .set_model(Some(&StringList::new(
+            &config::SAVE_CHANGED_SEQUENCE_BEHAVIOR_OPTIONS.keys(),
+        )));
+
+    view.settings_save_changed_set_behavior_entry
+        .set_model(Some(&StringList::new(
+            &config::SAVE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS.keys(),
+        )));
+
+    view.settings_synchronize_changed_set_behavior_entry
+        .set_model(Some(&StringList::new(
+            &config::SYNCHRONIZE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS.keys(),
+        )));
+
     // we don't want to trigger signals in setup_settings_page(), so update the settings
     // view before hooking up the signals.
     update_settings_page(model_ptr.clone(), view);
@@ -54,31 +74,50 @@ pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
         }),
     );
 
-    view.settings_sample_rate_conversion_quality_entry
-        .connect_selected_item_notify(
-            clone!(@strong model_ptr, @strong view => move |e: &gtk::DropDown| {
-                update(
-                    model_ptr.clone(),
-                    &view,
-                    AppMessage::SettingsSampleRateConversionQualityChanged(
-                        strs_dropdown_get_selected(e)
-                    )
-                )
-            }),
-        );
+    macro_rules! connect_changed {
+        ($entry:ident, $message:ident) => {
+            view.$entry
+                .connect_selected_item_notify(
+                    clone!(@strong model_ptr, @strong view => move |e: &gtk::DropDown| {
+                        update(
+                            model_ptr.clone(),
+                            &view,
+                            AppMessage::$message(strs_dropdown_get_selected(e))
+                        )
+                    }),
+                );
+        }
+    }
 
-    view.settings_sample_playback_behavior_entry
-        .connect_selected_item_notify(
-            clone!(@strong model_ptr, @strong view => move |e: &gtk::DropDown| {
-                update(
-                    model_ptr.clone(),
-                    &view,
-                    AppMessage::SettingsSamplePlaybackBehaviorChanged(
-                        strs_dropdown_get_selected(e)
-                    )
-                )
-            }),
-        );
+    connect_changed!(
+        settings_sample_rate_conversion_quality_entry,
+        SettingsSampleRateConversionQualityChanged
+    );
+
+    connect_changed!(
+        settings_sample_playback_behavior_entry,
+        SettingsSamplePlaybackBehaviorChanged
+    );
+
+    connect_changed!(
+        settings_save_on_quit_behavior_entry,
+        SettingsSaveOnQuitBehaviorChanged
+    );
+
+    connect_changed!(
+        settings_save_changed_sequence_behavior_entry,
+        SettingsSaveChangedSequenceBehaviorChanged
+    );
+
+    connect_changed!(
+        settings_save_changed_set_behavior_entry,
+        SettingsSaveChangedSampleSetBehaviorChanged
+    );
+
+    connect_changed!(
+        settings_synchronize_changed_set_behavior_entry,
+        SettingsSynchronizeChangedSampleSetBehaviorChanged
+    );
 }
 
 pub fn update_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
@@ -107,6 +146,30 @@ pub fn update_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
             &view.settings_sample_playback_behavior_entry,
             &config::SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS,
             &config.sample_playback_behavior,
+        );
+
+        set_dropdown_choice(
+            &view.settings_save_on_quit_behavior_entry,
+            &config::SAVE_ON_QUIT_BEHAVIOR_OPTIONS,
+            &config.save_on_quit_behavior,
+        );
+
+        set_dropdown_choice(
+            &view.settings_save_changed_sequence_behavior_entry,
+            &config::SAVE_CHANGED_SEQUENCE_BEHAVIOR_OPTIONS,
+            &config.save_changed_sequence_behavior,
+        );
+
+        set_dropdown_choice(
+            &view.settings_save_changed_set_behavior_entry,
+            &config::SAVE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS,
+            &config.save_changed_set_behavior,
+        );
+
+        set_dropdown_choice(
+            &view.settings_synchronize_changed_set_behavior_entry,
+            &config::SYNCHRONIZE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS,
+            &config.synchronize_changed_set_behavior,
         );
 
         if view.settings_config_save_path_entry.text() != config.config_save_path {

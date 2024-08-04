@@ -49,6 +49,18 @@ pub struct AsampoViewState {
     #[template_child(id = "settings-sample-playback-behavior-entry")]
     pub settings_sample_playback_behavior_entry: gtk::TemplateChild<gtk::DropDown>,
 
+    #[template_child(id = "settings-save-on-quit-behavior-entry")]
+    pub settings_save_on_quit_behavior_entry: gtk::TemplateChild<gtk::DropDown>,
+
+    #[template_child(id = "settings-save-changed-sequence-behavior-entry")]
+    pub settings_save_changed_sequence_behavior_entry: gtk::TemplateChild<gtk::DropDown>,
+
+    #[template_child(id = "settings-save-changed-set-behavior-entry")]
+    pub settings_save_changed_set_behavior_entry: gtk::TemplateChild<gtk::DropDown>,
+
+    #[template_child(id = "settings-synchronize-changed-set-behavior-entry")]
+    pub settings_synchronize_changed_set_behavior_entry: gtk::TemplateChild<gtk::DropDown>,
+
     #[template_child(id = "settings-config-save-path-entry")]
     pub settings_config_save_path_entry: gtk::TemplateChild<gtk::Entry>,
 

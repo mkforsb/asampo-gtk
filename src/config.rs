@@ -4,10 +4,24 @@
 
 use crate::{configfile::ConfigFile, ext::OptionMapExt};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SamplePlaybackBehavior {
     PlaySingleSample,
     PlayUntilEnd,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SaveBehavior {
+    Ask,
+    Save,
+    DontSave,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SynchronizeBehavior {
+    Ask,
+    Synchronize,
+    Unlink,
 }
 
 #[derive(Debug, Clone)]
@@ -17,6 +31,10 @@ pub struct AppConfig {
     pub sample_rate_conversion_quality: audiothread::Quality,
     pub config_save_path: String,
     pub sample_playback_behavior: SamplePlaybackBehavior,
+    pub save_on_quit_behavior: SaveBehavior,
+    pub save_changed_sequence_behavior: SaveBehavior,
+    pub save_changed_set_behavior: SaveBehavior,
+    pub synchronize_changed_set_behavior: SynchronizeBehavior,
 }
 
 impl Default for AppConfig {
@@ -27,6 +45,10 @@ impl Default for AppConfig {
             sample_rate_conversion_quality: audiothread::Quality::Lowest,
             config_save_path: ConfigFile::default_path(),
             sample_playback_behavior: SamplePlaybackBehavior::PlayUntilEnd,
+            save_on_quit_behavior: SaveBehavior::Ask,
+            save_changed_sequence_behavior: SaveBehavior::Ask,
+            save_changed_set_behavior: SaveBehavior::Ask,
+            synchronize_changed_set_behavior: SynchronizeBehavior::Ask,
         }
     }
 }
@@ -92,6 +114,26 @@ impl AppConfig {
         sample_playback_behavior,
         SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS,
         "sample playback behavior");
+
+    update_with!(choice with_save_on_quit_behavior_choice,
+        save_on_quit_behavior,
+        SAVE_ON_QUIT_BEHAVIOR_OPTIONS,
+        "save on quit behavior");
+
+    update_with!(choice with_save_changed_sequence_behavior_choice,
+        save_changed_sequence_behavior,
+        SAVE_CHANGED_SEQUENCE_BEHAVIOR_OPTIONS,
+        "save changed sequence behavior");
+
+    update_with!(choice with_save_changed_set_behavior_choice,
+        save_changed_set_behavior,
+        SAVE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS,
+        "save changed set behavior");
+
+    update_with!(choice with_synchronize_changed_set_behavior_choice,
+        synchronize_changed_set_behavior,
+        SYNCHRONIZE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS,
+        "synchronize changed set behavior");
 }
 
 pub const OUTPUT_SAMPLE_RATE_OPTIONS: [(&str, u32); 4] = [
@@ -117,4 +159,28 @@ pub const SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS: [(&str, SamplePlaybackBehavior); 2] 
         "Let each sample play to completion",
         SamplePlaybackBehavior::PlayUntilEnd,
     ),
+];
+
+pub const SAVE_ON_QUIT_BEHAVIOR_OPTIONS: [(&str, SaveBehavior); 3] = [
+    ("Ask", SaveBehavior::Ask),
+    ("Always Save", SaveBehavior::Save),
+    ("Never Save", SaveBehavior::DontSave),
+];
+
+pub const SAVE_CHANGED_SEQUENCE_BEHAVIOR_OPTIONS: [(&str, SaveBehavior); 3] = [
+    ("Ask", SaveBehavior::Ask),
+    ("Always Save", SaveBehavior::Save),
+    ("Always Discard", SaveBehavior::DontSave),
+];
+
+pub const SAVE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS: [(&str, SaveBehavior); 3] = [
+    ("Ask", SaveBehavior::Ask),
+    ("Always Save", SaveBehavior::Save),
+    ("Always Discard", SaveBehavior::DontSave),
+];
+
+pub const SYNCHRONIZE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS: [(&str, SynchronizeBehavior); 3] = [
+    ("Ask", SynchronizeBehavior::Ask),
+    ("Always Synchronize", SynchronizeBehavior::Synchronize),
+    ("Always Unlink", SynchronizeBehavior::Unlink),
 ];

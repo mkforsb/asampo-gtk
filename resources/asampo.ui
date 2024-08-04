@@ -327,6 +327,114 @@
                                         </child>
                                       </object>
                                     </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="settings-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="setting-label" />
+                                            </style>
+                                            <property name="label">Save on quit:</property>
+                                            <property name="halign">start</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkDropDown" id="settings-save-on-quit-behavior-entry">
+                                            <property name="name">settings-save-on-quit-behavior-entry</property>
+                                            <style>
+                                              <class name="setting-entry" />
+                                            </style>
+                                            <property name="halign">start</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="settings-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="setting-label" />
+                                            </style>
+                                            <property name="label">Saving changed sequence:</property>
+                                            <property name="halign">start</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkDropDown" id="settings-save-changed-sequence-behavior-entry">
+                                            <property name="name">settings-save-changed-sequence-behavior-entry</property>
+                                            <style>
+                                              <class name="setting-entry" />
+                                            </style>
+                                            <property name="halign">start</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="settings-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="setting-label" />
+                                            </style>
+                                            <property name="label">Saving changed set:</property>
+                                            <property name="halign">start</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkDropDown" id="settings-save-changed-set-behavior-entry">
+                                            <property name="name">settings-save-changed-set-behavior-entry</property>
+                                            <style>
+                                              <class name="setting-entry" />
+                                            </style>
+                                            <property name="halign">start</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
+                                    <child>
+                                      <object class="GtkBox">
+                                        <style>
+                                          <class name="settings-row" />
+                                        </style>
+                                        <property name="orientation">horizontal</property>
+                                        <child>
+                                          <object class="GtkLabel">
+                                            <style>
+                                              <class name="setting-label" />
+                                            </style>
+                                            <property name="label">Synchronize changed set:</property>
+                                            <property name="halign">start</property>
+                                            <property name="xalign">0.0</property>
+                                          </object>
+                                        </child>
+                                        <child>
+                                          <object class="GtkDropDown" id="settings-synchronize-changed-set-behavior-entry">
+                                            <property name="name">settings-synchronize-changed-set-behavior-entry</property>
+                                            <style>
+                                              <class name="setting-entry" />
+                                            </style>
+                                            <property name="halign">start</property>
+                                          </object>
+                                        </child>
+                                      </object>
+                                    </child>
                                   </object>
                                 </child>
                                 <property name="halign">center</property>

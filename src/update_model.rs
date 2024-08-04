@@ -26,7 +26,10 @@ use crate::{
     config::SamplePlaybackBehavior,
     configfile::ConfigFile,
     labels::DRUM_LABELS,
-    model::{AppModel, DrumMachinePlaybackState, ExportKind, ExportState, Mirroring, Signal},
+    model::{
+        AnyhowResult, AppModel, DrumMachinePlaybackState, ExportKind, ExportState, Mirroring,
+        Signal,
+    },
     savefile::Savefile,
     view::dialogs::{InputDialogContext, SelectFolderDialogContext},
     ErrorWithEffect,
@@ -66,6 +69,109 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             Ok(_) => Ok(model.set_savefile_path(Some(filename))),
             Err(e) => Err(e),
         }
+    }
+
+    fn sync_set(model: AppModel) -> AnyhowResult<AppModel> {
+        let set = model
+            .set(model.selected_set().ok_or(anyhow!("No set selected"))?)?
+            .clone();
+        let sources = model.sources_list().iter().cloned().cloned().collect();
+
+        model.load_drum_machine_sampleset(set, sources)
+    }
+
+    fn unlink_set(model: AppModel) -> AnyhowResult<AppModel> {
+        Ok(model.clear_drum_machine_loaded_sampleset())
+    }
+
+    fn sync_set_rollback(model: AppModel) -> AnyhowResult<AppModel> {
+        let set = model.drum_machine_sampleset().clone();
+        let uuid = set.uuid();
+
+        let position = model
+            .sets_list()
+            .iter()
+            .position(|set| set.uuid() == uuid)
+            .ok_or(anyhow!("Set not found: UUID not present"))?;
+
+        model.remove_set(uuid)?.insert_set(set, position)
+    }
+
+    fn maybe_sync_set(model: AppModel) -> AnyhowResult<AppModel> {
+        match model.config().synchronize_changed_set_behavior {
+            crate::config::SynchronizeBehavior::Ask => {
+                Ok(model.signal(Signal::ShowSampleSetSynchronizationDialog))
+            }
+
+            crate::config::SynchronizeBehavior::Synchronize => sync_set(model),
+            crate::config::SynchronizeBehavior::Unlink => unlink_set(model),
+        }
+    }
+
+    fn load_set_save(model: AppModel) -> AnyhowResult<AppModel> {
+        let set_to_save = model.drum_machine_model().sampleset().clone();
+
+        let position = model
+            .sets_list()
+            .iter()
+            .position(|set| set.uuid() == set_to_save.uuid())
+            .ok_or(anyhow!("Set not found: UUID not present"))?;
+
+        let model = model
+            .remove_set(set_to_save.uuid())?
+            .insert_set(set_to_save, position)?;
+
+        let set_uuid_to_load = model
+            .selected_set()
+            .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?;
+
+        let set_to_load = model.set(set_uuid_to_load)?.clone();
+        let sources = model.sources_list().iter().cloned().cloned().collect();
+
+        model.load_drum_machine_sampleset(set_to_load, sources)
+    }
+
+    fn load_set_discard(model: AppModel) -> AnyhowResult<AppModel> {
+        let set = model
+            .set(model.selected_set().ok_or(anyhow!("No set selected"))?)?
+            .clone();
+        let sources = model.sources_list().iter().cloned().cloned().collect();
+
+        model.load_drum_machine_sampleset(set, sources)
+    }
+
+    fn load_seq_save(model: AppModel) -> AnyhowResult<AppModel> {
+        let sequence_to_save = model.drum_machine_model().sequence().clone();
+
+        let position = model
+            .sequences_list()
+            .iter()
+            .position(|seq| seq.uuid() == sequence_to_save.uuid())
+            .ok_or(anyhow!("Sequence not found: UUID not present"))?;
+
+        let model = model
+            .remove_sequence(sequence_to_save.uuid())?
+            .insert_sequence(sequence_to_save, position)?;
+
+        let sequence_uuid_to_load = model
+            .selected_sequence()
+            .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?;
+
+        let sequence_to_load = model.sequence(sequence_uuid_to_load)?.clone();
+
+        model.load_drum_machine_sequence(sequence_to_load)
+    }
+
+    fn load_seq_discard(model: AppModel) -> AnyhowResult<AppModel> {
+        let sequence_to_load = model
+            .sequence(
+                model
+                    .selected_sequence()
+                    .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?,
+            )?
+            .clone();
+
+        model.load_drum_machine_sequence(sequence_to_load)
     }
 
     macro_rules! config_choice {
@@ -140,6 +246,22 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             config_choice!(with_sample_playback_behavior_choice, choice)
         }
 
+        AppMessage::SettingsSaveOnQuitBehaviorChanged(choice) => {
+            config_choice!(with_save_on_quit_behavior_choice, choice)
+        }
+
+        AppMessage::SettingsSaveChangedSequenceBehaviorChanged(choice) => {
+            config_choice!(with_save_changed_sequence_behavior_choice, choice)
+        }
+
+        AppMessage::SettingsSaveChangedSampleSetBehaviorChanged(choice) => {
+            config_choice!(with_save_changed_set_behavior_choice, choice)
+        }
+
+        AppMessage::SettingsSynchronizeChangedSampleSetBehaviorChanged(choice) => {
+            config_choice!(with_synchronize_changed_set_behavior_choice, choice)
+        }
+
         AppMessage::AddFilesystemSourceNameChanged(text) => Ok(model
             .set_add_fs_source_name(text)
             .validate_add_fs_source_fields()),
@@ -204,7 +326,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .drum_machine_loaded_sampleset()
                 .is_some_and(|set| set.uuid() == set_uuid)
             {
-                Ok(model.signal(Signal::ShowSampleSetSynchronizationDialog))
+                maybe_sync_set(model)
             } else {
                 Ok(model)
             }
@@ -226,7 +348,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .drum_machine_loaded_sampleset()
                 .is_some_and(|set| set.uuid() == set_uuid)
             {
-                Ok(model.signal(Signal::ShowSampleSetSynchronizationDialog))
+                maybe_sync_set(model)
             } else {
                 Ok(model)
             }
@@ -363,7 +485,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                     .drum_machine_loaded_sampleset()
                     .is_some_and(|set| set.uuid() == set_uuid)
                 {
-                    Ok(model.signal(Signal::ShowSampleSetSynchronizationDialog))
+                    maybe_sync_set(model)
                 } else {
                     Ok(model)
                 }
@@ -465,7 +587,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .drum_machine_loaded_sampleset()
                 .is_some_and(|set| set.uuid() == set_uuid)
             {
-                Ok(model.signal(Signal::ShowSampleSetSynchronizationDialog))
+                maybe_sync_set(model)
             } else {
                 Ok(model)
             }
@@ -473,10 +595,16 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::SampleSetDetailsLoadInDrumMachineClicked => {
             if model.drum_machine_model().is_sampleset_modified() {
-                if model.drum_machine_loaded_sampleset().is_some() {
-                    Ok(model.signal(Signal::ShowSampleSetSaveBeforeLoadDialog))
-                } else {
-                    Ok(model.signal(Signal::ShowSampleSetConfirmAbandonDialog))
+                match model.config().save_changed_set_behavior {
+                    crate::config::SaveBehavior::Ask => {
+                        if model.drum_machine_loaded_sampleset().is_some() {
+                            Ok(model.signal(Signal::ShowSampleSetSaveBeforeLoadDialog))
+                        } else {
+                            Ok(model.signal(Signal::ShowSampleSetConfirmAbandonDialog))
+                        }
+                    }
+                    crate::config::SaveBehavior::Save => load_set_save(model),
+                    crate::config::SaveBehavior::DontSave => load_set_discard(model),
                 }
             } else {
                 let set = model
@@ -765,10 +893,17 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             let model = model.set_selected_sequence(Some(uuid))?;
 
             if model.drum_machine_model().is_sequence_modified() {
-                if model.drum_machine_loaded_sequence().is_some() {
-                    Ok(model.signal(Signal::ShowSequenceSaveBeforeLoadDialog))
-                } else {
-                    Ok(model.signal(Signal::ShowSequenceConfirmAbandonDialog))
+                match model.config().save_changed_sequence_behavior {
+                    crate::config::SaveBehavior::Ask => {
+                        if model.drum_machine_loaded_sequence().is_some() {
+                            Ok(model.signal(Signal::ShowSequenceSaveBeforeLoadDialog))
+                        } else {
+                            Ok(model.signal(Signal::ShowSequenceConfirmAbandonDialog))
+                        }
+                    }
+
+                    crate::config::SaveBehavior::Save => load_seq_save(model),
+                    crate::config::SaveBehavior::DontSave => load_seq_discard(model),
                 }
             } else {
                 let sequence = model.sequence(uuid)?.clone();
@@ -782,39 +917,8 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             .set_main_view_sensitive(false)
             .clear_signal(Signal::ShowSequenceSaveBeforeLoadDialog),
 
-        AppMessage::LoadSequenceConfirmSaveChanges => {
-            let sequence_to_save = model.drum_machine_model().sequence().clone();
-
-            let position = model
-                .sequences_list()
-                .iter()
-                .position(|seq| seq.uuid() == sequence_to_save.uuid())
-                .ok_or(anyhow!("Sequence not found: UUID not present"))?;
-
-            let model = model
-                .remove_sequence(sequence_to_save.uuid())?
-                .insert_sequence(sequence_to_save, position)?;
-
-            let sequence_uuid_to_load = model
-                .selected_sequence()
-                .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?;
-
-            let sequence_to_load = model.sequence(sequence_uuid_to_load)?.clone();
-
-            model.load_drum_machine_sequence(sequence_to_load)
-        }
-
-        AppMessage::LoadSequenceConfirmDiscardChanges => {
-            let sequence_to_load = model
-                .sequence(
-                    model
-                        .selected_sequence()
-                        .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?,
-                )?
-                .clone();
-
-            model.load_drum_machine_sequence(sequence_to_load)
-        }
+        AppMessage::LoadSequenceConfirmSaveChanges => load_seq_save(model),
+        AppMessage::LoadSequenceConfirmDiscardChanges => load_seq_discard(model),
 
         AppMessage::LoadSequenceCancelSave => {
             let loaded_uuid = model
@@ -830,17 +934,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             .set_main_view_sensitive(false)
             .clear_signal(Signal::ShowSequenceConfirmAbandonDialog),
 
-        AppMessage::LoadSequenceConfirmAbandon => {
-            let sequence_to_load = model
-                .sequence(
-                    model
-                        .selected_sequence()
-                        .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?,
-                )?
-                .clone();
-
-            model.load_drum_machine_sequence(sequence_to_load)
-        }
+        AppMessage::LoadSequenceConfirmAbandon => load_seq_discard(model),
 
         AppMessage::LoadSequenceCancelAbandon => model.set_selected_sequence(None),
 
@@ -866,76 +960,34 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             .set_main_view_sensitive(false)
             .clear_signal(Signal::ShowSampleSetConfirmAbandonDialog),
 
-        AppMessage::LoadSampleSetConfirmAbandon => {
-            let set = model
-                .set(model.selected_set().ok_or(anyhow!("No set selected"))?)?
-                .clone();
-            let sources = model.sources_list().iter().cloned().cloned().collect();
-
-            Ok(model.load_drum_machine_sampleset(set, sources)?)
-        }
-
-        AppMessage::LoadSampleSetConfirmDiscardChanges => {
-            let set = model
-                .set(model.selected_set().ok_or(anyhow!("No set selected"))?)?
-                .clone();
-            let sources = model.sources_list().iter().cloned().cloned().collect();
-
-            Ok(model.load_drum_machine_sampleset(set, sources)?)
-        }
-
-        AppMessage::LoadSampleSetConfirmSaveChanges => {
-            let set_to_save = model.drum_machine_model().sampleset().clone();
-
-            let position = model
-                .sets_list()
-                .iter()
-                .position(|set| set.uuid() == set_to_save.uuid())
-                .ok_or(anyhow!("Set not found: UUID not present"))?;
-
-            let model = model
-                .remove_set(set_to_save.uuid())?
-                .insert_set(set_to_save, position)?;
-
-            let set_uuid_to_load = model
-                .selected_set()
-                .ok_or(anyhow!("Cannot finish loading, no sequence selected"))?;
-
-            let set_to_load = model.set(set_uuid_to_load)?.clone();
-            let sources = model.sources_list().iter().cloned().cloned().collect();
-
-            model.load_drum_machine_sampleset(set_to_load, sources)
-        }
+        AppMessage::LoadSampleSetConfirmAbandon => load_set_discard(model),
+        AppMessage::LoadSampleSetConfirmDiscardChanges => load_set_discard(model),
+        AppMessage::LoadSampleSetConfirmSaveChanges => load_set_save(model),
 
         AppMessage::SynchronizeSampleSetDialogOpened => model
             .set_main_view_sensitive(false)
             .clear_signal(Signal::ShowSampleSetSynchronizationDialog),
 
-        AppMessage::SynchronizeSampleSetConfirm => {
-            let set = model
-                .set(model.selected_set().ok_or(anyhow!("No set selected"))?)?
-                .clone();
-            let sources = model.sources_list().iter().cloned().cloned().collect();
+        AppMessage::SynchronizeSampleSetConfirm => sync_set(model),
+        AppMessage::SynchronizeSampleSetUnlink => unlink_set(model),
+        AppMessage::SynchronizeSampleSetCancel => sync_set_rollback(model),
 
-            Ok(model.load_drum_machine_sampleset(set, sources)?)
-        }
+        AppMessage::QuitRequested => match model.config().save_on_quit_behavior {
+            crate::config::SaveBehavior::Ask => {
+                Ok(model.signal(Signal::ShowSaveBeforeQuitConfirmDialog))
+            }
 
-        AppMessage::SynchronizeSampleSetUnlink => Ok(model.clear_drum_machine_loaded_sampleset()),
+            crate::config::SaveBehavior::Save => {
+                if model.savefile_path().is_some() {
+                    let filename = model.savefile_path().unwrap().clone();
+                    Ok(save(model, filename)?.signal(Signal::QuitConfirmed))
+                } else {
+                    Ok(model.signal(Signal::ShowSaveBeforeQuitSaveDialog))
+                }
+            }
 
-        AppMessage::SynchronizeSampleSetCancel => {
-            let set = model.drum_machine_sampleset().clone();
-            let uuid = set.uuid();
-
-            let position = model
-                .sets_list()
-                .iter()
-                .position(|set| set.uuid() == uuid)
-                .ok_or(anyhow!("Set not found: UUID not present"))?;
-
-            Ok(model.remove_set(uuid)?.insert_set(set, position)?)
-        }
-
-        AppMessage::QuitRequested => Ok(model.signal(Signal::ShowSaveBeforeQuitConfirmDialog)),
+            crate::config::SaveBehavior::DontSave => Ok(model.signal(Signal::QuitConfirmed)),
+        },
 
         AppMessage::SaveBeforeQuitConfirmDialogOpened => model
             .set_main_view_sensitive(false)
