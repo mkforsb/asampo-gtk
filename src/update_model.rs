@@ -68,6 +68,16 @@ pub fn save(model: AppModel, filename: String) -> Result<AppModel, anyhow::Error
 }
 
 pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow::Error> {
+    macro_rules! config_choice {
+        ($method:ident, $choice:ident) => {{
+            let new_config = model.config().clone().$method($choice);
+
+            Ok(model
+                .set_config(new_config)
+                .set_config_save_timeout(Instant::now() + Duration::from_secs(3)))
+        }};
+    }
+
     match message {
         AppMessage::NoOp => Ok(model),
 
@@ -117,25 +127,11 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         }
 
         AppMessage::SettingsSampleRateConversionQualityChanged(choice) => {
-            let new_config = model
-                .config()
-                .clone()
-                .with_conversion_quality_choice(choice);
-
-            Ok(model
-                .set_config(new_config)
-                .set_config_save_timeout(Instant::now() + Duration::from_secs(3)))
+            config_choice!(with_conversion_quality_choice, choice)
         }
 
         AppMessage::SettingsSamplePlaybackBehaviorChanged(choice) => {
-            let new_config = model
-                .config()
-                .clone()
-                .with_sample_playback_behavior_choice(choice);
-
-            Ok(model
-                .set_config(new_config)
-                .set_config_save_timeout(Instant::now() + Duration::from_secs(3)))
+            config_choice!(with_sample_playback_behavior_choice, choice)
         }
 
         AppMessage::AddFilesystemSourceNameChanged(text) => Ok(model
