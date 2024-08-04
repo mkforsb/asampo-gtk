@@ -58,8 +58,24 @@ fn play_sample(model: &AppModel, sample: &Sample) -> Result<(), anyhow::Error> {
     Ok(())
 }
 
+pub fn save(model: AppModel, filename: String) -> Result<AppModel, anyhow::Error> {
+    log::log!(log::Level::Info, "Saving to {filename}");
+
+    match Savefile::save(&model, &filename) {
+        Ok(_) => Ok(model.set_savefile_path(Some(filename))),
+        Err(e) => Err(e),
+    }
+}
+
 pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow::Error> {
     match message {
+        AppMessage::NoOp => Ok(model),
+
+        AppMessage::LogError(e) => {
+            log::log!(log::Level::Error, "Error: {e}");
+            Ok(model)
+        }
+
         AppMessage::TimerTick => {
             if model.has_sources_loading() {
                 model.populate_samples_listmodel();
@@ -293,14 +309,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             }
         }
 
-        AppMessage::SaveToSavefile(filename) => {
-            log::log!(log::Level::Info, "Saving to {filename}");
-
-            match Savefile::save(&model, &filename) {
-                Ok(_) => Ok(model.set_savefile_path(Some(filename))),
-                Err(e) => Err(e),
-            }
-        }
+        AppMessage::SaveToSavefile(filename) => save(model, filename),
 
         AppMessage::DialogError(error) => {
             match error.kind::<DialogError>() {
@@ -981,6 +990,24 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .ok_or(anyhow!("Set not found: UUID not present"))?;
 
             Ok(model.remove_set(uuid)?.insert_set(set, position)?)
+        }
+
+        AppMessage::QuitRequested => Ok(model.signal(Signal::ShowSaveBeforeQuitConfirmDialog)),
+
+        AppMessage::SaveBeforeQuitConfirmDialogOpened => {
+            model.clear_signal(Signal::ShowSaveBeforeQuitConfirmDialog)
+        }
+
+        AppMessage::Quit => Ok(model.signal(Signal::QuitConfirmed)),
+
+        AppMessage::SaveAndQuitBegin => Ok(model.signal(Signal::ShowSaveBeforeQuitSaveDialog)),
+
+        AppMessage::SaveBeforeQuitSaveDialogOpened => {
+            model.clear_signal(Signal::ShowSaveBeforeQuitSaveDialog)
+        }
+
+        AppMessage::SaveAndQuitFinish(filename) => {
+            Ok(save(model, filename)?.signal(Signal::QuitConfirmed))
         }
     }
 }

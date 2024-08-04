@@ -275,6 +275,32 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
+    if new.is_signalling(Signal::ShowSaveBeforeQuitConfirmDialog) {
+        dialogs::confirm(
+            model_ptr.clone(),
+            view,
+            "Save workspace before quitting?",
+            "",
+            vec![
+                ButtonSpec::new("Save", || AppMessage::SaveAndQuitBegin).set_as_default(),
+                ButtonSpec::new("Don't save", || AppMessage::Quit),
+                ButtonSpec::new("Cancel", || AppMessage::NoOp).set_as_cancel(),
+            ],
+            AppMessage::SaveBeforeQuitConfirmDialogOpened,
+            |e| AppMessage::LogError(anyhow!("Dialog error: {e:?}")),
+        );
+    }
+
+    if new.is_signalling(Signal::ShowSaveBeforeQuitSaveDialog) {
+        dialogs::save(
+            model_ptr.clone(),
+            view,
+            AppMessage::SaveBeforeQuitSaveDialogOpened,
+            |s| AppMessage::SaveAndQuitFinish(s),
+            |e| AppMessage::LogError(anyhow!("Save dialog error: {e}")),
+        )
+    }
+
     if old.are_add_fs_source_fields_valid() != new.are_add_fs_source_fields_valid() {
         view.sources_add_fs_add_button
             .set_sensitive(new.are_add_fs_source_fields_valid());
@@ -373,5 +399,9 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
 
     if old.drum_machine_model() != new.drum_machine_model() {
         update_drum_machine_view(&new);
+    }
+
+    if new.is_signalling(Signal::QuitConfirmed) {
+        view.close();
     }
 }

@@ -189,6 +189,19 @@ fn main() -> ExitCode {
             }),
         );
 
+        view.connect_close_request(clone!(@strong model_ptr, @strong view => move |_| {
+            let model = model_ptr.take().unwrap();
+            let shutdown_confirmed = model.is_signalling(model::Signal::QuitConfirmed);
+            model_ptr.set(Some(model));
+
+            if shutdown_confirmed {
+                gtk::glib::Propagation::Proceed
+            } else {
+                update(model_ptr.clone(), &view, AppMessage::QuitRequested);
+                gtk::glib::Propagation::Stop
+            }
+        }));
+
         view.present();
 
         timers::init_timertick_timer(model_ptr.clone(), &view);

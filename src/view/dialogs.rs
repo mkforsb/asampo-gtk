@@ -371,3 +371,48 @@ pub fn confirm(
 
     update(model_ptr.clone(), view, on_open);
 }
+
+pub fn save(
+    model_ptr: AppModelPtr,
+    view: &AsampoView,
+    on_open: AppMessage,
+    ok: fn(String) -> AppMessage,
+    err: fn(gtk::glib::Error) -> AppMessage,
+) {
+    let filters = gtk::gio::ListStore::new::<gtk::FileFilter>();
+    let filter_json = gtk::FileFilter::new();
+
+    filter_json.add_suffix("json");
+    filters.append(&filter_json);
+
+    let model = model_ptr.take().unwrap();
+    let maybe_initial_name = model.savefile_path().cloned();
+    model_ptr.set(Some(model));
+
+    let mut dialog = gtk::FileDialog::builder().modal(true).filters(&filters);
+
+    // TODO: separate path and basename
+    if let Some(filename) = maybe_initial_name {
+        dialog = dialog.initial_name(filename);
+    } else {
+        dialog = dialog.initial_name("workspace.json");
+    }
+
+    dialog.build().save(
+        Some(view),
+        None::<gtk::gio::Cancellable>.as_ref(),
+        clone!(@strong model_ptr, @strong view => move |result| {
+            match result {
+                Ok(gfile) => update(
+                    model_ptr.clone(),
+                    &view,
+                    ok(gfile.path().unwrap().into_os_string().into_string().unwrap())
+                ),
+
+                Err(e) => update(model_ptr.clone(), &view, err(e)),
+            }
+        }),
+    );
+
+    update(model_ptr.clone(), view, on_open);
+}

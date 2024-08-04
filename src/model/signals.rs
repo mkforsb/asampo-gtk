@@ -25,6 +25,9 @@ pub enum Signal {
     ShowSequenceSaveBeforeLoadDialog,
     ShowSequenceConfirmAbandonDialog,
     ShowSequenceConfirmClearDialog,
+    ShowSaveBeforeQuitConfirmDialog,
+    ShowSaveBeforeQuitSaveDialog,
+    QuitConfirmed,
 }
 
 #[derive(Debug, Clone, Default)]

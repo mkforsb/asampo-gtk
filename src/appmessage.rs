@@ -10,6 +10,8 @@ use crate::view::dialogs::{self, InputDialogContext, SelectFolderDialogContext};
 
 #[derive(Debug)]
 pub enum AppMessage {
+    NoOp,
+    LogError(anyhow::Error),
     TimerTick,
     SettingsOutputSampleRateChanged(String),
     SettingsBufferSizeChanged(u16),
@@ -104,4 +106,10 @@ pub enum AppMessage {
     SynchronizeSampleSetConfirm,
     SynchronizeSampleSetUnlink,
     SynchronizeSampleSetCancel,
+    QuitRequested,
+    SaveBeforeQuitConfirmDialogOpened,
+    SaveBeforeQuitSaveDialogOpened,
+    Quit,
+    SaveAndQuitBegin,
+    SaveAndQuitFinish(String),
 }
