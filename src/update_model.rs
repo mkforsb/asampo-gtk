@@ -32,42 +32,42 @@ use crate::{
     ErrorWithEffect,
 };
 
-fn play_sample(model: &AppModel, sample: &Sample) -> Result<(), anyhow::Error> {
-    let stream = model
-        .source(
-            *sample
-                .source_uuid()
-                .ok_or(anyhow!("Sample missing source UUID"))?,
-        )?
-        .stream(sample)?;
+pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow::Error> {
+    fn play_sample(model: &AppModel, sample: &Sample) -> Result<(), anyhow::Error> {
+        let stream = model
+            .source(
+                *sample
+                    .source_uuid()
+                    .ok_or(anyhow!("Sample missing source UUID"))?,
+            )?
+            .stream(sample)?;
 
-    if model.config().sample_playback_behavior == SamplePlaybackBehavior::PlaySingleSample {
+        if model.config().sample_playback_behavior == SamplePlaybackBehavior::PlaySingleSample {
+            model
+                .audiothread_send(audiothread::Message::DropAllMatching(
+                    SourceMatcher::new().match_type(SourceType::SymphoniaSource),
+                ))
+                .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
+        }
+
         model
-            .audiothread_send(audiothread::Message::DropAllMatching(
-                SourceMatcher::new().match_type(SourceType::SymphoniaSource),
+            .audiothread_send(audiothread::Message::PlaySymphoniaSource(
+                audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
             ))
             .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
+
+        Ok(())
     }
 
-    model
-        .audiothread_send(audiothread::Message::PlaySymphoniaSource(
-            audiothread::SymphoniaSource::from_buf_reader(BufReader::new(stream))?,
-        ))
-        .map_err(|e| anyhow!("Send error on audiothread control channel: {e}"))?;
+    fn save(model: AppModel, filename: String) -> Result<AppModel, anyhow::Error> {
+        log::log!(log::Level::Info, "Saving to {filename}");
 
-    Ok(())
-}
-
-pub fn save(model: AppModel, filename: String) -> Result<AppModel, anyhow::Error> {
-    log::log!(log::Level::Info, "Saving to {filename}");
-
-    match Savefile::save(&model, &filename) {
-        Ok(_) => Ok(model.set_savefile_path(Some(filename))),
-        Err(e) => Err(e),
+        match Savefile::save(&model, &filename) {
+            Ok(_) => Ok(model.set_savefile_path(Some(filename))),
+            Err(e) => Err(e),
+        }
     }
-}
 
-pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, anyhow::Error> {
     macro_rules! config_choice {
         ($method:ident, $choice:ident) => {{
             let new_config = model.config().clone().$method($choice);
