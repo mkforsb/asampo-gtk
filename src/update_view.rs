@@ -8,7 +8,7 @@ use libasampo::{samplesets::SampleSetOps, sequences::StepSequenceOps};
 
 use crate::{
     appmessage::AppMessage,
-    model::{AppModel, AppModelPtr, ExportState},
+    model::{AppModel, AppModelPtr, ExportState, Signal},
     util::gtk_find_child_by_builder_id,
     view::{
         dialogs::{self, ButtonSpec, InputDialogContext, SelectFolderDialogContext},
@@ -51,7 +51,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         }
     }
 
-    if new.is_signalling_add_fs_source_begin_browse() {
+    if new.is_signalling(Signal::ShowAddFilesystemSourceBrowseDialog) {
         dialogs::choose_folder(
             model_ptr.clone(),
             view,
@@ -61,7 +61,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling_add_sample_to_set_show_dialog() {
+    if new.is_signalling(Signal::ShowAddSampleToSetDialog) {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -73,7 +73,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling_add_set_show_dialog() {
+    if new.is_signalling(Signal::ShowCreateSampleSetDialog) {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -85,7 +85,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling_sampleset_loaded_edit_show_dialog() {
+    if new.is_signalling(Signal::ShowSampleSetSynchronizationDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -105,7 +105,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling_create_sequence_show_dialog() {
+    if new.is_signalling(Signal::ShowCreateSequenceDialog) {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -117,7 +117,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling_sequence_save_as_show_dialog() {
+    if new.is_signalling(Signal::ShowSequenceSaveAsDialog) {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -129,7 +129,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling_sampleset_save_as_show_dialog() {
+    if new.is_signalling(Signal::ShowSampleSetSaveAsDialog) {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -141,7 +141,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling_sequence_load_show_confirm_save_dialog() {
+    if new.is_signalling(Signal::ShowSequenceSaveBeforeLoadDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -169,7 +169,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling_sequence_load_show_confirm_abandon_dialog() {
+    if new.is_signalling(Signal::ShowSequenceConfirmAbandonDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -184,7 +184,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if new.is_signalling_sampleset_load_show_confirm_save_dialog() {
+    if new.is_signalling(Signal::ShowSampleSetSaveBeforeLoadDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -212,7 +212,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling_sampleset_load_show_confirm_abandon_dialog() {
+    if new.is_signalling(Signal::ShowSampleSetConfirmAbandonDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -229,7 +229,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if new.is_signalling_sequence_clear_show_confirm_dialog() {
+    if new.is_signalling(Signal::ShowSequenceConfirmClearDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -244,7 +244,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if new.is_signalling_sampleset_clear_show_confirm_dialog() {
+    if new.is_signalling(Signal::ShowSampleSetConfirmClearDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -261,11 +261,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if new.is_signalling_export_show_dialog() {
+    if new.is_signalling(Signal::ShowExportDialog) {
         dialogs::sampleset_export(model_ptr.clone(), view, new.clone());
     }
 
-    if new.is_signalling_export_begin_browse() {
+    if new.is_signalling(Signal::ShowExportBrowseDialog) {
         dialogs::choose_folder(
             model_ptr.clone(),
             view,

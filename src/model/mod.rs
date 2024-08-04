@@ -29,17 +29,20 @@ use crate::{
 mod core;
 pub(in crate::model) mod delegate;
 mod drum_machine;
+mod signals;
 mod viewflags;
 mod viewvalues;
 
 use delegate::{delegate, delegate_priv};
 
 use core::{CoreModel, SourceLoadMsg};
+use signals::SignalModel;
 use viewflags::ViewFlags;
 use viewvalues::ViewValues;
 
 pub use core::ExportState;
 pub use drum_machine::{DrumMachineModel, Mirroring, PlaybackState as DrumMachinePlaybackState};
+pub use signals::Signal;
 pub use viewvalues::ExportKind;
 
 pub type AnyhowResult<T> = Result<T, anyhow::Error>;
@@ -49,6 +52,7 @@ pub struct AppModel {
     core: CoreModel,
     viewflags: ViewFlags,
     viewvalues: ViewValues,
+    signals: SignalModel,
     audiothread_tx: mpsc::Sender<audiothread::Message>,
     drum_machine: DrumMachineModel,
 }
@@ -68,6 +72,7 @@ impl AppModel {
             core: CoreModel::new(config, savefile),
             viewflags: ViewFlags::default(),
             viewvalues,
+            signals: SignalModel::new(),
             audiothread_tx,
             drum_machine,
         }
@@ -354,52 +359,7 @@ impl AppModel {
         set_set_export_enabled(state: bool): Model,
         is_set_export_enabled() -> bool,
         set_add_to_prev_set_enabled(state: bool): Model,
-        is_add_to_prev_set_enabled() -> bool,
-        signal_add_fs_source_begin_browse(): Model,
-        signal_add_sample_to_set_show_dialog(): Model,
-        signal_add_set_show_dialog(): Model,
-        signal_export_show_dialog(): Model,
-        signal_export_begin_browse(): Model,
-        signal_sampleset_loaded_edit_show_dialog(): Model,
-        signal_create_sequence_show_dialog(): Model,
-        signal_sequence_save_as_show_dialog(): Model,
-        signal_sampleset_save_as_show_dialog(): Model,
-        signal_sequence_load_show_confirm_save_dialog(): Model,
-        signal_sequence_load_show_confirm_abandon_dialog(): Model,
-        signal_sampleset_load_show_confirm_save_dialog(): Model,
-        signal_sampleset_load_show_confirm_abandon_dialog(): Model,
-        signal_sequence_clear_show_confirm_dialog(): Model,
-        signal_sampleset_clear_show_confirm_dialog(): Model,
-        is_signalling_add_fs_source_begin_browse() -> bool,
-        is_signalling_add_sample_to_set_show_dialog() -> bool,
-        is_signalling_add_set_show_dialog() -> bool,
-        is_signalling_export_show_dialog() -> bool,
-        is_signalling_export_begin_browse() -> bool,
-        is_signalling_sampleset_loaded_edit_show_dialog() -> bool,
-        is_signalling_create_sequence_show_dialog() -> bool,
-        is_signalling_sequence_save_as_show_dialog() -> bool,
-        is_signalling_sampleset_save_as_show_dialog() -> bool,
-        is_signalling_sequence_load_show_confirm_save_dialog() -> bool,
-        is_signalling_sequence_load_show_confirm_abandon_dialog() -> bool,
-        is_signalling_sampleset_load_show_confirm_save_dialog() -> bool,
-        is_signalling_sampleset_load_show_confirm_abandon_dialog() -> bool,
-        is_signalling_sequence_clear_show_confirm_dialog() -> bool,
-        is_signalling_sampleset_clear_show_confirm_dialog() -> bool,
-        clear_signal_add_fs_source_begin_browse(): Model,
-        clear_signal_add_sample_to_set_show_dialog(): Model,
-        clear_signal_add_set_show_dialog(): Model,
-        clear_signal_export_show_dialog(): Model,
-        clear_signal_export_begin_browse(): Model,
-        clear_signal_sampleset_loaded_edit_show_dialog(): Model,
-        clear_signal_create_sequence_show_dialog(): Model,
-        clear_signal_sequence_save_as_show_dialog(): Model,
-        clear_signal_sampleset_save_as_show_dialog(): Model,
-        clear_signal_sequence_load_show_confirm_save_dialog(): Model,
-        clear_signal_sequence_load_show_confirm_abandon_dialog(): Model,
-        clear_signal_sampleset_load_show_confirm_save_dialog(): Model,
-        clear_signal_sampleset_load_show_confirm_abandon_dialog(): Model,
-        clear_signal_sequence_clear_show_confirm_dialog(): Model,
-        clear_signal_sampleset_clear_show_confirm_dialog(): Model);
+        is_add_to_prev_set_enabled() -> bool);
 
     delegate!(viewvalues,
         set_latency_approx_label_by_config(config: &AppConfig): Model,
@@ -433,6 +393,11 @@ impl AppModel {
         samples_listmodel() -> &gtk::gio::ListStore,
         set_drum_machine_view(view: Option<DrumMachineView>): Model,
         drum_machine_view() -> Option<&DrumMachineView>);
+
+    delegate!(signals,
+        signal(signal: Signal): Model,
+        clear_signal(signal: Signal): Result,
+        is_signalling(signal: Signal) -> bool);
 
     delegate!(drum_machine,
         is_render_thread_active() as is_drum_machine_render_thread_active -> bool,

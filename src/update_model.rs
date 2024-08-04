@@ -26,7 +26,7 @@ use crate::{
     config::SamplePlaybackBehavior,
     configfile::ConfigFile,
     labels::DRUM_LABELS,
-    model::{AppModel, DrumMachinePlaybackState, ExportKind, ExportState, Mirroring},
+    model::{AppModel, DrumMachinePlaybackState, ExportKind, ExportState, Mirroring, Signal},
     savefile::Savefile,
     view::dialogs::{InputDialogContext, SelectFolderDialogContext},
     ErrorWithEffect,
@@ -131,7 +131,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             .validate_add_fs_source_fields()),
 
         AppMessage::AddFilesystemSourcePathBrowseClicked => {
-            Ok(model.signal_add_fs_source_begin_browse())
+            Ok(model.signal(Signal::ShowAddFilesystemSourceBrowseDialog))
         }
 
         AppMessage::AddFilesystemSourcePathBrowseSubmitted(text) => {
@@ -182,7 +182,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             .tap(AppModel::populate_samples_listmodel)),
 
         AppMessage::SampleSidebarAddToSetClicked => {
-            Ok(model.signal_add_sample_to_set_show_dialog())
+            Ok(model.signal(Signal::ShowAddSampleToSetDialog))
         }
 
         AppMessage::DeleteSampleFromSetClicked(sample, set_uuid) => {
@@ -192,7 +192,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .drum_machine_loaded_sampleset()
                 .is_some_and(|set| set.uuid() == set_uuid)
             {
-                Ok(model.signal_sampleset_loaded_edit_show_dialog())
+                Ok(model.signal(Signal::ShowSampleSetSynchronizationDialog))
             } else {
                 Ok(model)
             }
@@ -214,7 +214,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .drum_machine_loaded_sampleset()
                 .is_some_and(|set| set.uuid() == set_uuid)
             {
-                Ok(model.signal_sampleset_loaded_edit_show_dialog())
+                Ok(model.signal(Signal::ShowSampleSetSynchronizationDialog))
             } else {
                 Ok(model)
             }
@@ -316,25 +316,27 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             Ok(model)
         }
 
-        AppMessage::AddSampleSetClicked => Ok(model.signal_add_set_show_dialog()),
+        AppMessage::AddSampleSetClicked => Ok(model.signal(Signal::ShowCreateSampleSetDialog)),
 
         AppMessage::InputDialogOpened(context) => match context {
             InputDialogContext::AddToSampleset => {
-                Ok(model.clear_signal_add_sample_to_set_show_dialog())
+                model.clear_signal(Signal::ShowAddSampleToSetDialog)
             }
 
-            InputDialogContext::CreateSampleSet => Ok(model.clear_signal_add_set_show_dialog()),
+            InputDialogContext::CreateSampleSet => {
+                model.clear_signal(Signal::ShowCreateSampleSetDialog)
+            }
 
             InputDialogContext::CreateEmptySequence => {
-                Ok(model.clear_signal_create_sequence_show_dialog())
+                model.clear_signal(Signal::ShowCreateSequenceDialog)
             }
 
             InputDialogContext::SaveDrumMachineSequenceAs => {
-                Ok(model.clear_signal_sequence_save_as_show_dialog())
+                model.clear_signal(Signal::ShowSequenceSaveAsDialog)
             }
 
             InputDialogContext::SaveDrumMachineSampleSetAs => {
-                Ok(model.clear_signal_sampleset_save_as_show_dialog())
+                model.clear_signal(Signal::ShowSampleSetSaveAsDialog)
             }
         },
 
@@ -356,7 +358,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                     .drum_machine_loaded_sampleset()
                     .is_some_and(|set| set.uuid() == set_uuid)
                 {
-                    Ok(model.signal_sampleset_loaded_edit_show_dialog())
+                    Ok(model.signal(Signal::ShowSampleSetSynchronizationDialog))
                 } else {
                     Ok(model)
                 }
@@ -409,11 +411,11 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         // TODO: replace with function pointer, just like "ok" and "cancel" for input dialog?
         AppMessage::SelectFolderDialogOpened(context) => match context {
             SelectFolderDialogContext::BrowseForFilesystemSource => {
-                Ok(model.clear_signal_add_fs_source_begin_browse())
+                model.clear_signal(Signal::ShowAddFilesystemSourceBrowseDialog)
             }
 
             SelectFolderDialogContext::BrowseForExportTargetDirectory => {
-                Ok(model.clear_signal_export_begin_browse())
+                model.clear_signal(Signal::ShowExportBrowseDialog)
             }
         },
 
@@ -458,7 +460,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .drum_machine_loaded_sampleset()
                 .is_some_and(|set| set.uuid() == set_uuid)
             {
-                Ok(model.signal_sampleset_loaded_edit_show_dialog())
+                Ok(model.signal(Signal::ShowSampleSetSynchronizationDialog))
             } else {
                 Ok(model)
             }
@@ -467,9 +469,9 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::SampleSetDetailsLoadInDrumMachineClicked => {
             if model.drum_machine_model().is_sampleset_modified() {
                 if model.drum_machine_loaded_sampleset().is_some() {
-                    Ok(model.signal_sampleset_load_show_confirm_save_dialog())
+                    Ok(model.signal(Signal::ShowSampleSetSaveBeforeLoadDialog))
                 } else {
-                    Ok(model.signal_sampleset_load_show_confirm_abandon_dialog())
+                    Ok(model.signal(Signal::ShowSampleSetConfirmAbandonDialog))
                 }
             } else {
                 let set = model
@@ -481,10 +483,10 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             }
         }
 
-        AppMessage::SampleSetDetailsExportClicked => Ok(model.signal_export_show_dialog()),
+        AppMessage::SampleSetDetailsExportClicked => Ok(model.signal(Signal::ShowExportDialog)),
 
         AppMessage::ExportDialogOpened(dialogview) => Ok(model
-            .clear_signal_export_show_dialog()
+            .clear_signal(Signal::ShowExportDialog)?
             .set_main_view_sensitive(false)
             .set_export_dialog_view(Some(dialogview))),
 
@@ -496,7 +498,9 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             .set_export_fields_valid(!text.is_empty())
             .set_export_target_dir(text)),
 
-        AppMessage::ExportTargetDirectoryBrowseClicked => Ok(model.signal_export_begin_browse()),
+        AppMessage::ExportTargetDirectoryBrowseClicked => {
+            Ok(model.signal(Signal::ShowExportBrowseDialog))
+        }
 
         AppMessage::ExportTargetDirectoryBrowseSubmitted(text) => {
             Ok(model.set_export_target_dir(text))
@@ -610,11 +614,11 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         }
 
         AppMessage::DrumMachineSaveSequenceAsClicked => {
-            Ok(model.signal_sequence_save_as_show_dialog())
+            Ok(model.signal(Signal::ShowSequenceSaveAsDialog))
         }
 
         AppMessage::DrumMachineClearSequenceClicked => {
-            Ok(model.signal_sequence_clear_show_confirm_dialog())
+            Ok(model.signal(Signal::ShowSequenceConfirmClearDialog))
         }
 
         AppMessage::DrumMachineSaveSampleSetClicked => {
@@ -631,12 +635,13 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .insert_set(set, position)?
                 .commit_drum_machine_sampleset()
         }
+
         AppMessage::DrumMachineSaveSampleSetAsClicked => {
-            Ok(model.signal_sampleset_save_as_show_dialog())
+            Ok(model.signal(Signal::ShowSampleSetSaveAsDialog))
         }
 
         AppMessage::DrumMachineClearSampleSetClicked => {
-            Ok(model.signal_sampleset_clear_show_confirm_dialog())
+            Ok(model.signal(Signal::ShowSampleSetConfirmClearDialog))
         }
 
         AppMessage::DrumMachinePadClicked(n) => {
@@ -760,9 +765,9 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
             if model.drum_machine_model().is_sequence_modified() {
                 if model.drum_machine_loaded_sequence().is_some() {
-                    Ok(model.signal_sequence_load_show_confirm_save_dialog())
+                    Ok(model.signal(Signal::ShowSequenceSaveBeforeLoadDialog))
                 } else {
-                    Ok(model.signal_sequence_load_show_confirm_abandon_dialog())
+                    Ok(model.signal(Signal::ShowSequenceConfirmAbandonDialog))
                 }
             } else {
                 let sequence = model.sequence(uuid)?.clone();
@@ -770,11 +775,11 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             }
         }
 
-        AppMessage::AddSequenceClicked => Ok(model.signal_create_sequence_show_dialog()),
+        AppMessage::AddSequenceClicked => Ok(model.signal(Signal::ShowCreateSequenceDialog)),
 
-        AppMessage::LoadSequenceConfirmSaveDialogOpened => Ok(model
+        AppMessage::LoadSequenceConfirmSaveDialogOpened => model
             .set_main_view_sensitive(false)
-            .clear_signal_sequence_load_show_confirm_save_dialog()),
+            .clear_signal(Signal::ShowSequenceSaveBeforeLoadDialog),
 
         AppMessage::LoadSequenceConfirmSaveChanges => {
             let sequence_to_save = model.drum_machine_model().sequence().clone();
@@ -826,9 +831,9 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .set_main_view_sensitive(true))
         }
 
-        AppMessage::LoadSequenceConfirmAbandonDialogOpened => Ok(model
+        AppMessage::LoadSequenceConfirmAbandonDialogOpened => model
             .set_main_view_sensitive(false)
-            .clear_signal_sequence_load_show_confirm_abandon_dialog()),
+            .clear_signal(Signal::ShowSequenceConfirmAbandonDialog),
 
         AppMessage::LoadSequenceConfirmAbandon => {
             let sequence_to_load = model
@@ -853,9 +858,9 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             Ok(model.set_main_view_sensitive(true))
         }
 
-        AppMessage::ClearSequenceConfirmDialogOpened => Ok(model
+        AppMessage::ClearSequenceConfirmDialogOpened => model
             .set_main_view_sensitive(false)
-            .clear_signal_sequence_clear_show_confirm_dialog()),
+            .clear_signal(Signal::ShowSequenceConfirmClearDialog),
 
         AppMessage::ClearSequenceConfirmDialogError(e) => {
             log::log!(log::Level::Error, "{e}");
@@ -869,9 +874,9 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::ClearSequenceCancel => Ok(model.set_main_view_sensitive(true)),
 
-        AppMessage::ClearSampleSetConfirmDialogOpened => Ok(model
+        AppMessage::ClearSampleSetConfirmDialogOpened => model
             .set_main_view_sensitive(false)
-            .clear_signal_sampleset_clear_show_confirm_dialog()),
+            .clear_signal(Signal::ShowSampleSetConfirmClearDialog),
 
         AppMessage::ClearSampleSetConfirmDialogError(e) => {
             log::log!(log::Level::Error, "{e}");
@@ -886,11 +891,11 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::ClearSampleSetCancel => Ok(model.set_main_view_sensitive(true)),
 
         AppMessage::LoadSampleSetConfirmSaveDialogOpened => {
-            Ok(model.clear_signal_sampleset_load_show_confirm_save_dialog())
+            model.clear_signal(Signal::ShowSampleSetSaveBeforeLoadDialog)
         }
 
         AppMessage::LoadSampleSetConfirmAbandonDialogOpened => {
-            Ok(model.clear_signal_sampleset_load_show_confirm_abandon_dialog())
+            model.clear_signal(Signal::ShowSampleSetConfirmAbandonDialog)
         }
 
         AppMessage::LoadSampleSetCancelSave => Ok(model),
@@ -946,7 +951,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         }
 
         AppMessage::SynchronizeSampleSetDialogOpened => {
-            Ok(model.clear_signal_sampleset_loaded_edit_show_dialog())
+            model.clear_signal(Signal::ShowSampleSetSynchronizationDialog)
         }
 
         AppMessage::SynchronizeSampleSetDialogError(e) => {
