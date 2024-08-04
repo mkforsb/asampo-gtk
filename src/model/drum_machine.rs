@@ -71,7 +71,9 @@ impl PartialEq for DrumMachineModel {
         if self.activated_pad != other.activated_pad
             || self.activated_part != other.activated_part
             || self.sequence != other.sequence
+            || self.loaded_sequence != other.loaded_sequence
             || self.sampleset != other.sampleset
+            || self.loaded_sampleset != other.loaded_sampleset
         {
             return false;
         }
