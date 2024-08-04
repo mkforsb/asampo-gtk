@@ -260,7 +260,14 @@ pub fn sampleset_export(model_ptr: AppModelPtr, view: &AsampoView, model: AppMod
 
     dialogwin.connect_close_request(
         clone!(@strong model_ptr, @strong view => move |_: &gtk::Window| {
-            update(model_ptr.clone(), &view, AppMessage::ExportDialogClosed);
+            update(
+                model_ptr.clone(),
+                &view,
+                AppMessage::Sequence(vec![
+                    AppMessage::DialogClosed,
+                    AppMessage::ExportDialogClosed
+                ])
+            );
             Propagation::Proceed
         }),
     );

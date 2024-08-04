@@ -68,6 +68,14 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
         _ => log::log!(log::Level::Debug, "{message:?}"),
     }
 
+    if let AppMessage::Sequence(messages) = message {
+        for message in messages {
+            update(model_ptr.clone(), view, message);
+        }
+
+        return;
+    }
+
     let old_model = model_ptr.take().unwrap();
 
     match update_model(old_model.clone(), message) {

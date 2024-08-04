@@ -51,13 +51,23 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         }
     }
 
+    macro_rules! closer {
+        ($message:expr) => {
+            AppMessage::Sequence(vec![AppMessage::DialogClosed, $message])
+        };
+    }
+
     if new.is_signalling(Signal::ShowAddFilesystemSourceBrowseDialog) {
         dialogs::choose_folder(
             model_ptr.clone(),
             view,
             SelectFolderDialogContext::BrowseForFilesystemSource,
-            AppMessage::AddFilesystemSourcePathBrowseSubmitted,
-            AppMessage::AddFilesystemSourcePathBrowseError,
+            |s| closer!(AppMessage::AddFilesystemSourcePathBrowseSubmitted(s)),
+            |e| {
+                closer!(AppMessage::LogError(anyhow!(
+                    "Error browsing for folder: {e}"
+                )))
+            },
         );
     }
 
@@ -94,14 +104,16 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                 if you want to treat these as two different sets. Cancel to roll back \
                 the change.",
             vec![
-                ButtonSpec::new("Synchronize", || AppMessage::SynchronizeSampleSetConfirm)
-                    .set_as_default(),
-                ButtonSpec::new("Unlink", || AppMessage::SynchronizeSampleSetUnlink),
-                ButtonSpec::new("Cancel", || AppMessage::SynchronizeSampleSetCancel)
+                ButtonSpec::new("Synchronize", || {
+                    closer!(AppMessage::SynchronizeSampleSetConfirm)
+                })
+                .set_as_default(),
+                ButtonSpec::new("Unlink", || closer!(AppMessage::SynchronizeSampleSetUnlink)),
+                ButtonSpec::new("Cancel", || closer!(AppMessage::SynchronizeSampleSetCancel))
                     .set_as_cancel(),
             ],
             AppMessage::SynchronizeSampleSetDialogOpened,
-            |e| AppMessage::SynchronizeSampleSetDialogError(anyhow!("Confirm dialog error: {e:?}")),
+            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
         );
     }
 
@@ -156,16 +168,17 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             "",
             vec![
                 ButtonSpec::new("Save changes", || {
-                    AppMessage::LoadSequenceConfirmSaveChanges
+                    closer!(AppMessage::LoadSequenceConfirmSaveChanges)
                 })
                 .set_as_default(),
                 ButtonSpec::new("Discard changes", || {
-                    AppMessage::LoadSequenceConfirmDiscardChanges
+                    closer!(AppMessage::LoadSequenceConfirmDiscardChanges)
                 }),
-                ButtonSpec::new("Cancel", || AppMessage::LoadSequenceCancelSave).set_as_cancel(),
+                ButtonSpec::new("Cancel", || closer!(AppMessage::LoadSequenceCancelSave))
+                    .set_as_cancel(),
             ],
             AppMessage::LoadSequenceConfirmSaveDialogOpened,
-            |e| AppMessage::LoadSequenceConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
+            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
         );
     }
 
@@ -176,11 +189,12 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             "Abandon unnamed sequence?",
             "This action cannot be undone",
             vec![
-                ButtonSpec::new("Ok", || AppMessage::LoadSequenceConfirmAbandon),
-                ButtonSpec::new("Cancel", || AppMessage::LoadSequenceCancelAbandon).set_as_cancel(),
+                ButtonSpec::new("Ok", || closer!(AppMessage::LoadSequenceConfirmAbandon)),
+                ButtonSpec::new("Cancel", || closer!(AppMessage::LoadSequenceCancelAbandon))
+                    .set_as_cancel(),
             ],
             AppMessage::LoadSequenceConfirmAbandonDialogOpened,
-            |e| AppMessage::LoadSequenceConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
+            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
         )
     }
 
@@ -199,16 +213,16 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             "The sample set was loaded into the drum machine, and has been modified there",
             vec![
                 ButtonSpec::new("Save changes", || {
-                    AppMessage::LoadSampleSetConfirmSaveChanges
+                    closer!(AppMessage::LoadSampleSetConfirmSaveChanges)
                 })
                 .set_as_default(),
                 ButtonSpec::new("Discard changes", || {
-                    AppMessage::LoadSampleSetConfirmDiscardChanges
+                    closer!(AppMessage::LoadSampleSetConfirmDiscardChanges)
                 }),
-                ButtonSpec::new("Cancel", || AppMessage::LoadSampleSetCancelSave).set_as_cancel(),
+                ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
             ],
             AppMessage::LoadSampleSetConfirmSaveDialogOpened,
-            |e| AppMessage::LoadSampleSetConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
+            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
         );
     }
 
@@ -220,12 +234,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             "The drum machine contains an unnamed and unsaved sample set. \
                 Abandoning this set cannot be undone.",
             vec![
-                ButtonSpec::new("Ok", || AppMessage::LoadSampleSetConfirmAbandon),
-                ButtonSpec::new("Cancel", || AppMessage::LoadSampleSetCancelAbandon)
-                    .set_as_cancel(),
+                ButtonSpec::new("Ok", || closer!(AppMessage::LoadSampleSetConfirmAbandon)),
+                ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
             ],
             AppMessage::LoadSampleSetConfirmAbandonDialogOpened,
-            |e| AppMessage::LoadSampleSetConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
+            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
         )
     }
 
@@ -236,11 +249,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             "Clear sequence?",
             "This action cannot be undone",
             vec![
-                ButtonSpec::new("Ok", || AppMessage::ClearSequenceConfirm),
-                ButtonSpec::new("Cancel", || AppMessage::ClearSequenceCancel).set_as_cancel(),
+                ButtonSpec::new("Ok", || closer!(AppMessage::ClearSequenceConfirm)),
+                ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
             ],
             AppMessage::ClearSequenceConfirmDialogOpened,
-            |e| AppMessage::ClearSequenceConfirmDialogError(anyhow!("Confirm dialog error: {e:?}")),
+            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
         )
     }
 
@@ -251,13 +264,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             "Clear sample set?",
             "This action cannot be undone",
             vec![
-                ButtonSpec::new("Ok", || AppMessage::ClearSampleSetConfirm),
-                ButtonSpec::new("Cancel", || AppMessage::ClearSampleSetCancel).set_as_cancel(),
+                ButtonSpec::new("Ok", || closer!(AppMessage::ClearSampleSetConfirm)),
+                ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
             ],
             AppMessage::ClearSampleSetConfirmDialogOpened,
-            |e| {
-                AppMessage::ClearSampleSetConfirmDialogError(anyhow!("Confirm dialog error: {e:?}"))
-            },
+            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
         )
     }
 
@@ -271,7 +282,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             view,
             SelectFolderDialogContext::BrowseForExportTargetDirectory,
             AppMessage::ExportTargetDirectoryBrowseSubmitted,
-            AppMessage::ExportTargetDirectoryBrowseError,
+            |e| AppMessage::LogError(anyhow!("Export browse dialog error: {e}")),
         );
     }
 
@@ -282,12 +293,12 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             "Save workspace before quitting?",
             "",
             vec![
-                ButtonSpec::new("Save", || AppMessage::SaveAndQuitBegin).set_as_default(),
-                ButtonSpec::new("Don't save", || AppMessage::Quit),
-                ButtonSpec::new("Cancel", || AppMessage::NoOp).set_as_cancel(),
+                ButtonSpec::new("Save", || closer!(AppMessage::SaveAndQuitBegin)).set_as_default(),
+                ButtonSpec::new("Don't save", || closer!(AppMessage::Quit)),
+                ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
             ],
             AppMessage::SaveBeforeQuitConfirmDialogOpened,
-            |e| AppMessage::LogError(anyhow!("Dialog error: {e:?}")),
+            |e| closer!(AppMessage::LogError(anyhow!("Dialog error: {e:?}"))),
         );
     }
 
@@ -296,8 +307,8 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             model_ptr.clone(),
             view,
             AppMessage::SaveBeforeQuitSaveDialogOpened,
-            AppMessage::SaveAndQuitFinish,
-            |e| AppMessage::LogError(anyhow!("Save dialog error: {e}")),
+            |s| closer!(AppMessage::SaveAndQuitFinish(s)),
+            |e| closer!(AppMessage::LogError(anyhow!("Save dialog error: {e}"))),
         )
     }
 
