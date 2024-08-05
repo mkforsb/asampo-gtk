@@ -995,7 +995,14 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::Quit => Ok(model.signal(Signal::QuitConfirmed)),
 
-        AppMessage::SaveAndQuitBegin => Ok(model.signal(Signal::ShowSaveBeforeQuitSaveDialog)),
+        AppMessage::SaveAndQuitBegin => {
+            if model.savefile_path().is_some() {
+                let filename = model.savefile_path().unwrap().clone();
+                Ok(save(model, filename)?.signal(Signal::QuitConfirmed))
+            } else {
+                Ok(model.signal(Signal::ShowSaveBeforeQuitSaveDialog))
+            }
+        }
 
         AppMessage::SaveBeforeQuitSaveDialogOpened => model
             .set_main_view_sensitive(false)
