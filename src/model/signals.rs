@@ -8,9 +8,10 @@ use anyhow::anyhow;
 
 use crate::model::AnyhowResult;
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum Signal {
     ShowSampleSetCreateDialog,
+    ShowSampleSetDeleteDialog,
     ShowAddSampleToSetDialog,
     ShowSampleSetSaveAsDialog,
     ShowSampleSetSaveBeforeLoadDialog,

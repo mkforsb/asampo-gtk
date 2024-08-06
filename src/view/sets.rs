@@ -72,6 +72,16 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
 
         name_label.add_controller(clicked);
 
+        let delete_button = objects
+            .object::<gtk::Button>(format!("{uuid}-delete-button"))
+            .unwrap();
+
+        delete_button.connect_clicked(
+            clone!(@strong model_ptr, @strong view, @strong uuid => move |_| {
+                update(model_ptr.clone(), &view, AppMessage::SampleSetDeleteClicked(uuid))
+            }),
+        );
+
         let keyup = EventControllerKey::new();
 
         keyup.connect_key_released(clone!(@strong model_ptr, @strong view, @strong uuid =>

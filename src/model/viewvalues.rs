@@ -38,6 +38,7 @@ pub struct ViewValues {
     samples_list_filter: String,
     settings_latency_approx_label: String,
     samples_listview_model: ListStore,
+    sets_set_pending_deletion: Option<Uuid>,
     sets_export_dialog_view: Option<dialogs::ExportDialogView>,
     sets_export_target_dir_entry: String,
     sets_export_kind: ExportKind,
@@ -55,6 +56,7 @@ impl Default for ViewValues {
             samples_list_filter: String::default(),
             settings_latency_approx_label: String::default(),
             samples_listview_model: ListStore::new::<SampleListEntry>(),
+            sets_set_pending_deletion: None,
             sets_export_dialog_view: None,
             sets_export_target_dir_entry: String::default(),
             sets_export_kind: ExportKind::PlainCopy,
@@ -225,6 +227,17 @@ impl ViewValues {
             samples_list_filter: text.into(),
             ..self
         }
+    }
+
+    pub fn set_set_pending_deletion(self, maybe_uuid: Option<Uuid>) -> ViewValues {
+        ViewValues {
+            sets_set_pending_deletion: maybe_uuid,
+            ..self
+        }
+    }
+
+    pub fn set_pending_deletion(&self) -> Option<Uuid> {
+        self.sets_set_pending_deletion
     }
 
     pub fn set_export_dialog_view(self, maybe_view: Option<ExportDialogView>) -> ViewValues {

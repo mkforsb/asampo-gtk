@@ -560,6 +560,49 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             }
         }
 
+        AppMessage::SampleSetDeleteClicked(uuid) => Ok(model
+            .set_set_pending_deletion(Some(uuid))
+            .signal(Signal::ShowSampleSetDeleteDialog)),
+
+        AppMessage::SampleSetDeleteDialogOpened => {
+            model.clear_signal(Signal::ShowSampleSetDeleteDialog)
+        }
+
+        AppMessage::SampleSetDeleteCanceled => Ok(model.set_set_pending_deletion(None)),
+
+        AppMessage::SampleSetDeleteConfirmed => {
+            let uuid = model
+                .set_pending_deletion()
+                .ok_or(anyhow!("No set pending deletion"))?;
+
+            let mut model = model.remove_set(uuid)?.set_set_pending_deletion(None);
+
+            if model
+                .drum_machine_loaded_sampleset()
+                .is_some_and(|s| s.uuid() == uuid)
+            {
+                model = model.clear_drum_machine_loaded_sampleset();
+            }
+
+            if model
+                .selected_set()
+                .is_some_and(|sel_uuid| sel_uuid == uuid)
+            {
+                model = model.set_selected_set(None)?;
+            }
+
+            if model
+                .set_most_recently_added_to()
+                .is_some_and(|mru_uuid| mru_uuid == uuid)
+            {
+                model = model
+                    .set_set_most_recently_added_to(None)?
+                    .set_add_to_prev_set_enabled(false);
+            }
+
+            Ok(model)
+        }
+
         AppMessage::SampleSetSampleSelected(sample) => {
             play_sample(&model, &sample)?;
             Ok(model.set_selected_set_member(Some(sample)))

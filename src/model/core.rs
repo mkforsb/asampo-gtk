@@ -412,7 +412,10 @@ impl CoreModel {
         Ok(result)
     }
 
-    fn set_set_most_recently_added_to(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<CoreModel> {
+    pub fn set_set_most_recently_added_to(
+        self,
+        maybe_uuid: Option<Uuid>,
+    ) -> AnyhowResult<CoreModel> {
         match maybe_uuid.and_then(|uuid| self.set(uuid).err()) {
             Some(err) => Err(err),
             None => Ok(CoreModel {
