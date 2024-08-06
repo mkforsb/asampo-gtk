@@ -66,11 +66,11 @@ pub fn update_samplesets_list(model_ptr: AppModelPtr, model: AppModel, view: &As
 
         let clicked = GestureClick::new();
 
-        clicked.connect_pressed(|e: &GestureClick, _, _, _| {
-            e.widget().activate();
-        });
+        clicked.connect_pressed(clone!(@weak row => move |_, _, _, _| {
+            row.activate();
+        }));
 
-        row.add_controller(clicked);
+        name_label.add_controller(clicked);
 
         let keyup = EventControllerKey::new();
 
