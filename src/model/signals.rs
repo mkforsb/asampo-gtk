@@ -21,7 +21,7 @@ pub enum Signal {
     ShowExportDialog,
     ShowExportBrowseDialog,
     ShowAddFilesystemSourceBrowseDialog,
-    ShowCreateSequenceDialog,
+    ShowSequenceCreateDialog,
     ShowSequenceSaveAsDialog,
     ShowSequenceSaveBeforeLoadDialog,
     ShowSequenceConfirmAbandonDialog,

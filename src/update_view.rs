@@ -142,7 +142,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowCreateSequenceDialog) {
+    if new.is_signalling(Signal::ShowSequenceCreateDialog) {
         dialogs::input(
             model_ptr.clone(),
             view,

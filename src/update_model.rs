@@ -455,7 +455,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             }
 
             InputDialogContext::CreateEmptySequence => {
-                model.clear_signal(Signal::ShowCreateSequenceDialog)
+                model.clear_signal(Signal::ShowSequenceCreateDialog)
             }
 
             InputDialogContext::SaveDrumMachineSequenceAs => {
@@ -954,7 +954,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             }
         }
 
-        AppMessage::AddSequenceClicked => Ok(model.signal(Signal::ShowCreateSequenceDialog)),
+        AppMessage::AddSequenceClicked => Ok(model.signal(Signal::ShowSequenceCreateDialog)),
 
         AppMessage::LoadSequenceConfirmSaveDialogOpened => model
             .set_main_view_sensitive(false)
