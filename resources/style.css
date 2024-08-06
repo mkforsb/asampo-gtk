@@ -329,18 +329,17 @@ overlay#input-dialog {
     margin: 0.5em;
 }
 
-
-#sets-page #sets-list .set-delete-button {
+#sequences-page #sequences-list .sequence-delete-button {
     background: #fafafa;
     margin-right: 1em;
     padding: 0px;
 }
 
-#sets-page #sets-list .set-delete-button:hover {
+#sequences-page #sequences-list .sequence-delete-button:hover {
     background: #eaeaea;
 }
 
-#sets-page #sets-list .set-delete-button:active {
+#sequences-page #sequences-list .sequence-delete-button:active {
     background: #cacaca;
 }
 

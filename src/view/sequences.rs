@@ -3,7 +3,7 @@
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
 use gtk::{
-    glib::clone,
+    glib::{self, clone},
     prelude::{ButtonExt, EventControllerExt, FrameExt, ListBoxRowExt, PopoverExt, WidgetExt},
     Button, EventControllerKey, GestureClick, SpinButton,
 };
@@ -62,11 +62,11 @@ pub fn update_sequences_list(model_ptr: AppModelPtr, model: &AppModel, view: &As
 
         let clicked = GestureClick::new();
 
-        clicked.connect_pressed(|e: &GestureClick, _, _, _| {
-            e.widget().activate();
-        });
+        clicked.connect_pressed(clone!(@weak row => move |_, _, _, _| {
+            row.activate();
+        }));
 
-        row.add_controller(clicked);
+        name_label.add_controller(clicked);
 
         let keyup = EventControllerKey::new();
 
