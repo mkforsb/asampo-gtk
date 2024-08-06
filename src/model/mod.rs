@@ -395,7 +395,9 @@ impl AppModel {
         reset_export_progress(): Model,
         samples_listmodel() -> &gtk::gio::ListStore,
         set_drum_machine_view(view: Option<DrumMachineView>): Model,
-        drum_machine_view() -> Option<&DrumMachineView>);
+        drum_machine_view() -> Option<&DrumMachineView>,
+        set_sequence_pending_deletion(maybe_uuid: Option<Uuid>): Model,
+        sequence_pending_deletion() -> Option<Uuid>);
 
     delegate!(signals,
         signal(signal: Signal): Model,

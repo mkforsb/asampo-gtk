@@ -154,6 +154,31 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
+    if new.is_signalling(Signal::ShowSequenceDeleteDialog) {
+        dialogs::confirm(
+            model_ptr.clone(),
+            view,
+            format!(
+                "Really delete sequence '{}'?",
+                new.sequence(
+                    new.sequence_pending_deletion()
+                        .expect("A sequence should be pending deletion")
+                )
+                .expect("The sequence should exist")
+                .name()
+            )
+            .as_str(),
+            "This action cannot be undone",
+            vec![
+                ButtonSpec::new("Ok", || closer!(AppMessage::SequenceDeleteConfirmed)),
+                ButtonSpec::new("Cancel", || closer!(AppMessage::SequenceDeleteCanceled))
+                    .set_as_cancel(),
+            ],
+            AppMessage::SequenceDeleteDialogOpened,
+            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
+        )
+    }
+
     if new.is_signalling(Signal::ShowSequenceSaveAsDialog) {
         dialogs::input(
             model_ptr.clone(),

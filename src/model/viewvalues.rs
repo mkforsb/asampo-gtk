@@ -44,6 +44,7 @@ pub struct ViewValues {
     sets_export_kind: ExportKind,
     sets_export_progress: Option<(usize, usize)>,
     drum_machine: Option<DrumMachineView>,
+    sequences_seq_pending_deletion: Option<Uuid>,
 }
 
 impl Default for ViewValues {
@@ -62,6 +63,7 @@ impl Default for ViewValues {
             sets_export_kind: ExportKind::PlainCopy,
             sets_export_progress: None,
             drum_machine: None,
+            sequences_seq_pending_deletion: None,
         }
     }
 }
@@ -360,5 +362,16 @@ impl ViewValues {
 
     pub fn drum_machine_view(&self) -> Option<&DrumMachineView> {
         self.drum_machine.as_ref()
+    }
+
+    pub fn set_sequence_pending_deletion(self, maybe_uuid: Option<Uuid>) -> ViewValues {
+        ViewValues {
+            sequences_seq_pending_deletion: maybe_uuid,
+            ..self
+        }
+    }
+
+    pub fn sequence_pending_deletion(&self) -> Option<Uuid> {
+        self.sequences_seq_pending_deletion
     }
 }

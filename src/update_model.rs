@@ -956,6 +956,42 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::AddSequenceClicked => Ok(model.signal(Signal::ShowSequenceCreateDialog)),
 
+        AppMessage::SequenceDeleteClicked(uuid) => Ok(model
+            .set_sequence_pending_deletion(Some(uuid))
+            .signal(Signal::ShowSequenceDeleteDialog)),
+
+        AppMessage::SequenceDeleteDialogOpened => {
+            model.clear_signal(Signal::ShowSequenceDeleteDialog)
+        }
+
+        AppMessage::SequenceDeleteCanceled => Ok(model.set_sequence_pending_deletion(None)),
+
+        AppMessage::SequenceDeleteConfirmed => {
+            let uuid = model
+                .sequence_pending_deletion()
+                .ok_or(anyhow!("No sequence pending deletion"))?;
+
+            let mut model = model
+                .remove_sequence(uuid)?
+                .set_sequence_pending_deletion(None);
+
+            if model
+                .drum_machine_loaded_sequence()
+                .is_some_and(|s| s.uuid() == uuid)
+            {
+                model = model.clear_drum_machine_loaded_sequence();
+            }
+
+            if model
+                .selected_sequence()
+                .is_some_and(|sel_uuid| sel_uuid == uuid)
+            {
+                model = model.set_selected_sequence(None)?;
+            }
+
+            Ok(model)
+        }
+
         AppMessage::LoadSequenceConfirmSaveDialogOpened => model
             .set_main_view_sensitive(false)
             .clear_signal(Signal::ShowSequenceSaveBeforeLoadDialog),
