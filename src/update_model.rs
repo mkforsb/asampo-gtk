@@ -443,7 +443,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             Ok(model)
         }
 
-        AppMessage::AddSampleSetClicked => Ok(model.signal(Signal::ShowCreateSampleSetDialog)),
+        AppMessage::AddSampleSetClicked => Ok(model.signal(Signal::ShowSampleSetCreateDialog)),
 
         AppMessage::InputDialogOpened(context) => match context {
             InputDialogContext::AddToSampleset => {
@@ -451,7 +451,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             }
 
             InputDialogContext::CreateSampleSet => {
-                model.clear_signal(Signal::ShowCreateSampleSetDialog)
+                model.clear_signal(Signal::ShowSampleSetCreateDialog)
             }
 
             InputDialogContext::CreateEmptySequence => {
