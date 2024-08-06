@@ -10,7 +10,7 @@
 }
 
 #titlebar-stop-button {
-  margin-left: 1em;
+    margin-left: 1em;
 }
 
 #progress-popup {
@@ -292,22 +292,22 @@ overlay#input-dialog {
 }
 
 #sets-page #sets-details-sample-list > row .sample-label-frame {
-  margin: 0.25em;
-  background: #fafafa;
-  border-color: #e4e4e4;
-  color: #000;
-  min-width: 13em;
+    margin: 0.25em;
+    background: #fafafa;
+    border-color: #e4e4e4;
+    color: #000;
+    min-width: 13em;
 }
 
 #sets-page #sets-details-sample-list > row .sample-label-frame > box > label {
- margin-left: 0.5em;
+    margin-left: 0.5em;
 }
 
 #sets-page #sets-details-sample-list > row .sample-label-frame dropdown button  {
-  padding: 0;
-  margin: 0;
-  border: none;
-  min-width: 8.5em;
+    padding: 0;
+    margin: 0;
+    border: none;
+    min-width: 8.5em;
 }
 
 #sets-page #sets-details-sample-list .set-sample-find-button {
@@ -327,6 +327,21 @@ overlay#input-dialog {
 
 #sequences-page #sequences-list-frame {
     margin: 0.5em;
+}
+
+
+#sets-page #sets-list .set-delete-button {
+    background: #fafafa;
+    margin-right: 1em;
+    padding: 0px;
+}
+
+#sets-page #sets-list .set-delete-button:hover {
+    background: #eaeaea;
+}
+
+#sets-page #sets-list .set-delete-button:active {
+    background: #cacaca;
 }
 
 #sequences-page #sequences-list row {
@@ -387,47 +402,47 @@ overlay#input-dialog {
 }
 
 #sequences-editor-seq-popover button {
-  margin: 0.5em;
+    margin: 0.5em;
 }
 
 #sequences-editor-set-popover button {
-  margin: 0.5em;
+    margin: 0.5em;
 }
 
 #sequences-editor-ops-row popover contents {
-  box-shadow: 0em 0em 1.5em #888;
+    box-shadow: 0em 0em 1.5em #888;
 }
 
 #sequences-editor-ops-row popover separator {
-  margin: 1em;
+    margin: 1em;
 }
 
 #sequences-editor-clear-seq-button {
-  border: 2px solid red;
+    border: 2px solid red;
 }
 
 #sequences-editor-clear-seq-button:hover {
-  border: 2px solid red;
-  background: #faa;
+    border: 2px solid red;
+    background: #faa;
 }
 
 #sequences-editor-clear-seq-button:active {
-  border: 2px solid red;
-  background: red;
+    border: 2px solid red;
+    background: red;
 }
 
 #sequences-editor-clear-set-button {
-  border: 2px solid red;
+    border: 2px solid red;
 }
 
 #sequences-editor-clear-set-button:hover {
-  border: 2px solid red;
-  background: #faa;
+    border: 2px solid red;
+    background: #faa;
 }
 
 #sequences-editor-clear-set-button:active {
-  border: 2px solid red;
-  background: red;
+    border: 2px solid red;
+    background: red;
 }
 
 #sequences-page #sequences-editor-pads {
