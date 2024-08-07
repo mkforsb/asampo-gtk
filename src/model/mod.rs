@@ -93,7 +93,8 @@ impl AppModel {
     }
 
     pub fn modified(&self) -> bool {
-        self.core != self.core_orig || self.drum_machine != self.drum_machine_orig
+        self.core.is_modified_vs(&self.core_orig)
+            || self.drum_machine.is_modified_vs(&self.drum_machine_orig)
     }
 
     pub fn reset_modified_state(self) -> AppModel {

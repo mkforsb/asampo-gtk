@@ -536,7 +536,10 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         update_sequences_list(model_ptr.clone(), &new, view);
     }
 
-    if old.drum_machine_model() != new.drum_machine_model() {
+    if new
+        .drum_machine_model()
+        .is_visibly_modified_vs(old.drum_machine_model())
+    {
         update_drum_machine_view(&new);
     }
 

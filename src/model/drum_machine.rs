@@ -52,36 +52,6 @@ pub struct DrumMachineModel {
     activated_part: usize,
 }
 
-impl PartialEq for DrumMachineModel {
-    fn eq(&self, other: &Self) -> bool {
-        if self.playback_state != other.playback_state {
-            return false;
-        }
-
-        match (&self.event_latest, &other.event_latest) {
-            (Some(a), Some(b)) => {
-                if a.step != b.step || a.labels != b.labels {
-                    return false;
-                }
-            }
-            (None, None) => (),
-            _ => return false,
-        }
-
-        if self.activated_pad != other.activated_pad
-            || self.activated_part != other.activated_part
-            || self.sequence != other.sequence
-            || self.loaded_sequence != other.loaded_sequence
-            || self.sampleset != other.sampleset
-            || self.loaded_sampleset != other.loaded_sampleset
-        {
-            return false;
-        }
-
-        true
-    }
-}
-
 impl DrumMachineModel {
     pub fn new(
         render_thread_tx: Option<Sender<drumkit_render_thread::Message>>,
@@ -101,6 +71,38 @@ impl DrumMachineModel {
             activated_pad: 8,
             activated_part: 0,
         }
+    }
+
+    pub fn is_visibly_modified_vs(&self, other: &DrumMachineModel) -> bool {
+        self.activated_pad != other.activated_pad
+            || self.activated_part != other.activated_part
+            || self.is_modified_vs(other)
+    }
+
+    pub fn is_modified_vs(&self, other: &DrumMachineModel) -> bool {
+        if self.playback_state != other.playback_state {
+            return true;
+        }
+
+        match (&self.event_latest, &other.event_latest) {
+            (Some(a), Some(b)) => {
+                if a.step != b.step || a.labels != b.labels {
+                    return true;
+                }
+            }
+            (None, None) => (),
+            _ => return true,
+        }
+
+        if self.sequence != other.sequence
+            || self.loaded_sequence != other.loaded_sequence
+            || self.sampleset != other.sampleset
+            || self.loaded_sampleset != other.loaded_sampleset
+        {
+            return true;
+        }
+
+        false
     }
 
     pub fn new_with_render_thread(audiothread_tx: mpsc::Sender<audiothread::Message>) -> Self {
