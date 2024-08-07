@@ -799,11 +799,13 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             ExportJobMessage::Error(e) => Err(e.into()),
             ExportJobMessage::Finished => Ok(model
                 .set_export_state(Some(ExportState::Finished))
-                .set_export_job_rx(None)
                 .reset_export_progress()),
         },
 
-        AppMessage::ExportJobDisconnected => Ok(model.set_export_job_rx(None)),
+        AppMessage::ExportJobDisconnected => Ok(model
+            .set_export_job_rx(None)
+            .set_export_state(None)
+            .reset_export_progress()),
 
         AppMessage::StopAllSoundButtonClicked => {
             match model.audiothread_send(audiothread::Message::DropAllMatching(
