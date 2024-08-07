@@ -423,3 +423,40 @@ pub fn save(
 
     update(model_ptr.clone(), view, on_open);
 }
+
+pub fn open(
+    model_ptr: AppModelPtr,
+    view: &AsampoView,
+    on_open: AppMessage,
+    ok: fn(String) -> AppMessage,
+    err: fn(gtk::glib::Error) -> AppMessage,
+) {
+    let filters = gtk::gio::ListStore::new::<gtk::FileFilter>();
+    let filter_json = gtk::FileFilter::new();
+
+    filter_json.add_suffix("json");
+    filters.append(&filter_json);
+
+    let dialog = gtk::FileDialog::builder()
+        .modal(true)
+        .filters(&filters)
+        .build();
+
+    dialog.open(
+        Some(view),
+        None::<gtk::gio::Cancellable>.as_ref(),
+        clone!(@strong model_ptr, @strong view => move |result| {
+            match result {
+                Ok(gfile) => update(
+                    model_ptr.clone(),
+                    &view,
+                    ok(gfile.path().unwrap().into_os_string().into_string().unwrap())
+                ),
+
+                Err(e) => update(model_ptr.clone(), &view, err(e)),
+            }
+        }),
+    );
+
+    update(model_ptr.clone(), view, on_open);
+}

@@ -44,7 +44,6 @@ pub enum AppMessage {
     SourceLoadingDisconnected(Uuid),
     LoadFromSavefile(String),
     SaveToSavefile(String),
-    DialogError(gtk::glib::Error),
     AddSampleSetClicked,
     InputDialogOpened(InputDialogContext),
     InputDialogSubmitted(InputDialogContext, String),

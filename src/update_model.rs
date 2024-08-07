@@ -10,7 +10,7 @@ use std::{
 
 use anyhow::anyhow;
 use audiothread::{SourceMatcher, SourceType};
-use gtk::{gdk::ModifierType, DialogError};
+use gtk::gdk::ModifierType;
 use libasampo::{
     samples::{Sample, SampleOps},
     samplesets::{
@@ -428,20 +428,6 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         }
 
         AppMessage::SaveToSavefile(filename) => save(model, filename),
-
-        AppMessage::DialogError(error) => {
-            match error.kind::<DialogError>() {
-                Some(e) => match e {
-                    DialogError::Failed => log::log!(log::Level::Error, "Dialog failed: {e:?}"),
-                    DialogError::Cancelled => (),
-                    DialogError::Dismissed => (),
-                    _ => log::log!(log::Level::Error, "Dialog error: {e:?}"),
-                },
-                None => log::log!(log::Level::Error, "Unknown dialog error: {error:?}"),
-            };
-
-            Ok(model)
-        }
 
         AppMessage::AddSampleSetClicked => Ok(model.signal(Signal::ShowSampleSetCreateDialog)),
 
