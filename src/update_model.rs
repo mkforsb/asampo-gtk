@@ -23,7 +23,7 @@ use libasampo::{
 
 use crate::{
     appmessage::AppMessage,
-    config::SamplePlaybackBehavior,
+    config::{SamplePlaybackBehavior, SaveBehavior},
     configfile::ConfigFile,
     labels::DRUM_LABELS,
     model::{
@@ -418,7 +418,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                         Mirroring::Mirror,
                     )?;
 
-                    Ok(result)
+                    Ok(result.reset_modified_state())
                 }
                 Err(e) => Err(anyhow::Error::new(ErrorWithEffect::AlertDialog {
                     text: "Error loading savefile".to_string(),
@@ -1051,22 +1051,30 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::SynchronizeSampleSetUnlink => unlink_set(model),
         AppMessage::SynchronizeSampleSetCancel => sync_set_rollback(model),
 
-        AppMessage::QuitRequested => match model.config().save_on_quit_behavior {
-            crate::config::SaveBehavior::Ask => {
-                Ok(model.signal(Signal::ShowSaveBeforeQuitConfirmDialog))
-            }
+        AppMessage::QuitRequested => {
+            if model.modified() {
+                match model.config().save_on_quit_behavior {
+                    SaveBehavior::Ask => Ok(model.signal(Signal::ShowSaveBeforeQuitConfirmDialog)),
 
-            crate::config::SaveBehavior::Save => {
-                if model.savefile_path().is_some() {
-                    let filename = model.savefile_path().unwrap().clone();
-                    Ok(save(model, filename)?.signal(Signal::QuitConfirmed))
-                } else {
-                    Ok(model.signal(Signal::ShowSaveBeforeQuitSaveDialog))
+                    SaveBehavior::Save => {
+                        if model.savefile_path().is_some() {
+                            let filename = model.savefile_path().unwrap().clone();
+                            Ok(save(model, filename)?.signal(Signal::QuitConfirmed))
+                        } else {
+                            Ok(model.signal(Signal::ShowSaveBeforeQuitSaveDialog))
+                        }
+                    }
+
+                    SaveBehavior::DontSave => Ok(model.signal(Signal::QuitConfirmed)),
                 }
+            } else {
+                log::log!(
+                    log::Level::Debug,
+                    "Workspace not modified, so not asking to save"
+                );
+                Ok(model.signal(Signal::QuitConfirmed))
             }
-
-            crate::config::SaveBehavior::DontSave => Ok(model.signal(Signal::QuitConfirmed)),
-        },
+        }
 
         AppMessage::SaveBeforeQuitConfirmDialogOpened => model
             .set_main_view_sensitive(false)

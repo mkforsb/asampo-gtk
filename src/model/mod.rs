@@ -50,11 +50,13 @@ pub type AnyhowResult<T> = Result<T, anyhow::Error>;
 #[derive(Clone, Debug)]
 pub struct AppModel {
     core: CoreModel,
+    core_orig: CoreModel,
     viewflags: ViewFlags,
     viewvalues: ViewValues,
     signals: SignalModel,
     audiothread_tx: mpsc::Sender<audiothread::Message>,
     drum_machine: DrumMachineModel,
+    drum_machine_orig: DrumMachineModel,
 }
 
 pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
@@ -69,18 +71,32 @@ impl AppModel {
         let drum_machine = DrumMachineModel::new_with_render_thread(audiothread_tx.clone());
 
         AppModel {
-            core: CoreModel::new(config, savefile),
+            core: CoreModel::new(config.clone(), savefile.clone()),
+            core_orig: CoreModel::new(config, savefile),
             viewflags: ViewFlags::default(),
             viewvalues,
             signals: SignalModel::new(),
             audiothread_tx,
-            drum_machine,
+            drum_machine: drum_machine.clone(),
+            drum_machine_orig: drum_machine,
         }
     }
 
     pub fn tap<F: FnOnce(&AppModel)>(self, f: F) -> AppModel {
         f(&self);
         self
+    }
+
+    pub fn modified(&self) -> bool {
+        self.core != self.core_orig || self.drum_machine != self.drum_machine_orig
+    }
+
+    pub fn reset_modified_state(self) -> AppModel {
+        AppModel {
+            core_orig: self.core.clone(),
+            drum_machine_orig: self.drum_machine.clone(),
+            ..self
+        }
     }
 
     pub fn spawn_audiothread(

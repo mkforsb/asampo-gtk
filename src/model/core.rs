@@ -49,6 +49,19 @@ pub struct CoreModel {
     export_job_rx: Option<Rc<mpsc::Receiver<ExportJobMessage>>>,
 }
 
+impl PartialEq for CoreModel {
+    fn eq(&self, other: &Self) -> bool {
+        self.config == other.config
+            && self.savefile == other.savefile
+            && self.sources == other.sources
+            && self.sources_order == other.sources_order
+            && self.sets == other.sets
+            && self.sets_order == other.sets_order
+            && self.sequences == other.sequences
+            && self.sequences_order == other.sequences_order
+    }
+}
+
 impl CoreModel {
     pub fn new(config: AppConfig, savefile_path: Option<impl Into<String>>) -> CoreModel {
         CoreModel {

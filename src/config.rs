@@ -24,7 +24,7 @@ pub enum SynchronizeBehavior {
     Unlink,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AppConfig {
     pub output_samplerate_hz: u32,
     pub buffer_size_frames: u16,
