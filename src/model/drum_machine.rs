@@ -590,4 +590,8 @@ impl DrumMachineModel {
             ..self
         })
     }
+
+    pub fn sources(&self) -> Vec<&Source> {
+        self.sources.iter().collect()
+    }
 }

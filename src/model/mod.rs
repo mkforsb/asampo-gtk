@@ -12,6 +12,7 @@ use std::{
 
 use anyhow::anyhow;
 use libasampo::{
+    prelude::{SampleSetOps, StepSequenceOps},
     samples::Sample,
     samplesets::{export::ExportJobMessage, DrumkitLabel, SampleSet},
     sequences::{
@@ -184,9 +185,44 @@ impl AppModel {
 
         let new_audiothread_tx = AppModel::spawn_audiothread(&config)?;
 
-        // TODO: retain sequence, samples, tempo etc.
-        let new_drum_machine_model =
+        let mut new_drum_machine_model =
             DrumMachineModel::new_with_render_thread(new_audiothread_tx.clone());
+
+        if self.drum_machine.loaded_sequence().is_some() {
+            new_drum_machine_model = new_drum_machine_model.load_sequence(
+                self.sequence(self.drum_machine.loaded_sequence().unwrap().uuid())?
+                    .clone(),
+            )?;
+        }
+
+        new_drum_machine_model = new_drum_machine_model
+            .set_sequence(self.drum_machine.sequence().clone(), Mirroring::Mirror)?;
+
+        if self.drum_machine.loaded_sampleset().is_some() {
+            new_drum_machine_model = new_drum_machine_model.load_sampleset(
+                self.set(self.drum_machine.loaded_sampleset().unwrap().uuid())?
+                    .clone(),
+                self.drum_machine
+                    .sources()
+                    .iter()
+                    .map(|s| (*s).clone())
+                    .collect(),
+            )?;
+        }
+
+        new_drum_machine_model = new_drum_machine_model.set_sampleset(
+            self.drum_machine.sampleset().clone(),
+            self.drum_machine
+                .sources()
+                .iter()
+                .map(|s| (*s).clone())
+                .collect(),
+            Mirroring::Mirror,
+        )?;
+
+        if self.drum_machine.playback_state() == DrumMachinePlaybackState::Playing {
+            new_drum_machine_model = new_drum_machine_model.play()?;
+        }
 
         let old_audiothread_tx = std::mem::replace(&mut result.audiothread_tx, new_audiothread_tx);
         let old_drum_machine_model =
