@@ -402,6 +402,49 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
+    if new.is_signalling(Signal::ShowSaveBeforeLoadConfirmDialog) {
+        dialogs::confirm(
+            model_ptr.clone(),
+            view,
+            "Save workspace before loading another?",
+            "",
+            vec![
+                ButtonSpec::new("Save", || {
+                    closer!(AppMessage::Sequence(vec![
+                        AppMessage::SaveBeforeLoadPerformSave,
+                        AppMessage::SaveBeforeLoadPerformLoad
+                    ]))
+                })
+                .set_as_default(),
+                ButtonSpec::new("Do not save", || {
+                    closer!(AppMessage::SaveBeforeLoadPerformLoad)
+                }),
+                ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
+            ],
+            AppMessage::SaveBeforeLoadConfirmDialogOpened,
+            |e| closer!(AppMessage::LogError(anyhow!("Dialog error: {e:?}").into())),
+        );
+    }
+
+    if new.is_signalling(Signal::ShowSaveBeforeLoadSaveDialog) {
+        dialogs::save(
+            model_ptr.clone(),
+            view,
+            AppMessage::SaveBeforeLoadSaveDialogOpened,
+            |s| {
+                closer!(AppMessage::Sequence(vec![
+                    AppMessage::SaveToSavefile(s),
+                    AppMessage::SaveBeforeLoadPerformLoad
+                ]))
+            },
+            |e| {
+                closer!(AppMessage::LogError(
+                    anyhow!("Save dialog error: {e}").into()
+                ))
+            },
+        )
+    }
+
     if old.are_add_fs_source_fields_valid() != new.are_add_fs_source_fields_valid() {
         view.sources_add_fs_add_button
             .set_sensitive(new.are_add_fs_source_fields_valid());

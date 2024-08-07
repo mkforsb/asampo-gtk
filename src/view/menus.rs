@@ -14,7 +14,7 @@ pub fn build_actions(app: &Application, model_ptr: AppModelPtr, view: &AsampoVie
                     model_ptr.clone(),
                     &view,
                     AppMessage::NoOp,
-                    AppMessage::LoadFromSavefile,
+                    AppMessage::LoadSavefileRequested,
                     |e| AppMessage::LogError(anyhow::Error::from(e).into())
                 );
             }),

@@ -45,6 +45,7 @@ pub struct ViewValues {
     sets_export_progress: Option<(usize, usize)>,
     drum_machine: Option<DrumMachineView>,
     sequences_seq_pending_deletion: Option<Uuid>,
+    savefile_pending_load: Option<String>,
 }
 
 impl Default for ViewValues {
@@ -64,6 +65,7 @@ impl Default for ViewValues {
             sets_export_progress: None,
             drum_machine: None,
             sequences_seq_pending_deletion: None,
+            savefile_pending_load: None,
         }
     }
 }
@@ -373,5 +375,16 @@ impl ViewValues {
 
     pub fn sequence_pending_deletion(&self) -> Option<Uuid> {
         self.sequences_seq_pending_deletion
+    }
+
+    pub fn set_savefile_pending_load(self, maybe_filename: Option<String>) -> ViewValues {
+        ViewValues {
+            savefile_pending_load: maybe_filename,
+            ..self
+        }
+    }
+
+    pub fn savefile_pending_load(&self) -> Option<&String> {
+        self.savefile_pending_load.as_ref()
     }
 }

@@ -82,6 +82,16 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
         Ok(new_model) => {
             model_ptr.set(Some(new_model.clone()));
             update_view(model_ptr.clone(), old_model, new_model.clone(), view);
+
+            if !new_model.is_message_queue_empty() {
+                match new_model.pop_message_queue() {
+                    Ok((new_model, message)) => {
+                        model_ptr.set(Some(new_model.clone()));
+                        update(model_ptr.clone(), view, message);
+                    }
+                    Err(e) => log::log!(log::Level::Error, "Message queue error: {e}"),
+                }
+            }
         }
 
         Err(e) => {

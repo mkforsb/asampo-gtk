@@ -367,6 +367,57 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             .remove_source(uuid)?
             .tap(AppModel::populate_samples_listmodel)),
 
+        AppMessage::LoadSavefileRequested(filename) => {
+            if model.modified() {
+                match model.config().save_on_quit_behavior {
+                    SaveBehavior::Ask => Ok(model
+                        .set_savefile_pending_load(Some(filename))
+                        .signal(Signal::ShowSaveBeforeLoadConfirmDialog)),
+                    SaveBehavior::Save => Ok(model
+                        .set_savefile_pending_load(Some(filename))
+                        .enqueue_message(AppMessage::SaveBeforeLoadPerformSave)
+                        .enqueue_message(AppMessage::SaveBeforeLoadPerformLoad)),
+                    SaveBehavior::DontSave => {
+                        Ok(model.enqueue_message(AppMessage::LoadFromSavefile(filename)))
+                    }
+                }
+            } else {
+                log::log!(
+                    log::Level::Debug,
+                    "Workspace not modified, so not asking to save"
+                );
+                Ok(model.enqueue_message(AppMessage::LoadFromSavefile(filename)))
+            }
+        }
+
+        AppMessage::SaveBeforeLoadConfirmDialogOpened => {
+            model.clear_signal(Signal::ShowSaveBeforeLoadConfirmDialog)
+        }
+
+        AppMessage::SaveBeforeLoadPerformSave => {
+            if model.savefile_path().is_some() {
+                let filename = model.savefile_path().unwrap().to_string();
+                save(model, filename)
+            } else {
+                Ok(model.signal(Signal::ShowSaveBeforeLoadSaveDialog))
+            }
+        }
+
+        AppMessage::SaveBeforeLoadSaveDialogOpened => {
+            model.clear_signal(Signal::ShowSaveBeforeLoadSaveDialog)
+        }
+
+        AppMessage::SaveBeforeLoadPerformLoad => {
+            let filename = model
+                .savefile_pending_load()
+                .ok_or(anyhow!("No filename pending load"))?
+                .to_string();
+
+            Ok(model
+                .set_savefile_pending_load(None)
+                .enqueue_message(AppMessage::LoadFromSavefile(filename)))
+        }
+
         AppMessage::LoadFromSavefile(filename) => {
             log::log!(log::Level::Info, "Loading from {filename}");
 

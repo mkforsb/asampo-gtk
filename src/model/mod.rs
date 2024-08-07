@@ -22,6 +22,7 @@ use libasampo::{
 use uuid::Uuid;
 
 use crate::{
+    appmessage::AppMessage,
     config::AppConfig,
     view::{dialogs::ExportDialogView, sequences::DrumMachineView},
 };
@@ -29,6 +30,7 @@ use crate::{
 mod core;
 pub(in crate::model) mod delegate;
 mod drum_machine;
+mod message_queue;
 mod signals;
 mod viewflags;
 mod viewvalues;
@@ -36,6 +38,7 @@ mod viewvalues;
 use delegate::{delegate, delegate_priv};
 
 use core::{CoreModel, SourceLoadMsg};
+use message_queue::MessageQueue;
 use signals::SignalModel;
 use viewflags::ViewFlags;
 use viewvalues::ViewValues;
@@ -57,6 +60,7 @@ pub struct AppModel {
     audiothread_tx: mpsc::Sender<audiothread::Message>,
     drum_machine: DrumMachineModel,
     drum_machine_orig: DrumMachineModel,
+    message_queue: MessageQueue,
 }
 
 pub type AppModelPtr = Rc<Cell<Option<AppModel>>>;
@@ -79,6 +83,7 @@ impl AppModel {
             audiothread_tx,
             drum_machine: drum_machine.clone(),
             drum_machine_orig: drum_machine,
+            message_queue: MessageQueue::new(),
         }
     }
 
@@ -413,7 +418,9 @@ impl AppModel {
         set_drum_machine_view(view: Option<DrumMachineView>): Model,
         drum_machine_view() -> Option<&DrumMachineView>,
         set_sequence_pending_deletion(maybe_uuid: Option<Uuid>): Model,
-        sequence_pending_deletion() -> Option<Uuid>);
+        sequence_pending_deletion() -> Option<Uuid>,
+        set_savefile_pending_load(maybe_filename: Option<String>): Model,
+        savefile_pending_load() -> Option<&String>);
 
     delegate!(signals,
         signal(signal: Signal): Model,
@@ -458,4 +465,20 @@ impl AppModel {
         playback_state() as drum_machine_playback_state -> DrumMachinePlaybackState,
         assign_sample(source: &Source, sample: Sample, label: DrumkitLabel)
             as assign_drum_pad: Result);
+
+    delegate!(message_queue,
+        enqueue_message(message: AppMessage): Model,
+        is_empty() as is_message_queue_empty -> bool);
+
+    pub fn pop_message_queue(self) -> AnyhowResult<(AppModel, AppMessage)> {
+        let result = self.message_queue.pop_message()?;
+
+        Ok((
+            AppModel {
+                message_queue: result.0,
+                ..self
+            },
+            result.1,
+        ))
+    }
 }
