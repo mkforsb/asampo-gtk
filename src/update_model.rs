@@ -68,7 +68,9 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         log::log!(log::Level::Info, "Saving to {filename}");
 
         match Savefile::save(&model, &filename) {
-            Ok(_) => Ok(model.set_savefile_path(Some(filename))),
+            Ok(_) => Ok(model
+                .reset_modified_state()
+                .set_savefile_path(Some(filename))),
             Err(e) => Err(e),
         }
     }
