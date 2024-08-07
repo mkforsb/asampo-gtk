@@ -52,7 +52,7 @@ pub fn build_actions(app: &Application, model_ptr: AppModelPtr, view: &AsampoVie
                     &view,
                     AppMessage::NoOp,
                     AppMessage::SaveToSavefile,
-                    |e| AppMessage::LogError(anyhow::Error::from(e))
+                    |e| AppMessage::LogError(anyhow::Error::from(e).into())
                 );
             }),
         )

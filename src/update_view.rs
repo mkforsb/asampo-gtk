@@ -64,9 +64,9 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             SelectFolderDialogContext::BrowseForFilesystemSource,
             |s| closer!(AppMessage::AddFilesystemSourcePathBrowseSubmitted(s)),
             |e| {
-                closer!(AppMessage::LogError(anyhow!(
-                    "Error browsing for folder: {e}"
-                )))
+                closer!(AppMessage::LogError(
+                    anyhow!("Error browsing for folder: {e}").into()
+                ))
             },
         );
     }
@@ -116,7 +116,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                     .set_as_cancel(),
             ],
             AppMessage::SampleSetDeleteDialogOpened,
-            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
+            |e| {
+                closer!(AppMessage::LogError(
+                    anyhow!("Confirm dialog error: {e}").into()
+                ))
+            },
         )
     }
 
@@ -138,7 +142,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                     .set_as_cancel(),
             ],
             AppMessage::SynchronizeSampleSetDialogOpened,
-            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
+            |e| {
+                closer!(AppMessage::LogError(
+                    anyhow!("Confirm dialog error: {e}").into()
+                ))
+            },
         );
     }
 
@@ -175,7 +183,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                     .set_as_cancel(),
             ],
             AppMessage::SequenceDeleteDialogOpened,
-            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
+            |e| {
+                closer!(AppMessage::LogError(
+                    anyhow!("Confirm dialog error: {e}").into()
+                ))
+            },
         )
     }
 
@@ -228,7 +240,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                     .set_as_cancel(),
             ],
             AppMessage::LoadSequenceConfirmSaveDialogOpened,
-            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
+            |e| {
+                closer!(AppMessage::LogError(
+                    anyhow!("Confirm dialog error: {e}").into()
+                ))
+            },
         );
     }
 
@@ -244,7 +260,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                     .set_as_cancel(),
             ],
             AppMessage::LoadSequenceConfirmAbandonDialogOpened,
-            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
+            |e| {
+                closer!(AppMessage::LogError(
+                    anyhow!("Confirm dialog error: {e}").into()
+                ))
+            },
         )
     }
 
@@ -272,7 +292,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                 ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
             ],
             AppMessage::LoadSampleSetConfirmSaveDialogOpened,
-            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
+            |e| {
+                closer!(AppMessage::LogError(
+                    anyhow!("Confirm dialog error: {e}").into()
+                ))
+            },
         );
     }
 
@@ -288,7 +312,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                 ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
             ],
             AppMessage::LoadSampleSetConfirmAbandonDialogOpened,
-            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
+            |e| {
+                closer!(AppMessage::LogError(
+                    anyhow!("Confirm dialog error: {e}").into()
+                ))
+            },
         )
     }
 
@@ -303,7 +331,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                 ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
             ],
             AppMessage::ClearSequenceConfirmDialogOpened,
-            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
+            |e| {
+                closer!(AppMessage::LogError(
+                    anyhow!("Confirm dialog error: {e}").into()
+                ))
+            },
         )
     }
 
@@ -318,7 +350,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                 ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
             ],
             AppMessage::ClearSampleSetConfirmDialogOpened,
-            |e| closer!(AppMessage::LogError(anyhow!("Confirm dialog error: {e}"))),
+            |e| {
+                closer!(AppMessage::LogError(
+                    anyhow!("Confirm dialog error: {e}").into()
+                ))
+            },
         )
     }
 
@@ -332,7 +368,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             view,
             SelectFolderDialogContext::BrowseForExportTargetDirectory,
             AppMessage::ExportTargetDirectoryBrowseSubmitted,
-            |e| AppMessage::LogError(anyhow!("Export browse dialog error: {e}")),
+            |e| AppMessage::LogError(anyhow!("Export browse dialog error: {e}").into()),
         );
     }
 
@@ -348,7 +384,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                 ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
             ],
             AppMessage::SaveBeforeQuitConfirmDialogOpened,
-            |e| closer!(AppMessage::LogError(anyhow!("Dialog error: {e:?}"))),
+            |e| closer!(AppMessage::LogError(anyhow!("Dialog error: {e:?}").into())),
         );
     }
 
@@ -358,7 +394,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             view,
             AppMessage::SaveBeforeQuitSaveDialogOpened,
             |s| closer!(AppMessage::SaveAndQuitFinish(s)),
-            |e| closer!(AppMessage::LogError(anyhow!("Save dialog error: {e}"))),
+            |e| {
+                closer!(AppMessage::LogError(
+                    anyhow!("Save dialog error: {e}").into()
+                ))
+            },
         )
     }
 

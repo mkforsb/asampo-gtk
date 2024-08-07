@@ -2,17 +2,19 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
+use std::rc::Rc;
+
 use gtk::gdk::ModifierType;
 use libasampo::{samples::Sample, samplesets::DrumkitLabel, sequences::DrumkitSequenceEvent};
 use uuid::Uuid;
 
 use crate::view::dialogs::{self, InputDialogContext, SelectFolderDialogContext};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum AppMessage {
     NoOp,
     Sequence(Vec<AppMessage>),
-    LogError(anyhow::Error),
+    LogError(Rc<anyhow::Error>), // uses `Rc` for `derive Clone`
     DialogClosed,
     TimerTick,
     SettingsOutputSampleRateChanged(String),
