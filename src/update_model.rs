@@ -215,8 +215,14 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 );
                 ConfigFile::save(&config, &config.config_save_path)?;
 
-                log::log!(log::Level::Info, "Respawning audiothread with new config");
-                Ok(model.reconfigure(config)?.clear_config_save_timeout())
+                if model.is_signalling(Signal::AudioSettingsModified) {
+                    Ok(model
+                        .clear_signal(Signal::AudioSettingsModified)?
+                        .reconfigure(config)?
+                        .clear_config_save_timeout())
+                } else {
+                    Ok(model.clear_config_save_timeout())
+                }
             } else {
                 Ok(model)
             }
@@ -226,6 +232,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             let new_config = model.config().clone().with_samplerate_choice(choice);
 
             Ok(model
+                .signal(Signal::AudioSettingsModified)
                 .set_latency_approx_label_by_config(&new_config)
                 .set_config(new_config)
                 .set_config_save_timeout(Instant::now() + Duration::from_secs(3)))
@@ -235,13 +242,22 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             let new_config = model.config().clone().with_buffer_size(samples);
 
             Ok(model
+                .signal(Signal::AudioSettingsModified)
                 .set_latency_approx_label_by_config(&new_config)
                 .set_config(new_config)
                 .set_config_save_timeout(Instant::now() + Duration::from_secs(3)))
         }
 
         AppMessage::SettingsSampleRateConversionQualityChanged(choice) => {
-            config_choice!(with_conversion_quality_choice, choice)
+            let new_config = model
+                .config()
+                .clone()
+                .with_conversion_quality_choice(choice);
+
+            Ok(model
+                .signal(Signal::AudioSettingsModified)
+                .set_config(new_config)
+                .set_config_save_timeout(Instant::now() + Duration::from_secs(3)))
         }
 
         AppMessage::SettingsSamplePlaybackBehaviorChanged(choice) => {

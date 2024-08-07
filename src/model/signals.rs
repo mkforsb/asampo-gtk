@@ -10,6 +10,7 @@ use crate::model::AnyhowResult;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum Signal {
+    AudioSettingsModified,
     ShowSampleSetCreateDialog,
     ShowSampleSetDeleteDialog,
     ShowAddSampleToSetDialog,

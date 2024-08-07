@@ -179,6 +179,7 @@ impl AppModel {
     }
 
     pub fn reconfigure(self, config: AppConfig) -> AnyhowResult<AppModel> {
+        log::log!(log::Level::Info, "Respawning audiothread with new config");
         let mut result = self.clone();
 
         let new_audiothread_tx = AppModel::spawn_audiothread(&config)?;
