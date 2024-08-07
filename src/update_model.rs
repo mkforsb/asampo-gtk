@@ -346,7 +346,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 .drum_machine_loaded_sampleset()
                 .is_some_and(|set| set.uuid() == set_uuid)
             {
-                maybe_sync_set(model)
+                maybe_sync_set(model.set_selected_set(Some(set_uuid))?)
             } else {
                 Ok(model)
             }
