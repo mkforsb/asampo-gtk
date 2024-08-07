@@ -409,13 +409,8 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             "Save workspace before loading another?",
             "",
             vec![
-                ButtonSpec::new("Save", || {
-                    closer!(AppMessage::Sequence(vec![
-                        AppMessage::SaveBeforeLoadPerformSave,
-                        AppMessage::SaveBeforeLoadPerformLoad
-                    ]))
-                })
-                .set_as_default(),
+                ButtonSpec::new("Save", || closer!(AppMessage::SaveBeforeLoadPerformSave))
+                    .set_as_default(),
                 ButtonSpec::new("Do not save", || {
                     closer!(AppMessage::SaveBeforeLoadPerformLoad)
                 }),

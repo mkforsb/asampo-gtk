@@ -375,8 +375,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                         .signal(Signal::ShowSaveBeforeLoadConfirmDialog)),
                     SaveBehavior::Save => Ok(model
                         .set_savefile_pending_load(Some(filename))
-                        .enqueue_message(AppMessage::SaveBeforeLoadPerformSave)
-                        .enqueue_message(AppMessage::SaveBeforeLoadPerformLoad)),
+                        .enqueue_message(AppMessage::SaveBeforeLoadPerformSave)),
                     SaveBehavior::DontSave => {
                         Ok(model.enqueue_message(AppMessage::LoadFromSavefile(filename)))
                     }
@@ -397,7 +396,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::SaveBeforeLoadPerformSave => {
             if model.savefile_path().is_some() {
                 let filename = model.savefile_path().unwrap().to_string();
-                save(model, filename)
+                Ok(save(model, filename)?.enqueue_message(AppMessage::SaveBeforeLoadPerformLoad))
             } else {
                 Ok(model.signal(Signal::ShowSaveBeforeLoadSaveDialog))
             }
