@@ -52,6 +52,9 @@ pub type AnyhowResult<T> = Result<T, anyhow::Error>;
 
 #[derive(Clone, Debug)]
 pub struct AppModel {
+    config: AppConfig,
+    config_save_timeout: Option<std::time::Instant>,
+    savefile: Option<String>,
     core: CoreModel,
     core_orig: CoreModel,
     viewflags: ViewFlags,
@@ -75,8 +78,11 @@ impl AppModel {
         let drum_machine = DrumMachineModel::new_with_render_thread(audiothread_tx.clone());
 
         AppModel {
-            core: CoreModel::new(config.clone(), savefile.clone()),
-            core_orig: CoreModel::new(config, savefile),
+            config,
+            config_save_timeout: None,
+            savefile,
+            core: CoreModel::new(),
+            core_orig: CoreModel::new(),
             viewflags: ViewFlags::default(),
             viewvalues,
             signals: SignalModel::new(),
@@ -103,6 +109,44 @@ impl AppModel {
             drum_machine_orig: self.drum_machine.clone(),
             ..self
         }
+    }
+
+    pub fn set_config(self, config: AppConfig) -> AppModel {
+        AppModel { config, ..self }
+    }
+
+    pub fn config(&self) -> &AppConfig {
+        &self.config
+    }
+
+    pub fn set_config_save_timeout(self, deadline: Instant) -> AppModel {
+        AppModel {
+            config_save_timeout: Some(deadline),
+            ..self
+        }
+    }
+
+    pub fn clear_config_save_timeout(self) -> AppModel {
+        AppModel {
+            config_save_timeout: None,
+            ..self
+        }
+    }
+
+    pub fn reached_config_save_timeout(&self) -> bool {
+        self.config_save_timeout
+            .is_some_and(|t| t <= Instant::now())
+    }
+
+    pub fn set_savefile_path(self, maybe_path: Option<impl Into<String>>) -> AppModel {
+        AppModel {
+            savefile: maybe_path.map(|s| s.into()),
+            ..self
+        }
+    }
+
+    pub fn savefile_path(&self) -> Option<&String> {
+        self.savefile.as_ref()
     }
 
     pub fn spawn_audiothread(
@@ -316,13 +360,6 @@ impl AppModel {
     //////////////////////////////////////////////////////////////////////////////////
 
     delegate!(core,
-        set_config(config: AppConfig): Model,
-        config() -> &AppConfig,
-        set_config_save_timeout(deadline: Instant): Model,
-        clear_config_save_timeout(): Model,
-        reached_config_save_timeout() -> bool,
-        set_savefile_path(maybe_path: Option<impl Into<String>>): Model,
-        savefile_path() -> Option<&String>,
         source(uuid: Uuid) -> AnyhowResult<&Source>,
         sources_map() -> &HashMap<Uuid, Source>,
         sources_list() -> Vec<&Source>,

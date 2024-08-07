@@ -2,7 +2,7 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::mpsc, time::Instant};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::mpsc};
 
 use anyhow::anyhow;
 use libasampo::{
@@ -14,7 +14,6 @@ use libasampo::{
 use uuid::Uuid;
 
 use crate::{
-    config::AppConfig,
     ext::{ClonedHashMapExt, ClonedVecExt},
     model::AnyhowResult,
 };
@@ -29,9 +28,6 @@ pub enum ExportState {
 
 #[derive(Clone, Debug)]
 pub struct CoreModel {
-    config: AppConfig,
-    config_save_timeout: Option<std::time::Instant>,
-    savefile: Option<String>,
     sources: HashMap<Uuid, Source>,
     sources_order: Vec<Uuid>,
     sources_loading: HashMap<Uuid, Rc<mpsc::Receiver<SourceLoadMsg>>>,
@@ -50,11 +46,8 @@ pub struct CoreModel {
 }
 
 impl CoreModel {
-    pub fn new(config: AppConfig, savefile_path: Option<impl Into<String>>) -> CoreModel {
+    pub fn new() -> CoreModel {
         CoreModel {
-            config,
-            config_save_timeout: None,
-            savefile: savefile_path.map(|s| s.into()),
             sources: HashMap::new(),
             sources_order: Vec::new(),
             sources_loading: HashMap::new(),
@@ -74,52 +67,12 @@ impl CoreModel {
     }
 
     pub fn is_modified_vs(&self, other: &Self) -> bool {
-        self.config != other.config
-            || self.savefile != other.savefile
-            || self.sources != other.sources
+        self.sources != other.sources
             || self.sources_order != other.sources_order
             || self.sets != other.sets
             || self.sets_order != other.sets_order
             || self.sequences != other.sequences
             || self.sequences_order != other.sequences_order
-    }
-
-    pub fn set_config(self, config: AppConfig) -> CoreModel {
-        CoreModel { config, ..self }
-    }
-
-    pub fn config(&self) -> &AppConfig {
-        &self.config
-    }
-
-    pub fn set_config_save_timeout(self, deadline: Instant) -> CoreModel {
-        CoreModel {
-            config_save_timeout: Some(deadline),
-            ..self
-        }
-    }
-
-    pub fn clear_config_save_timeout(self) -> CoreModel {
-        CoreModel {
-            config_save_timeout: None,
-            ..self
-        }
-    }
-
-    pub fn reached_config_save_timeout(&self) -> bool {
-        self.config_save_timeout
-            .is_some_and(|t| t <= Instant::now())
-    }
-
-    pub fn set_savefile_path(self, maybe_path: Option<impl Into<String>>) -> CoreModel {
-        CoreModel {
-            savefile: maybe_path.map(|s| s.into()),
-            ..self
-        }
-    }
-
-    pub fn savefile_path(&self) -> Option<&String> {
-        self.savefile.as_ref()
     }
 
     pub fn sources_map(&self) -> &HashMap<Uuid, Source> {
@@ -580,7 +533,7 @@ mod tests {
 
     #[test]
     fn test_add_remove_sampleset() {
-        let model = CoreModel::new(AppConfig::default(), Some("/tmp/config.json"));
+        let model = CoreModel::new();
         let set = BaseSampleSet::new("Favorites".to_string());
 
         let model = model
