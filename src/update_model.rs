@@ -23,7 +23,9 @@ use libasampo::{
 
 use crate::{
     appmessage::AppMessage,
-    config::{SamplePlaybackBehavior, SaveBehavior},
+    config::{
+        SamplePlaybackBehavior, SaveItemBehavior, SaveWorkspaceBehavior, SynchronizeBehavior,
+    },
     configfile::ConfigFile,
     labels::DRUM_LABELS,
     model::{
@@ -99,12 +101,12 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
     fn maybe_sync_set(model: AppModel) -> AnyhowResult<AppModel> {
         match model.config().synchronize_changed_set_behavior {
-            crate::config::SynchronizeBehavior::Ask => {
+            SynchronizeBehavior::Ask => {
                 Ok(model.signal(Signal::ShowSampleSetSynchronizationDialog))
             }
 
-            crate::config::SynchronizeBehavior::Synchronize => sync_set(model),
-            crate::config::SynchronizeBehavior::Unlink => unlink_set(model),
+            SynchronizeBehavior::Synchronize => sync_set(model),
+            SynchronizeBehavior::Unlink => unlink_set(model),
         }
     }
 
@@ -247,7 +249,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         }
 
         AppMessage::SettingsSaveOnQuitBehaviorChanged(choice) => {
-            config_choice!(with_save_on_quit_behavior_choice, choice)
+            config_choice!(with_save_workspace_behavior_choice, choice)
         }
 
         AppMessage::SettingsSaveChangedSequenceBehaviorChanged(choice) => {
@@ -369,14 +371,25 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::LoadSavefileRequested(filename) => {
             if model.modified() {
-                match model.config().save_on_quit_behavior {
-                    SaveBehavior::Ask => Ok(model
+                match model.config().save_workspace_behavior {
+                    SaveWorkspaceBehavior::Ask => Ok(model
                         .set_savefile_pending_load(Some(filename))
                         .signal(Signal::ShowSaveBeforeLoadConfirmDialog)),
-                    SaveBehavior::Save => Ok(model
+                    SaveWorkspaceBehavior::AskIfUnnamed => {
+                        if model.savefile_path().is_none() {
+                            Ok(model
+                                .set_savefile_pending_load(Some(filename))
+                                .signal(Signal::ShowSaveBeforeLoadConfirmDialog))
+                        } else {
+                            Ok(model
+                                .set_savefile_pending_load(Some(filename))
+                                .enqueue_message(AppMessage::SaveBeforeLoadPerformSave))
+                        }
+                    }
+                    SaveWorkspaceBehavior::Save => Ok(model
                         .set_savefile_pending_load(Some(filename))
                         .enqueue_message(AppMessage::SaveBeforeLoadPerformSave)),
-                    SaveBehavior::DontSave => {
+                    SaveWorkspaceBehavior::DontSave => {
                         Ok(model.enqueue_message(AppMessage::LoadFromSavefile(filename)))
                     }
                 }
@@ -675,15 +688,16 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
         AppMessage::SampleSetDetailsLoadInDrumMachineClicked => {
             if model.drum_machine_model().is_sampleset_modified() {
                 match model.config().save_changed_set_behavior {
-                    crate::config::SaveBehavior::Ask => {
+                    SaveItemBehavior::Ask => {
                         if model.drum_machine_loaded_sampleset().is_some() {
                             Ok(model.signal(Signal::ShowSampleSetSaveBeforeLoadDialog))
                         } else {
                             Ok(model.signal(Signal::ShowSampleSetConfirmAbandonDialog))
                         }
                     }
-                    crate::config::SaveBehavior::Save => load_set_save(model),
-                    crate::config::SaveBehavior::DontSave => load_set_discard(model),
+
+                    SaveItemBehavior::Save => load_set_save(model),
+                    SaveItemBehavior::DontSave => load_set_discard(model),
                 }
             } else {
                 let set = model
@@ -973,7 +987,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
             if model.drum_machine_model().is_sequence_modified() {
                 match model.config().save_changed_sequence_behavior {
-                    crate::config::SaveBehavior::Ask => {
+                    SaveItemBehavior::Ask => {
                         if model.drum_machine_loaded_sequence().is_some() {
                             Ok(model.signal(Signal::ShowSequenceSaveBeforeLoadDialog))
                         } else {
@@ -981,8 +995,8 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                         }
                     }
 
-                    crate::config::SaveBehavior::Save => load_seq_save(model),
-                    crate::config::SaveBehavior::DontSave => load_seq_discard(model),
+                    SaveItemBehavior::Save => load_seq_save(model),
+                    SaveItemBehavior::DontSave => load_seq_discard(model),
                 }
             } else {
                 let sequence = model.sequence(uuid)?.clone();
@@ -1089,10 +1103,21 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::QuitRequested => {
             if model.modified() {
-                match model.config().save_on_quit_behavior {
-                    SaveBehavior::Ask => Ok(model.signal(Signal::ShowSaveBeforeQuitConfirmDialog)),
+                match model.config().save_workspace_behavior {
+                    SaveWorkspaceBehavior::Ask => {
+                        Ok(model.signal(Signal::ShowSaveBeforeQuitConfirmDialog))
+                    }
 
-                    SaveBehavior::Save => {
+                    SaveWorkspaceBehavior::AskIfUnnamed => {
+                        if model.savefile_path().is_none() {
+                            Ok(model.signal(Signal::ShowSaveBeforeQuitConfirmDialog))
+                        } else {
+                            let filename = model.savefile_path().unwrap().clone();
+                            Ok(save(model, filename)?.signal(Signal::QuitConfirmed))
+                        }
+                    }
+
+                    SaveWorkspaceBehavior::Save => {
                         if model.savefile_path().is_some() {
                             let filename = model.savefile_path().unwrap().clone();
                             Ok(save(model, filename)?.signal(Signal::QuitConfirmed))
@@ -1101,7 +1126,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                         }
                     }
 
-                    SaveBehavior::DontSave => Ok(model.signal(Signal::QuitConfirmed)),
+                    SaveWorkspaceBehavior::DontSave => Ok(model.signal(Signal::QuitConfirmed)),
                 }
             } else {
                 log::log!(

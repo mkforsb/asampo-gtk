@@ -31,9 +31,9 @@ pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
             &config::SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS.keys(),
         )));
 
-    view.settings_save_on_quit_behavior_entry
+    view.settings_save_workspace_behavior_entry
         .set_model(Some(&StringList::new(
-            &config::SAVE_ON_QUIT_BEHAVIOR_OPTIONS.keys(),
+            &config::SAVE_WORKSPACE_BEHAVIOR_OPTIONS.keys(),
         )));
 
     view.settings_save_changed_sequence_behavior_entry
@@ -100,7 +100,7 @@ pub fn setup_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
     );
 
     connect_changed!(
-        settings_save_on_quit_behavior_entry,
+        settings_save_workspace_behavior_entry,
         SettingsSaveOnQuitBehaviorChanged
     );
 
@@ -149,9 +149,9 @@ pub fn update_settings_page(model_ptr: AppModelPtr, view: &AsampoView) {
         );
 
         set_dropdown_choice(
-            &view.settings_save_on_quit_behavior_entry,
-            &config::SAVE_ON_QUIT_BEHAVIOR_OPTIONS,
-            &config.save_on_quit_behavior,
+            &view.settings_save_workspace_behavior_entry,
+            &config::SAVE_WORKSPACE_BEHAVIOR_OPTIONS,
+            &config.save_workspace_behavior,
         );
 
         set_dropdown_choice(

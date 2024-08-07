@@ -11,7 +11,15 @@ pub enum SamplePlaybackBehavior {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SaveBehavior {
+pub enum SaveWorkspaceBehavior {
+    Ask,
+    AskIfUnnamed,
+    Save,
+    DontSave,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SaveItemBehavior {
     Ask,
     Save,
     DontSave,
@@ -31,9 +39,9 @@ pub struct AppConfig {
     pub sample_rate_conversion_quality: audiothread::Quality,
     pub config_save_path: String,
     pub sample_playback_behavior: SamplePlaybackBehavior,
-    pub save_on_quit_behavior: SaveBehavior,
-    pub save_changed_sequence_behavior: SaveBehavior,
-    pub save_changed_set_behavior: SaveBehavior,
+    pub save_workspace_behavior: SaveWorkspaceBehavior,
+    pub save_changed_sequence_behavior: SaveItemBehavior,
+    pub save_changed_set_behavior: SaveItemBehavior,
     pub synchronize_changed_set_behavior: SynchronizeBehavior,
 }
 
@@ -45,9 +53,9 @@ impl Default for AppConfig {
             sample_rate_conversion_quality: audiothread::Quality::Lowest,
             config_save_path: ConfigFile::default_path(),
             sample_playback_behavior: SamplePlaybackBehavior::PlayUntilEnd,
-            save_on_quit_behavior: SaveBehavior::Ask,
-            save_changed_sequence_behavior: SaveBehavior::Ask,
-            save_changed_set_behavior: SaveBehavior::Ask,
+            save_workspace_behavior: SaveWorkspaceBehavior::Ask,
+            save_changed_sequence_behavior: SaveItemBehavior::Ask,
+            save_changed_set_behavior: SaveItemBehavior::Ask,
             synchronize_changed_set_behavior: SynchronizeBehavior::Ask,
         }
     }
@@ -115,9 +123,9 @@ impl AppConfig {
         SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS,
         "sample playback behavior");
 
-    update_with!(choice with_save_on_quit_behavior_choice,
-        save_on_quit_behavior,
-        SAVE_ON_QUIT_BEHAVIOR_OPTIONS,
+    update_with!(choice with_save_workspace_behavior_choice,
+        save_workspace_behavior,
+        SAVE_WORKSPACE_BEHAVIOR_OPTIONS,
         "save on quit behavior");
 
     update_with!(choice with_save_changed_sequence_behavior_choice,
@@ -161,22 +169,26 @@ pub const SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS: [(&str, SamplePlaybackBehavior); 2] 
     ),
 ];
 
-pub const SAVE_ON_QUIT_BEHAVIOR_OPTIONS: [(&str, SaveBehavior); 3] = [
-    ("Ask", SaveBehavior::Ask),
-    ("Always Save", SaveBehavior::Save),
-    ("Never Save", SaveBehavior::DontSave),
+pub const SAVE_WORKSPACE_BEHAVIOR_OPTIONS: [(&str, SaveWorkspaceBehavior); 4] = [
+    ("Ask", SaveWorkspaceBehavior::Ask),
+    (
+        "Ask if unnamed, otherwise Save",
+        SaveWorkspaceBehavior::AskIfUnnamed,
+    ),
+    ("Always Save", SaveWorkspaceBehavior::Save),
+    ("Never Save", SaveWorkspaceBehavior::DontSave),
 ];
 
-pub const SAVE_CHANGED_SEQUENCE_BEHAVIOR_OPTIONS: [(&str, SaveBehavior); 3] = [
-    ("Ask", SaveBehavior::Ask),
-    ("Always Save", SaveBehavior::Save),
-    ("Always Discard", SaveBehavior::DontSave),
+pub const SAVE_CHANGED_SEQUENCE_BEHAVIOR_OPTIONS: [(&str, SaveItemBehavior); 3] = [
+    ("Ask", SaveItemBehavior::Ask),
+    ("Always Save", SaveItemBehavior::Save),
+    ("Always Discard", SaveItemBehavior::DontSave),
 ];
 
-pub const SAVE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS: [(&str, SaveBehavior); 3] = [
-    ("Ask", SaveBehavior::Ask),
-    ("Always Save", SaveBehavior::Save),
-    ("Always Discard", SaveBehavior::DontSave),
+pub const SAVE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS: [(&str, SaveItemBehavior); 3] = [
+    ("Ask", SaveItemBehavior::Ask),
+    ("Always Save", SaveItemBehavior::Save),
+    ("Always Discard", SaveItemBehavior::DontSave),
 ];
 
 pub const SYNCHRONIZE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS: [(&str, SynchronizeBehavior); 3] = [

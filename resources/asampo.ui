@@ -338,14 +338,14 @@
                                             <style>
                                               <class name="setting-label" />
                                             </style>
-                                            <property name="label">Save on quit:</property>
+                                            <property name="label">Save on load/quit:</property>
                                             <property name="halign">start</property>
                                             <property name="xalign">0.0</property>
                                           </object>
                                         </child>
                                         <child>
-                                          <object class="GtkDropDown" id="settings-save-on-quit-behavior-entry">
-                                            <property name="name">settings-save-on-quit-behavior-entry</property>
+                                          <object class="GtkDropDown" id="settings-save-workspace-behavior-entry">
+                                            <property name="name">settings-save-workspace-behavior-entry</property>
                                             <style>
                                               <class name="setting-entry" />
                                             </style>
