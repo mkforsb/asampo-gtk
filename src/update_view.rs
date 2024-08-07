@@ -506,10 +506,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
     if old.export_state() != new.export_state() {
         match new.export_state() {
             Some(ExportState::Exporting) => {
-                if let Some(dv) = &new.export_dialog_view() {
-                    dv.window.close();
-                    view.progress_popup.set_visible(true);
-                }
+                view.progress_popup.set_visible(true);
             }
 
             Some(ExportState::Finished) => {
