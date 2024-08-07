@@ -344,7 +344,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
             "",
             vec![
                 ButtonSpec::new("Save", || closer!(AppMessage::SaveAndQuitBegin)).set_as_default(),
-                ButtonSpec::new("Don't save", || closer!(AppMessage::Quit)),
+                ButtonSpec::new("Do not save", || closer!(AppMessage::Quit)),
                 ButtonSpec::new("Cancel", || AppMessage::DialogClosed).set_as_cancel(),
             ],
             AppMessage::SaveBeforeQuitConfirmDialogOpened,
