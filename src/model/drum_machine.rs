@@ -74,12 +74,6 @@ impl DrumMachineModel {
     }
 
     pub fn is_visibly_modified_vs(&self, other: &DrumMachineModel) -> bool {
-        self.activated_pad != other.activated_pad
-            || self.activated_part != other.activated_part
-            || self.is_modified_vs(other)
-    }
-
-    pub fn is_modified_vs(&self, other: &DrumMachineModel) -> bool {
         if self.playback_state != other.playback_state {
             return true;
         }
@@ -94,6 +88,12 @@ impl DrumMachineModel {
             _ => return true,
         }
 
+        self.activated_pad != other.activated_pad
+            || self.activated_part != other.activated_part
+            || self.is_modified_vs(other)
+    }
+
+    pub fn is_modified_vs(&self, other: &DrumMachineModel) -> bool {
         if self.sequence != other.sequence
             || self.loaded_sequence != other.loaded_sequence
             || self.sampleset != other.sampleset
