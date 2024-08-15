@@ -66,7 +66,6 @@ pub fn setup_samples_page(model_ptr: AppModelPtr, view: &AsampoView) {
     let factory = gtk::SignalListItemFactory::new();
 
     factory.connect_setup(move |_, list_item| {
-        // TODO: move to builder xml template
         let label = gtk::Label::new(None);
         label.set_xalign(0.0);
 
