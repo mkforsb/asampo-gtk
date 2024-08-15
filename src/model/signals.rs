@@ -4,10 +4,6 @@
 
 use std::collections::HashSet;
 
-use anyhow::anyhow;
-
-use crate::model::AnyhowResult;
-
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum Signal {
     AudioSettingsModified,
@@ -33,6 +29,12 @@ pub enum Signal {
     QuitConfirmed,
     ShowSaveBeforeLoadConfirmDialog,
     ShowSaveBeforeLoadSaveDialog,
+    MainViewSensitive,
+    AddFilesystemSourceFieldsValid,
+    AddToPreviousSetEnabled,
+    LoadSetInDrumMachineEnabled,
+    SampleSetExportEnabled,
+    SampleSetExportFieldsValid,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -54,15 +56,20 @@ impl SignalModel {
         }
     }
 
-    pub fn clear_signal(self, signal: Signal) -> AnyhowResult<SignalModel> {
+    pub fn clear_signal(self, signal: Signal) -> SignalModel {
         let mut new_signals = self.signals.clone();
+        new_signals.remove(&signal);
 
-        if new_signals.remove(&signal) {
-            Ok(SignalModel {
-                signals: new_signals,
-            })
+        SignalModel {
+            signals: new_signals,
+        }
+    }
+
+    pub fn set_signal_state(self, signal: Signal, enabled: bool) -> SignalModel {
+        if enabled {
+            self.signal(signal)
         } else {
-            Err(anyhow!("Signal not active"))
+            self.clear_signal(signal)
         }
     }
 
@@ -87,11 +94,9 @@ mod tests {
 
         assert!(!model.is_signalling(Signal::ShowSequenceConfirmClearDialog));
 
-        let model = model.clear_signal(Signal::ShowExportDialog).unwrap();
+        let model = model.clear_signal(Signal::ShowExportDialog);
 
         assert!(!model.is_signalling(Signal::ShowExportDialog));
         assert!(model.is_signalling(Signal::ShowSampleSetSaveAsDialog));
-
-        assert!(model.clear_signal(Signal::ShowExportDialog).is_err());
     }
 }

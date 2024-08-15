@@ -29,8 +29,14 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         };
     }
 
-    if old.is_main_view_sensitive() != new.is_main_view_sensitive() {
-        view.set_sensitive(new.is_main_view_sensitive());
+    macro_rules! is {
+        ($model:ident, $signal:ident) => {
+            $model.is_signalling(Signal::$signal)
+        };
+    }
+
+    if is!(old, MainViewSensitive) != is!(new, MainViewSensitive) {
+        view.set_sensitive(is!(new, MainViewSensitive));
     }
 
     maybe_update_text!(view.settings_latency_approx_label, latency_approx_label);
@@ -44,10 +50,10 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
     if let Some(dialogview) = new.export_dialog_view() {
         maybe_update_text!(dialogview.target_dir_entry, export_target_dir);
 
-        if old.are_export_fields_valid() != new.are_export_fields_valid() {
+        if is!(old, SampleSetExportFieldsValid) != is!(new, SampleSetExportFieldsValid) {
             dialogview
                 .export_button
-                .set_sensitive(new.are_export_fields_valid());
+                .set_sensitive(is!(new, SampleSetExportFieldsValid));
         }
     }
 
@@ -57,7 +63,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         };
     }
 
-    if new.is_signalling(Signal::ShowAddFilesystemSourceBrowseDialog) {
+    if is!(new, ShowAddFilesystemSourceBrowseDialog) {
         dialogs::choose_folder(
             model_ptr.clone(),
             view,
@@ -71,7 +77,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowAddSampleToSetDialog) {
+    if is!(new, ShowAddSampleToSetDialog) {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -83,7 +89,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowSampleSetCreateDialog) {
+    if is!(new, ShowSampleSetCreateDialog) {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -95,7 +101,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowSampleSetDeleteDialog) {
+    if is!(new, ShowSampleSetDeleteDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -124,7 +130,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if new.is_signalling(Signal::ShowSampleSetSynchronizationDialog) {
+    if is!(new, ShowSampleSetSynchronizationDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -150,7 +156,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowSequenceCreateDialog) {
+    if is!(new, ShowSequenceCreateDialog) {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -162,7 +168,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowSequenceDeleteDialog) {
+    if is!(new, ShowSequenceDeleteDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -191,7 +197,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if new.is_signalling(Signal::ShowSequenceSaveAsDialog) {
+    if is!(new, ShowSequenceSaveAsDialog) {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -203,7 +209,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowSampleSetSaveAsDialog) {
+    if is!(new, ShowSampleSetSaveAsDialog) {
         dialogs::input(
             model_ptr.clone(),
             view,
@@ -215,7 +221,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowSequenceSaveBeforeLoadDialog) {
+    if is!(new, ShowSequenceSaveBeforeLoadDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -248,7 +254,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowSequenceConfirmAbandonDialog) {
+    if is!(new, ShowSequenceConfirmAbandonDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -268,7 +274,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if new.is_signalling(Signal::ShowSampleSetSaveBeforeLoadDialog) {
+    if is!(new, ShowSampleSetSaveBeforeLoadDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -300,7 +306,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowSampleSetConfirmAbandonDialog) {
+    if is!(new, ShowSampleSetConfirmAbandonDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -320,7 +326,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if new.is_signalling(Signal::ShowSequenceConfirmClearDialog) {
+    if is!(new, ShowSequenceConfirmClearDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -339,7 +345,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if new.is_signalling(Signal::ShowSampleSetConfirmClearDialog) {
+    if is!(new, ShowSampleSetConfirmClearDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -358,11 +364,11 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if new.is_signalling(Signal::ShowExportDialog) {
+    if is!(new, ShowExportDialog) {
         dialogs::sampleset_export(model_ptr.clone(), view, new.clone());
     }
 
-    if new.is_signalling(Signal::ShowExportBrowseDialog) {
+    if is!(new, ShowExportBrowseDialog) {
         dialogs::choose_folder(
             model_ptr.clone(),
             view,
@@ -372,7 +378,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowSaveBeforeQuitConfirmDialog) {
+    if is!(new, ShowSaveBeforeQuitConfirmDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -388,7 +394,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowSaveBeforeQuitSaveDialog) {
+    if is!(new, ShowSaveBeforeQuitSaveDialog) {
         dialogs::save(
             model_ptr.clone(),
             view,
@@ -402,7 +408,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if new.is_signalling(Signal::ShowSaveBeforeLoadConfirmDialog) {
+    if is!(new, ShowSaveBeforeLoadConfirmDialog) {
         dialogs::confirm(
             model_ptr.clone(),
             view,
@@ -421,7 +427,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         );
     }
 
-    if new.is_signalling(Signal::ShowSaveBeforeLoadSaveDialog) {
+    if is!(new, ShowSaveBeforeLoadSaveDialog) {
         dialogs::save(
             model_ptr.clone(),
             view,
@@ -440,9 +446,9 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         )
     }
 
-    if old.are_add_fs_source_fields_valid() != new.are_add_fs_source_fields_valid() {
+    if is!(old, AddFilesystemSourceFieldsValid) != is!(new, AddFilesystemSourceFieldsValid) {
         view.sources_add_fs_add_button
-            .set_sensitive(new.are_add_fs_source_fields_valid());
+            .set_sensitive(is!(new, AddFilesystemSourceFieldsValid));
     }
 
     if old.sources_map() != new.sources_map() {
@@ -467,9 +473,9 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         update_samples_sidebar(model_ptr.clone(), new.clone(), view);
     }
 
-    if old.is_add_to_prev_set_enabled() != new.is_add_to_prev_set_enabled() {
+    if is!(old, AddToPreviousSetEnabled) != is!(new, AddToPreviousSetEnabled) {
         view.samples_sidebar_add_to_prev_button
-            .set_visible(new.is_add_to_prev_set_enabled());
+            .set_visible(is!(new, AddToPreviousSetEnabled));
     }
 
     if old.set_most_recently_added_to() != new.set_most_recently_added_to() {
@@ -493,14 +499,14 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         }
     }
 
-    if old.is_set_load_in_drum_machine_enabled() != new.is_set_load_in_drum_machine_enabled() {
+    if is!(old, LoadSetInDrumMachineEnabled) != is!(new, LoadSetInDrumMachineEnabled) {
         view.sets_details_load_drum_machine_button
-            .set_sensitive(new.is_set_load_in_drum_machine_enabled());
+            .set_sensitive(is!(new, LoadSetInDrumMachineEnabled));
     }
 
-    if old.is_set_export_enabled() != new.is_set_export_enabled() {
+    if is!(old, SampleSetExportEnabled) != is!(new, SampleSetExportEnabled) {
         view.sets_details_export_button
-            .set_sensitive(new.is_set_export_enabled());
+            .set_sensitive(is!(new, SampleSetExportEnabled));
     }
 
     if old.export_state() != new.export_state() {
@@ -540,7 +546,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         update_drum_machine_view(&new);
     }
 
-    if new.is_signalling(Signal::QuitConfirmed) {
+    if is!(new, QuitConfirmed) {
         view.destroy()
     }
 }

@@ -33,7 +33,6 @@ pub(in crate::model) mod delegate;
 mod drum_machine;
 mod message_queue;
 mod signals;
-mod viewflags;
 mod viewvalues;
 
 use delegate::{delegate, delegate_priv};
@@ -41,7 +40,6 @@ use delegate::{delegate, delegate_priv};
 use core::{CoreModel, SourceLoadMsg};
 use message_queue::MessageQueue;
 use signals::SignalModel;
-use viewflags::ViewFlags;
 use viewvalues::ViewValues;
 
 pub use core::ExportState;
@@ -58,7 +56,6 @@ pub struct AppModel {
     savefile: Option<String>,
     core: CoreModel,
     core_orig: CoreModel,
-    viewflags: ViewFlags,
     viewvalues: ViewValues,
     signals: SignalModel,
     audiothread_tx: mpsc::Sender<audiothread::Message>,
@@ -84,7 +81,6 @@ impl AppModel {
             savefile,
             core: CoreModel::new(),
             core_orig: CoreModel::new(),
-            viewflags: ViewFlags::default(),
             viewvalues,
             signals: SignalModel::new(),
             audiothread_tx,
@@ -270,7 +266,7 @@ impl AppModel {
 
     pub fn validate_add_fs_source_fields(self) -> AppModel {
         let valid = Self::add_fs_source_fields_valid(&self);
-        self.set_add_fs_source_fields_valid(valid)
+        self.set_signal_state(Signal::AddFilesystemSourceFieldsValid, valid)
     }
 
     pub fn commit_file_system_source(self) -> AnyhowResult<AppModel> {
@@ -306,7 +302,7 @@ impl AppModel {
             .add_source(new_source)?
             .enable_source(uuid)?
             .clear_add_fs_source_fields()
-            .set_add_fs_source_fields_valid(false))
+            .set_signal_state(Signal::AddFilesystemSourceFieldsValid, false))
     }
 
     pub fn load_sources(self, sources: Vec<Source>) -> AnyhowResult<AppModel> {
@@ -378,8 +374,8 @@ impl AppModel {
 
     pub fn clear_sets(self) -> AppModel {
         self.clear_sets_core()
-            .set_add_to_prev_set_enabled(false)
-            .set_set_export_enabled(false)
+            .set_signal_state(Signal::AddToPreviousSetEnabled, false)
+            .set_signal_state(Signal::SampleSetExportEnabled, false)
             .reset_export_progress()
     }
 
@@ -444,20 +440,6 @@ impl AppModel {
         handle_source_loader(messages: Vec<SourceLoadMsg>) as handle_source_loader_core -> (),
         clear_sets() as clear_sets_core: Model);
 
-    delegate!(viewflags,
-        set_main_view_sensitive(sensitive: bool): Model,
-        is_main_view_sensitive() -> bool,
-        set_add_fs_source_fields_valid(valid: bool): Model,
-        are_add_fs_source_fields_valid() -> bool,
-        set_export_fields_valid(valid: bool): Model,
-        are_export_fields_valid() -> bool,
-        set_set_load_in_drum_machine_enabled(state: bool): Model,
-        is_set_load_in_drum_machine_enabled() -> bool,
-        set_set_export_enabled(state: bool): Model,
-        is_set_export_enabled() -> bool,
-        set_add_to_prev_set_enabled(state: bool): Model,
-        is_add_to_prev_set_enabled() -> bool);
-
     delegate!(viewvalues,
         set_latency_approx_label_by_config(config: &AppConfig): Model,
         latency_approx_label() -> &String,
@@ -499,7 +481,8 @@ impl AppModel {
 
     delegate!(signals,
         signal(signal: Signal): Model,
-        clear_signal(signal: Signal): Result,
+        clear_signal(signal: Signal): Model,
+        set_signal_state(signal: Signal, enabled: bool): Model,
         is_signalling(signal: Signal) -> bool);
 
     delegate!(drum_machine,
