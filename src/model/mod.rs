@@ -302,7 +302,7 @@ impl AppModel {
             .add_source(new_source)?
             .enable_source(uuid)?
             .clear_add_fs_source_fields()
-            .set_signal_state(Signal::AddFilesystemSourceFieldsValid, false))
+            .clear_signal(Signal::AddFilesystemSourceFieldsValid))
     }
 
     pub fn load_sources(self, sources: Vec<Source>) -> AnyhowResult<AppModel> {
@@ -374,8 +374,8 @@ impl AppModel {
 
     pub fn clear_sets(self) -> AppModel {
         self.clear_sets_core()
-            .set_signal_state(Signal::AddToPreviousSetEnabled, false)
-            .set_signal_state(Signal::SampleSetExportEnabled, false)
+            .clear_signal(Signal::AddToPreviousSetEnabled)
+            .clear_signal(Signal::SampleSetExportEnabled)
             .reset_export_progress()
     }
 
