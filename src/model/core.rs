@@ -36,7 +36,6 @@ pub struct CoreModel {
     sets: HashMap<Uuid, SampleSet>,
     sets_order: Vec<Uuid>,
     sets_selected_set: Option<Uuid>,
-    sets_selected_sample: Option<Sample>,
     sets_most_recently_used_uuid: Option<Uuid>,
     sets_export_state: Option<ExportState>,
     sequences: HashMap<Uuid, DrumkitSequence>,
@@ -56,7 +55,6 @@ impl CoreModel {
             sets: HashMap::new(),
             sets_order: Vec::new(),
             sets_selected_set: None,
-            sets_selected_sample: None,
             sets_most_recently_used_uuid: None,
             sets_export_state: None,
             sequences: HashMap::new(),
@@ -402,17 +400,6 @@ impl CoreModel {
                 ..self
             })
         }
-    }
-
-    pub fn set_selected_set_member(self, maybe_sample: Option<Sample>) -> CoreModel {
-        CoreModel {
-            sets_selected_sample: maybe_sample,
-            ..self
-        }
-    }
-
-    pub fn selected_set_member(&self) -> Option<&Sample> {
-        self.sets_selected_sample.as_ref()
     }
 
     pub fn selected_set(&self) -> Option<Uuid> {

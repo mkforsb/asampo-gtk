@@ -1,3 +1,8 @@
+row:selected {
+    color: inherit;
+    background: #def;
+}
+
 .titlebar.less-tall {
     padding-top: 0px;
     padding-bottom: 0px;
@@ -285,45 +290,43 @@ overlay#input-dialog {
     padding: 0.25em;
 }
 
-#sets-page #sets-details-sample-list > row button {
-    margin: 0.25em;
-    background: #fafafa;
+#sets-page #sets-details-sample-list row:selected > box > box > button {
+  border: 1px solid #ddd;
 }
 
-#sets-page #sets-details-sample-list > row button:hover {
-    background: #eaeaea;
+#sets-page #sets-details-sample-list .opsbox button {
+  margin-right: 0.5em;
 }
 
-#sets-page #sets-details-sample-list > row button:active {
-    background: #cacaca;
+#sets-page #sets-details-sample-list .opsbox button:nth-child(3) {
+  margin-right: 2em;
 }
 
-#sets-page #sets-details-sample-list > row .sample-label-frame {
-    margin: 0.25em;
-    background: #fafafa;
-    border-color: #e4e4e4;
-    color: #000;
-    min-width: 13em;
+#sets-page #sets-details-sample-list .label-select-button {
+    min-width: 11.5em;
 }
 
-#sets-page #sets-details-sample-list > row .sample-label-frame > box > label {
-    margin-left: 0.5em;
-}
-
-#sets-page #sets-details-sample-list > row .sample-label-frame dropdown button  {
-    padding: 0;
-    margin: 0;
+#sets-page #sets-details-sample-list .label-select-popover frame {
     border: none;
-    min-width: 8.5em;
 }
 
-#sets-page #sets-details-sample-list .set-sample-find-button {
-    margin-left: 1em;
-    margin-right: 1em;
+#sets-page #sets-details-sample-list .label-select-popover button {
+  border: none;
+  background: none;
+  box-shadow: none;
+  font-size: 90%;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
-#sets-page #sets-details-sample-list .set-sample-delete-button {
-    margin-right: 1em;
+#sets-page #sets-details-sample-list .label-select-popover button:hover {
+  background: #ddd;
+}
+
+#sets-page #sets-details-sample-list .label-select-popover button.selected {
+  background: #ddd;
 }
 
 #sets-page #sets-details-below-list-box {

@@ -158,7 +158,7 @@ pub struct AsampoViewState {
     pub sets_details_sample_list_frame: gtk::TemplateChild<gtk::Frame>,
 
     #[template_child(id = "sets-details-sample-list")]
-    pub sets_details_sample_list: gtk::TemplateChild<gtk::ListBox>,
+    pub sets_details_sample_list: gtk::TemplateChild<gtk::ListView>,
 
     #[template_child(id = "sets-details-load-drum-machine-button")]
     pub sets_details_load_drum_machine_button: gtk::TemplateChild<gtk::Button>,

@@ -1271,9 +1271,10 @@
                                 <child>
                                   <object class="GtkScrolledWindow">
                                     <child>
-                                      <object class="GtkListBox" id="sets-details-sample-list">
+                                      <object class="GtkListView" id="sets-details-sample-list">
                                         <property name="name">sets-details-sample-list</property>
                                         <property name="vexpand">true</property>
+                                        <property name="single-click-activate">true</property>
                                       </object>
                                     </child>
                                   </object>

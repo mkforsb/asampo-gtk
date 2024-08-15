@@ -35,6 +35,7 @@ pub enum Signal {
     LoadSetInDrumMachineEnabled,
     SampleSetExportEnabled,
     SampleSetExportFieldsValid,
+    SkipNextSampleSetMemberListUpdate,
 }
 
 #[derive(Debug, Clone, Default)]

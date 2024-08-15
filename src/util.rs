@@ -155,7 +155,3 @@ pub fn resource_as_string(path: &str) -> Result<String, anyhow::Error> {
 pub fn uuidize_builder_template(xml: &str, uuid: Uuid) -> String {
     xml.replace("{uuid}", &format!("{uuid}"))
 }
-
-pub fn idize_builder_template(xml: &str, id: usize) -> String {
-    xml.replace("{id}", &format!("{id}"))
-}

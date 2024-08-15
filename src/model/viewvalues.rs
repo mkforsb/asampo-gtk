@@ -20,6 +20,7 @@ use crate::{
         dialogs::{self, ExportDialogView},
         samples::SampleListEntry,
         sequences::DrumMachineView,
+        sets::MemberListEntry,
     },
 };
 
@@ -43,6 +44,7 @@ pub struct ViewValues {
     sets_export_target_dir_entry: String,
     sets_export_kind: ExportKind,
     sets_export_progress: Option<(usize, usize)>,
+    sets_members_listview_model: ListStore,
     drum_machine: Option<DrumMachineView>,
     sequences_seq_pending_deletion: Option<Uuid>,
     savefile_pending_load: Option<String>,
@@ -63,6 +65,7 @@ impl Default for ViewValues {
             sets_export_target_dir_entry: String::default(),
             sets_export_kind: ExportKind::PlainCopy,
             sets_export_progress: None,
+            sets_members_listview_model: ListStore::new::<MemberListEntry>(),
             drum_machine: None,
             sequences_seq_pending_deletion: None,
             savefile_pending_load: None,
@@ -353,6 +356,10 @@ impl ViewValues {
 
     pub fn samples_listmodel(&self) -> &gtk::gio::ListStore {
         &self.samples_listview_model
+    }
+
+    pub fn sets_members_listmodel(&self) -> &gtk::gio::ListStore {
+        &self.sets_members_listview_model
     }
 
     pub fn set_drum_machine_view(self, maybe_view: Option<DrumMachineView>) -> ViewValues {

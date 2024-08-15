@@ -488,7 +488,7 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
     }
 
     if old.selected_set() != new.selected_set() || old.sets_map() != new.sets_map() {
-        update_samplesets_detail(model_ptr.clone(), new.clone(), view);
+        update_samplesets_detail(model_ptr.clone(), &new, view);
     }
 
     if old.sets_map() != new.sets_map() {

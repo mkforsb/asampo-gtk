@@ -10,7 +10,10 @@ use std::{
 
 use anyhow::anyhow;
 use audiothread::{SourceMatcher, SourceType};
-use gtk::gdk::ModifierType;
+use gtk::{
+    gdk::ModifierType,
+    prelude::{Cast, ListModelExtManual},
+};
 use libasampo::{
     samples::{Sample, SampleOps},
     samplesets::{
@@ -27,13 +30,17 @@ use crate::{
         SamplePlaybackBehavior, SaveItemBehavior, SaveWorkspaceBehavior, SynchronizeBehavior,
     },
     configfile::ConfigFile,
+    ext::OptionMapExt,
     labels::DRUM_LABELS,
     model::{
         AnyhowResult, AppModel, DrumMachinePlaybackState, ExportKind, ExportState, Mirroring,
         Signal,
     },
     savefile::Savefile,
-    view::dialogs::{InputDialogContext, SelectFolderDialogContext},
+    view::{
+        self,
+        dialogs::{InputDialogContext, SelectFolderDialogContext},
+    },
     ErrorWithEffect,
 };
 
@@ -462,8 +469,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                         .load_sources(loaded_savefile.sources_domained()?)?
                         .load_sets(loaded_savefile.sets_domained()?)?
                         .load_sequences(loaded_savefile.sequences_domained()?)?
-                        .set_selected_sequence(loaded_savefile.drum_machine_loaded_sequence())?
-                        .set_selected_set_member(None);
+                        .set_selected_sequence(loaded_savefile.drum_machine_loaded_sequence())?;
 
                     if loaded_savefile.drum_machine_loaded_sequence().is_some() {
                         let sequence = result
@@ -672,12 +678,35 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             Ok(model)
         }
 
-        AppMessage::SampleSetSampleSelected(sample) => {
+        AppMessage::SampleSetMemberSelected(sample) => {
             play_sample(&model, &sample)?;
-            Ok(model.set_selected_set_member(Some(sample)))
+            Ok(model)
         }
 
-        AppMessage::SampleSetSampleLabelChanged(sample, label) => {
+        AppMessage::SampleSetMemberLabelChanged(sample, label) => {
+            fn set_label_in_members_listmodel(
+                model: &AppModel,
+                sample: &Sample,
+                label: Option<DrumkitLabel>,
+            ) {
+                if let Some(x) = model
+                    .sets_members_listmodel()
+                    .iter::<gtk::glib::Object>()
+                    .filter_map(|x| match x {
+                        Ok(x) => x.downcast::<view::sets::MemberListEntry>().ok(),
+                        Err(_) => None,
+                    })
+                    .find(|x| *x.sample.borrow() == *sample)
+                {
+                    x.set_label_button_text(format!(
+                        "Label: {}",
+                        label
+                            .and_then(|lb| DRUM_LABELS.key_for(&lb))
+                            .unwrap_or("(None)")
+                    ))
+                };
+            }
+
             let set_uuid = model.selected_set().ok_or(anyhow!("No set selected"))?;
             let set = model.set(set_uuid)?;
 
@@ -688,10 +717,14 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
             {
                 let prev_sample = (*prev_assigned_label).clone();
 
+                set_label_in_members_listmodel(&model, &prev_sample, None);
+                set_label_in_members_listmodel(&model, &sample, label);
+
                 model
                     .set_sample_label(set_uuid, prev_sample, None)?
                     .set_sample_label(set_uuid, sample, label)
             } else {
+                set_label_in_members_listmodel(&model, &sample, label);
                 model.set_sample_label(set_uuid, sample, label)
             }?;
 
