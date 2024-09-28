@@ -237,7 +237,48 @@ fn test_enable_source_samples_loaded() {
     })
 }
 
-// TODO: test_enable_source_failure_uuid_not_present
+#[test]
+fn test_enable_source_failure_uuid_not_present() {
+    bolero_test!(|model| {
+        let source_uuids = model
+            .sources_map()
+            .iter()
+            .map(|(uuid, _)| uuid)
+            .cloned()
+            .collect::<Vec<_>>();
+
+        let mut bad_uuid = Uuid::new_v4();
+        let mut attempts = 0;
+
+        while attempts < 1000 && source_uuids.contains(&bad_uuid) {
+            attempts += 1;
+            bad_uuid = Uuid::new_v4();
+        }
+
+        assert!(model.enable_source(bad_uuid).is_err());
+    })
+}
 
 // TODO: test_disable_source_samples_removed
-// TODO: test_disable_source_failure_uuid_not_present
+
+#[test]
+fn test_disable_source_failure_uuid_not_present() {
+    bolero_test!(|model| {
+        let source_uuids = model
+            .sources_map()
+            .iter()
+            .map(|(uuid, _)| uuid)
+            .cloned()
+            .collect::<Vec<_>>();
+
+        let mut bad_uuid = Uuid::new_v4();
+        let mut attempts = 0;
+
+        while attempts < 1000 && source_uuids.contains(&bad_uuid) {
+            attempts += 1;
+            bad_uuid = Uuid::new_v4();
+        }
+
+        assert!(model.disable_source(bad_uuid).is_err());
+    })
+}
