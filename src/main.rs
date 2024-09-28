@@ -31,6 +31,10 @@ mod view;
 // is not a module
 
 #[cfg(test)]
+#[path = "testutils/bolero_utils.rs"]
+mod bolero_utils;
+
+#[cfg(test)]
 #[path = "testutils/fake_savefile.rs"]
 mod fake_savefile;
 
