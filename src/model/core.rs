@@ -64,6 +64,7 @@ impl CoreModel {
         }
     }
 
+    /// For detecting need to save
     pub fn is_modified_vs(&self, other: &Self) -> bool {
         self.sources != other.sources
             || self.sources_order != other.sources_order
@@ -513,28 +514,9 @@ impl CoreModel {
 }
 
 #[cfg(test)]
-mod tests {
-    use libasampo::samplesets::BaseSampleSet;
+#[path = "../tests/model/core.rs"]
+mod tests;
 
-    use super::*;
-
-    #[test]
-    fn test_add_remove_sampleset() {
-        let model = CoreModel::new();
-        let set = BaseSampleSet::new("Favorites".to_string());
-
-        let model = model
-            .add_set(SampleSet::BaseSampleSet(set.clone()))
-            .unwrap();
-
-        assert!(model.sets_map().contains_key(&set.uuid()));
-        assert_eq!(
-            model.sets_map().get(&set.uuid()).unwrap().name(),
-            "Favorites"
-        );
-
-        let model = model.remove_set(set.uuid()).unwrap();
-
-        assert!(!model.sets_map().contains_key(&set.uuid()));
-    }
-}
+#[cfg(test)]
+#[path = "../testutils/arbitrary/model/core.rs"]
+mod arbitrary;
