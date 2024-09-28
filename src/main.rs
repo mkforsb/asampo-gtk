@@ -21,12 +21,18 @@ mod ext;
 mod labels;
 mod model;
 mod savefile;
-mod testutils;
 mod timers;
 mod update_model;
 mod update_view;
 mod util;
 mod view;
+
+// the `testutils` modules are declared in an odd way because the "src/testutils" directory
+// is not a module
+
+#[cfg(test)]
+#[path = "testutils/fake_savefile.rs"]
+mod fake_savefile;
 
 use crate::{
     appmessage::AppMessage,
@@ -228,14 +234,14 @@ mod tests {
     use savefile::Savefile;
 
     use super::*;
-    use crate::testutils::savefile_for_test;
+    use crate::fake_savefile;
 
     #[test]
     fn test_using_real_savefile_in_test() {
         use libasampo::sources::{file_system_source::FilesystemSource, Source};
 
-        savefile_for_test::LOAD.set(Some(|path| match savefile::Savefile::load(path) {
-            Ok(loaded_savefile) => Ok(savefile_for_test::Savefile {
+        fake_savefile::LOAD.set(Some(|path| match savefile::Savefile::load(path) {
+            Ok(loaded_savefile) => Ok(fake_savefile::Savefile {
                 sources_domained: loaded_savefile.sources_domained()?,
                 sets_domained: loaded_savefile.sets_domained()?,
                 sequences_domained: loaded_savefile.sequences_domained()?,
@@ -243,7 +249,7 @@ mod tests {
             Err(e) => Err(e),
         }));
 
-        savefile_for_test::SAVE.set(Some(savefile::Savefile::save));
+        fake_savefile::SAVE.set(Some(savefile::Savefile::save));
 
         let tmpfile = tempfile::NamedTempFile::new()
             .expect("Should be able to create temporary file")
