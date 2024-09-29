@@ -6,7 +6,8 @@ use std::collections::HashMap;
 
 use bolero::{check, gen};
 use libasampo::{
-    samplesets::{BaseSampleSet, SampleSet},
+    prelude::SampleSetOps,
+    samplesets::{BaseSampleSet, DrumkitLabel, SampleSet},
     sequences::{DrumkitSequence, NoteLength, TimeSpec},
     sources::{FakeSource, Source, SourceOps},
 };
@@ -142,6 +143,8 @@ fn test_enable_source_samples_loaded() {
             model = model.disable_source(*uuid).unwrap();
         }
 
+        assert!(model.samples.borrow().is_empty());
+
         for uuid in source_uuids.iter() {
             let result = model.enable_source(*uuid);
             assert!(result.is_ok());
@@ -244,6 +247,71 @@ fn test_is_modified_vs_changed_sources_order() {
 }
 
 #[test]
+fn test_is_modified_vs_enabled_disabled_source() {
+    bolero_test!(|model| {
+        if let Some(enabled_source) = model.sources_list().iter().find(|s| s.is_enabled()) {
+            let updated_model = model
+                .clone()
+                .disable_source(*enabled_source.uuid())
+                .unwrap();
+            assert!(updated_model.is_modified_vs(&model));
+        }
+
+        if let Some(disabled_source) = model.sources_list().iter().find(|s| !s.is_enabled()) {
+            let updated_model = model
+                .clone()
+                .enable_source(*disabled_source.uuid())
+                .unwrap();
+            assert!(updated_model.is_modified_vs(&model));
+        }
+    })
+}
+
+#[test]
+fn test_is_modified_vs_label_assigned_in_set() {
+    bolero_test!(|model| {
+        model
+            .sets_list()
+            .iter()
+            .find(|set| set.len() > 0)
+            .map(|set| {
+                set.list()
+                    .iter()
+                    .find(|sample| {
+                        set.get_label::<DrumkitLabel>(sample)
+                            .is_ok_and(|x| x.is_none())
+                    })
+                    .map(|sample| {
+                        let mut updated_model = model.clone();
+                        let updated_set = updated_model.set_mut(set.uuid()).unwrap();
+                        updated_set
+                            .set_label::<DrumkitLabel, _>(sample, Some(DrumkitLabel::Clap))
+                            .unwrap();
+                        assert!(updated_model.is_modified_vs(&model));
+                    })
+            })
+    })
+}
+
+#[test]
+fn test_is_modified_vs_removed_sample_set() {
+    bolero_test!(|model| {
+        if !model.sets.is_empty() {
+            for uuid in [
+                *model.sets_order.first().unwrap(),
+                *model.sets_order.last().unwrap(),
+                model.sets_order[model.sets_order.len() / 2],
+            ]
+            .iter()
+            {
+                let updated_model = model.clone().remove_set(*uuid).unwrap();
+                assert!(updated_model.is_modified_vs(&model));
+            }
+        }
+    })
+}
+
+#[test]
 fn test_is_modified_vs_removed_source() {
     bolero_test!(|model| {
         if !model.sources.is_empty() {
@@ -251,6 +319,55 @@ fn test_is_modified_vs_removed_source() {
             let updated_model = model.clone().remove_source(uuid).unwrap();
             assert!(updated_model.is_modified_vs(&model));
         }
+    })
+}
+
+#[test]
+fn test_is_modified_vs_sample_added_to_set() {
+    bolero_test!(|model| {
+        model
+            .samples()
+            .iter()
+            .find_map(|sample| {
+                model
+                    .sets_list()
+                    .iter()
+                    .find(|set| !set.contains(sample))
+                    .map(|set| (sample.clone(), (*set).clone()))
+            })
+            .map(|(sample, set)| {
+                let mut updated_model = model.clone();
+                let updated_set = updated_model.set_mut(set.uuid()).unwrap();
+                updated_set.add_with_hash(sample.clone(), "hash".to_string());
+                assert!(updated_model.is_modified_vs(&model));
+            })
+    })
+}
+
+#[test]
+fn test_is_modified_vs_sample_removed_from_set() {
+    bolero_test!(|model| {
+        model
+            .sets_list()
+            .iter()
+            .find(|set| set.len() > 0)
+            .map(|set| {
+                for sample in [
+                    set.list().first().cloned().unwrap(),
+                    set.list().last().cloned().unwrap(),
+                    set.list()[set.list().len() / 2],
+                ]
+                .iter()
+                {
+                    let mut updated_model = model.clone();
+                    let updated_set = updated_model.set_mut(set.uuid()).unwrap();
+                    updated_set.remove(sample).unwrap();
+                    assert!(updated_model.is_modified_vs(&model));
+
+                    let updated_model = model.clone().remove_from_set(sample, set.uuid()).unwrap();
+                    assert!(updated_model.is_modified_vs(&model));
+                }
+            })
     })
 }
 
@@ -287,16 +404,11 @@ fn test_sources_map_and_sources_list() {
     })
 }
 
-// TODO: test_is_modified_vs_enabled_disabled_source()
-// TODO: test_is_modified_vs_removed_sample_set()
-// TODO: test_is_modified_vs_sample_added_to_set()
-// TODO: test_is_modified_vs_sample_removed_from_set()
-// TODO: test_is_modified_vs_label_assigned_in_set()
-// TODO: test_is_modified_vs_label_unassigned_in_set()
+// TODO: test_disable_source_samples_removed
+// TODO: test_is_modified_vs_label_unassigned_in_set() (when generator generates labels)
 // TODO: test_is_modified_vs_removed_sequence()
 // TODO: test_is_modified_vs_changed_sequence_length()
 // TODO: test_is_modified_vs_changed_sequence_tempo()
 // TODO: test_is_modified_vs_changed_sequence_swing()
 // TODO: test_is_modified_vs_changed_sequence_signature()
 // TODO: test_is_modified_vs_changed_sequence_step()
-// TODO: test_disable_source_samples_removed
