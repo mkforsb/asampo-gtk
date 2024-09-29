@@ -3,6 +3,7 @@
 from collections import namedtuple
 import re
 
+
 def balanced(text, open, close, depth):
     pos = 0
     length = len(text)
@@ -16,32 +17,46 @@ def balanced(text, open, close, depth):
 
             if rt_depth == 0:
                 return pos
-        
+
         pos += 1
+
 
 def text(filename):
     with open(filename) as fd:
         return fd.read()
 
+
 def line(code, offset):
     return code[:offset].count("\n")
+
 
 def tests(code):
     result = []
 
     for match in re.finditer(r"(?m)^\s*#\[test", code):
-        fnheader = re.search(r"(?ms)^\s*fn.+?{", code[match.span()[1]:])
-        bodylen = balanced(code[match.span()[1] + fnheader.span()[1] - 1:], "{", "}", 0)
-        result.append({
-            "start": match.span()[0],
-            "end": match.span()[1] + fnheader.span()[1] + bodylen,
-            "start_line": line(code, match.span()[0] + 1),
-            "end_line": line(code, match.span()[1] + fnheader.span()[1] + bodylen),
-            "code": code[match.span()[0]:match.span()[1] + fnheader.span()[1] + bodylen],
-            "header": code[match.span()[1] + fnheader.span()[0]:match.span()[1] + fnheader.span()[1]],
-        })
+        fnheader = re.search(r"(?ms)^\s*fn.+?{", code[match.span()[1] :])
+        bodylen = balanced(
+            code[match.span()[1] + fnheader.span()[1] - 1 :], "{", "}", 0
+        )
+        result.append(
+            {
+                "start": match.span()[0],
+                "end": match.span()[1] + fnheader.span()[1] + bodylen,
+                "start_line": line(code, match.span()[0] + 1),
+                "end_line": line(code, match.span()[1] + fnheader.span()[1] + bodylen),
+                "code": code[
+                    match.span()[0] : match.span()[1] + fnheader.span()[1] + bodylen
+                ],
+                "header": code[
+                    match.span()[1]
+                    + fnheader.span()[0] : match.span()[1]
+                    + fnheader.span()[1]
+                ],
+            }
+        )
 
     return result
+
 
 def first(xs):
     if len(xs) > 0:
@@ -49,10 +64,12 @@ def first(xs):
     else:
         return None
 
+
 textentry = namedtuple("textentry", ["linenum", "text"])
 blankentry = namedtuple("blankentry", ["linenum"])
 testentry = namedtuple("testentry", ["linenum_start", "header", "code"])
 testgroup = namedtuple("testgroup", ["linenum_start", "tests"])
+
 
 def classify(code):
     result = []
@@ -63,7 +80,7 @@ def classify(code):
 
     while i < len(lines):
         test = first([x for x in code_tests if x["start_line"] == i])
-        
+
         if test is None:
             if re.search(r"\S", lines[i]):
                 result.append(textentry(i, lines[i]))
@@ -74,16 +91,18 @@ def classify(code):
         else:
             result.append(testentry(i, test["header"], test["code"]))
             i = test["end_line"] + 1
-    
+
     while True:
         changed = False
 
         for i in range(len(result)):
-            if i + 2 < len(result)\
-            and type(result[i]) == testentry\
-            and type(result[i+1]) == blankentry\
-            and type(result[i+2]) == testentry:
-                del result[i+1]
+            if (
+                i + 2 < len(result)
+                and type(result[i]) == testentry
+                and type(result[i + 1]) == blankentry
+                and type(result[i + 2]) == testentry
+            ):
+                del result[i + 1]
                 changed = True
                 break
 
@@ -95,8 +114,8 @@ def classify(code):
     i = 0
 
     while True:
-        if i > 0 and type(result[i-1]) == testgroup:
-            group = i-1
+        if i > 0 and type(result[i - 1]) == testgroup:
+            group = i - 1
         else:
             group = None
 
@@ -105,7 +124,9 @@ def classify(code):
                 result.insert(i, testgroup(i, [result[i]]))
                 del result[i + 1]
             else:
-                result[group] = testgroup(result[group].linenum_start, result[group].tests + [result[i]])
+                result[group] = testgroup(
+                    result[group].linenum_start, result[group].tests + [result[i]]
+                )
                 del result[i]
                 i -= 1
         else:
@@ -131,7 +152,6 @@ def render(stuff):
                     print(test.code)
 
 
-
 if __name__ == "__main__":
     import sys
     import os
@@ -141,4 +161,3 @@ if __name__ == "__main__":
     else:
         code = text(sys.argv[1])
         render(classify(code))
-
