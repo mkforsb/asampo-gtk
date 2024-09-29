@@ -130,7 +130,7 @@ impl CoreModelBuilderOps {
                     })) {
                         Ok(updated_model) => {
                             if enabled {
-                                let updated_model = updated_model.enable_source(uuid).unwrap();
+                                let mut updated_model = updated_model.enable_source(uuid).unwrap();
 
                                 let loaders =
                                     updated_model.source_loaders().iter().collect::<Vec<_>>();
@@ -140,6 +140,18 @@ impl CoreModelBuilderOps {
                                         updated_model.handle_source_loader(vec![msg])
                                     }
                                 }
+
+                                let loader_uuids = updated_model
+                                    .source_loaders()
+                                    .keys()
+                                    .cloned()
+                                    .collect::<Vec<_>>();
+
+                                for uuid in loader_uuids {
+                                    updated_model =
+                                        updated_model.remove_source_loader(uuid).unwrap();
+                                }
+
                                 updated_model
                             } else {
                                 updated_model
