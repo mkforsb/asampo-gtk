@@ -38,6 +38,7 @@ pub enum CoreModelBuilderOps {
         name_uri_uuidgen: UuidGen,
         uuidgen: UuidGen,
         list_and_stream: Vec<(SampleGen, Vec<f32>)>,
+        enabled: bool,
     },
     AddSet {
         uuidgen: UuidGen,
@@ -81,6 +82,7 @@ impl CoreModelBuilderOps {
                     name_uri_uuidgen,
                     uuidgen,
                     list_and_stream,
+                    enabled,
                 } => {
                     let name = uuidstr(name_uri_uuidgen.val);
                     let uri = uuidstr(name_uri_uuidgen.val);
@@ -124,9 +126,22 @@ impl CoreModelBuilderOps {
                         list_error: None,
                         stream,
                         stream_error: None,
-                        enabled: true,
+                        enabled,
                     })) {
-                        Ok(updated_model) => updated_model,
+                        Ok(updated_model) => {
+                            if enabled {
+                                let loaders =
+                                    updated_model.source_loaders().iter().collect::<Vec<_>>();
+
+                                for (_, loader) in loaders.iter() {
+                                    while let Ok(msg) = loader.recv() {
+                                        updated_model.handle_source_loader(vec![msg])
+                                    }
+                                }
+                            }
+
+                            updated_model
+                        }
                         Err(_) => {
                             // eprintln!("failed to add source: {e:?}");
                             return None;
