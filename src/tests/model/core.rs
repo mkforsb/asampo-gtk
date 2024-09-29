@@ -113,7 +113,17 @@ fn test_is_modified_vs_changed_sequences_order() {
     })
 }
 
-// TODO: test_is_modified_vs_removed_source()
+#[test]
+fn test_is_modified_vs_removed_source() {
+    bolero_test!(|model| {
+        if !model.sources.is_empty() {
+            let uuid = *model.sources_map().keys().next().unwrap();
+            let updated_model = model.clone().remove_source(uuid).unwrap();
+            assert!(updated_model.is_modified_vs(&model));
+        }
+    })
+}
+
 // TODO: test_is_modified_vs_enabled_disabled_source()
 // TODO: test_is_modified_vs_removed_sample_set()
 // TODO: test_is_modified_vs_sample_added_to_set()
