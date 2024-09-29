@@ -133,19 +133,6 @@ fn test_is_modified_vs_removed_source() {
     })
 }
 
-// TODO: test_is_modified_vs_enabled_disabled_source()
-// TODO: test_is_modified_vs_removed_sample_set()
-// TODO: test_is_modified_vs_sample_added_to_set()
-// TODO: test_is_modified_vs_sample_removed_from_set()
-// TODO: test_is_modified_vs_label_assigned_in_set()
-// TODO: test_is_modified_vs_label_unassigned_in_set()
-// TODO: test_is_modified_vs_removed_sequence()
-// TODO: test_is_modified_vs_changed_sequence_length()
-// TODO: test_is_modified_vs_changed_sequence_tempo()
-// TODO: test_is_modified_vs_changed_sequence_swing()
-// TODO: test_is_modified_vs_changed_sequence_signature()
-// TODO: test_is_modified_vs_changed_sequence_step()
-
 #[test]
 fn test_sources_map_and_sources_list() {
     bolero_test!(|model| {
@@ -278,8 +265,6 @@ fn test_enable_source_failure_uuid_not_present() {
     })
 }
 
-// TODO: test_disable_source_samples_removed
-
 #[test]
 fn test_disable_source_failure_uuid_not_present() {
     bolero_test!(|model| {
@@ -301,3 +286,17 @@ fn test_disable_source_failure_uuid_not_present() {
         assert!(model.disable_source(bad_uuid).is_err());
     })
 }
+
+// TODO: test_is_modified_vs_enabled_disabled_source()
+// TODO: test_is_modified_vs_removed_sample_set()
+// TODO: test_is_modified_vs_sample_added_to_set()
+// TODO: test_is_modified_vs_sample_removed_from_set()
+// TODO: test_is_modified_vs_label_assigned_in_set()
+// TODO: test_is_modified_vs_label_unassigned_in_set()
+// TODO: test_is_modified_vs_removed_sequence()
+// TODO: test_is_modified_vs_changed_sequence_length()
+// TODO: test_is_modified_vs_changed_sequence_tempo()
+// TODO: test_is_modified_vs_changed_sequence_swing()
+// TODO: test_is_modified_vs_changed_sequence_signature()
+// TODO: test_is_modified_vs_changed_sequence_step()
+// TODO: test_disable_source_samples_removed
