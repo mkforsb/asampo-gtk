@@ -130,6 +130,8 @@ impl CoreModelBuilderOps {
                     })) {
                         Ok(updated_model) => {
                             if enabled {
+                                let updated_model = updated_model.enable_source(uuid).unwrap();
+
                                 let loaders =
                                     updated_model.source_loaders().iter().collect::<Vec<_>>();
 
@@ -138,9 +140,10 @@ impl CoreModelBuilderOps {
                                         updated_model.handle_source_loader(vec![msg])
                                     }
                                 }
+                                updated_model
+                            } else {
+                                updated_model
                             }
-
-                            updated_model
                         }
                         Err(_) => {
                             // eprintln!("failed to add source: {e:?}");
