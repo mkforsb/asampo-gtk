@@ -231,6 +231,8 @@ impl CoreModel {
     }
 
     pub fn set_selected_sample(self, maybe_sample: Option<Sample>) -> CoreModel {
+        // TODO: verify sample exists in self.samples?
+
         CoreModel {
             samplelist_selected_sample: maybe_sample,
             ..self
