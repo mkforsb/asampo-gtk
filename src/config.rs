@@ -196,3 +196,126 @@ pub const SYNCHRONIZE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS: [(&str, SynchronizeBeh
     ("Always Synchronize", SynchronizeBehavior::Synchronize),
     ("Always Unlink", SynchronizeBehavior::Unlink),
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    macro_rules! appconf_test {
+        (default $fn:ident, $field:ident $(,)?) => {{
+            let conf = AppConfig {
+                output_samplerate_hz: 44100,
+                buffer_size_frames: 512,
+                sample_rate_conversion_quality: audiothread::Quality::High,
+                config_save_path: "abc123".to_string(),
+                sample_playback_behavior: SamplePlaybackBehavior::PlaySingleSample,
+                save_workspace_behavior: SaveWorkspaceBehavior::Save,
+                save_changed_sequence_behavior: SaveItemBehavior::Save,
+                save_changed_set_behavior: SaveItemBehavior::Save,
+                synchronize_changed_set_behavior: SynchronizeBehavior::Synchronize,
+            };
+
+            assert_ne!(conf.$field, AppConfig::default().$field);
+
+            let updated_conf = conf.$fn("invalid choice".to_string());
+            assert_eq!(updated_conf.$field, AppConfig::default().$field);
+        }};
+
+        (choice $fn:ident, $field:ident, $choices:ident $(,)?) => {{
+            let conf = AppConfig::default();
+
+            for (key, val) in $choices.iter() {
+                let updated_conf = conf.clone().$fn(String::from(*key));
+                assert_eq!(updated_conf.$field, *val);
+            }
+        }};
+    }
+
+    #[test]
+    fn test_fmt_latency_approx() {
+        let conf1 = AppConfig::default().with_samplerate_choice("48 kHz".to_string());
+        let conf2 = AppConfig::default().with_samplerate_choice("96 kHz".to_string());
+
+        assert_eq!(
+            conf1.clone().with_buffer_size(512).fmt_latency_approx(),
+            "~10.7 ms"
+        );
+        assert_eq!(
+            conf2.clone().with_buffer_size(512).fmt_latency_approx(),
+            "~5.3 ms"
+        );
+        assert_eq!(
+            conf1.clone().with_buffer_size(1024).fmt_latency_approx(),
+            "~21.3 ms"
+        );
+        assert_eq!(
+            conf2.clone().with_buffer_size(1024).fmt_latency_approx(),
+            "~10.7 ms"
+        );
+    }
+
+    #[test]
+    fn test_default_fallbacks() {
+        appconf_test!(default with_samplerate_choice, output_samplerate_hz);
+        appconf_test!(default with_conversion_quality_choice, sample_rate_conversion_quality);
+        appconf_test!(default with_sample_playback_behavior_choice, sample_playback_behavior);
+        appconf_test!(default with_save_workspace_behavior_choice, save_workspace_behavior);
+
+        appconf_test!(
+            default with_save_changed_sequence_behavior_choice,
+            save_changed_sequence_behavior,
+        );
+
+        appconf_test!(default with_save_changed_set_behavior_choice, save_changed_set_behavior);
+
+        appconf_test!(
+            default with_synchronize_changed_set_behavior_choice,
+            synchronize_changed_set_behavior,
+        );
+    }
+
+    #[test]
+    fn test_choices() {
+        appconf_test!(
+            choice with_samplerate_choice,
+            output_samplerate_hz,
+            OUTPUT_SAMPLE_RATE_OPTIONS,
+        );
+
+        appconf_test!(
+            choice with_conversion_quality_choice,
+            sample_rate_conversion_quality,
+            SAMPLE_RATE_CONVERSION_QUALITY_OPTIONS,
+        );
+
+        appconf_test!(
+            choice with_sample_playback_behavior_choice,
+            sample_playback_behavior,
+            SAMPLE_PLAYBACK_BEHAVIOR_OPTIONS,
+        );
+
+        appconf_test!(
+            choice with_save_workspace_behavior_choice,
+            save_workspace_behavior,
+            SAVE_WORKSPACE_BEHAVIOR_OPTIONS,
+        );
+
+        appconf_test!(
+            choice with_save_changed_sequence_behavior_choice,
+            save_changed_sequence_behavior,
+            SAVE_CHANGED_SEQUENCE_BEHAVIOR_OPTIONS,
+        );
+
+        appconf_test!(
+            choice with_save_changed_set_behavior_choice,
+            save_changed_set_behavior,
+            SAVE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS,
+        );
+
+        appconf_test!(
+            choice with_synchronize_changed_set_behavior_choice,
+            synchronize_changed_set_behavior,
+            SYNCHRONIZE_CHANGED_SAMPLESET_BEHAVIOR_OPTIONS,
+        );
+    }
+}
