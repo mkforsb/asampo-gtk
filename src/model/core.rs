@@ -180,7 +180,7 @@ impl CoreModel {
         &self.sources_loading
     }
 
-    pub fn add_source_loader(
+    fn add_source_loader(
         self,
         source_uuid: Uuid,
         loader_rx: mpsc::Receiver<SourceLoadMsg>,
