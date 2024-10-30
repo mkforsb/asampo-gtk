@@ -1,0 +1,32 @@
+#!/bin/bash
+set -euo pipefail
+
+RED="\e[91m"
+YELLOW="\e[93m"
+ENDCOLOR="\e[0m"
+
+# if [ "$#" = 0 ] || [ ! "$1" = "check" ]; then
+#     branch=$(git symbolic-ref HEAD)
+#
+#     if [ "$branch" = "refs/heads/main" ]; then
+#         echo -e "${RED}Direct commits to the main branch are not allowed.${ENDCOLOR}"
+#         exit 1
+#     fi
+# fi
+
+function notice {
+    echo -e "${RED}Commit aborted due to check/test failures.${ENDCOLOR}"
+}
+
+function xtrace {
+    printf >&2 '+ %s\n' "$*"
+    trap notice ERR
+    "$@"
+}
+
+echo -e "${YELLOW}Running pre-commit checks ...${ENDCOLOR}"
+
+xtrace cargo fmt --all --check
+xtrace cargo clippy --all-targets
+xtrace cargo build
+xtrace cargo test
