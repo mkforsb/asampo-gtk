@@ -4,36 +4,39 @@
 
 use std::collections::HashMap;
 
-use bolero::{check, gen};
+use bolero::{check, gen, TypeGenerator};
 use libasampo::{
     prelude::SampleSetOps,
+    samples::{BaseSample, Sample, SampleMetadata, SampleURI},
     samplesets::{BaseSampleSet, DrumkitLabel, SampleSet},
     sequences::{DrumkitSequence, NoteLength, TimeSpec},
     sources::{FakeSource, Source, SourceOps},
 };
 use uuid::Uuid;
 
-use super::arbitrary::CoreModelBuilderOps; // super = crate::model::core
+use super::arbitrary::{CoreModelBuilderOps, UuidGen}; // super = crate::model::core
 
 macro_rules! bolero_test {
-    ($fn:expr) => {{
+    ($gen:expr, $each:expr) => {{
         check!()
-            .with_generator(gen::<Vec<CoreModelBuilderOps>>())
+            .with_generator($gen)
             .with_max_len(0)
             .with_iterations(1)
             .with_shrink_time(std::time::Duration::ZERO)
-            .for_each(|ops| {
-                CoreModelBuilderOps::build_model(ops).map($fn);
-            });
+            .for_each($each);
 
         check!()
-            .with_generator(gen::<Vec<CoreModelBuilderOps>>())
+            .with_generator($gen)
             .with_max_len(4294967296)
             // .with_iterations(10)
             .with_shrink_time(std::time::Duration::ZERO)
-            .for_each(|ops| {
-                CoreModelBuilderOps::build_model(ops).map($fn);
-            });
+            .for_each($each);
+    }};
+
+    ($fn:expr) => {{
+        bolero_test!(gen::<Vec<CoreModelBuilderOps>>(), |ops| {
+            CoreModelBuilderOps::build_model(ops).map($fn)
+        })
     }};
 }
 
@@ -401,6 +404,78 @@ fn test_sources_map_and_sources_list() {
             .sources_map()
             .iter()
             .any(|(_, mapval)| *listval == mapval)));
+    })
+}
+
+#[test]
+fn test_clear_sources() {
+    bolero_test!(|model| {
+        if !model.sources_map().is_empty() {
+            let updated_model = model.clear_sources();
+
+            assert_eq!(updated_model.sources_map().len(), 0);
+            assert_eq!(updated_model.sources_list().len(), 0);
+            assert_eq!(updated_model.samples().len(), 0);
+            assert!(!updated_model.has_sources_loading());
+        }
+    })
+}
+
+#[test]
+fn test_add_source_loader_failure_uuid_exists() {
+    #[derive(Debug, TypeGenerator)]
+    struct ModelAndUuid {
+        model_ops: Vec<CoreModelBuilderOps>,
+        uuid: UuidGen,
+    }
+
+    bolero_test!(gen::<ModelAndUuid>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+
+        if !model.source_loaders().contains_key(&values.uuid.get()) {
+            let (_tx, rx) = std::sync::mpsc::channel();
+            let updated_model = model.add_source_loader(values.uuid.get(), rx).unwrap();
+
+            let (_tx, rx) = std::sync::mpsc::channel();
+            let updated_model = updated_model.add_source_loader(values.uuid.get(), rx);
+
+            assert!(updated_model.is_err());
+        }
+    })
+}
+
+#[test]
+fn test_set_selected_sample() {
+    bolero_test!(|model| {
+        let sample = Sample::BaseSample(BaseSample::new(
+            SampleURI::new("test".to_string()),
+            "test".to_string(),
+            SampleMetadata {
+                rate: 44100,
+                channels: 2,
+                src_fmt_display: "PCM".to_string(),
+                size_bytes: None,
+                length_millis: None,
+            },
+            None,
+        ));
+
+        let sample2 = Sample::BaseSample(BaseSample::new(
+            SampleURI::new("test2".to_string()),
+            "test2".to_string(),
+            SampleMetadata {
+                rate: 44100,
+                channels: 2,
+                src_fmt_display: "PCM".to_string(),
+                size_bytes: None,
+                length_millis: None,
+            },
+            None,
+        ));
+
+        let updated_model = model.set_selected_sample(Some(sample.clone()));
+        assert_eq!(updated_model.selected_sample(), Some(sample).as_ref());
+        assert_ne!(updated_model.selected_sample(), Some(sample2).as_ref());
     })
 }
 

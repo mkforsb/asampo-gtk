@@ -20,6 +20,12 @@ pub struct UuidGen {
     val: u128,
 }
 
+impl UuidGen {
+    pub fn get(&self) -> Uuid {
+        uuid::Uuid::from_u128(self.val)
+    }
+}
+
 #[derive(Debug, Clone, TypeGenerator)]
 pub struct SampleGen {
     name_uri_uuidgen: UuidGen,
