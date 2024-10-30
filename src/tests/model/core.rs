@@ -62,6 +62,29 @@ fn test_add_source_failure_uuid_exists() {
 }
 
 #[test]
+fn test_add_source_loader_failure_uuid_exists() {
+    #[derive(Debug, TypeGenerator)]
+    struct ModelAndUuid {
+        model_ops: Vec<CoreModelBuilderOps>,
+        uuid: UuidGen,
+    }
+
+    bolero_test!(gen::<ModelAndUuid>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+
+        if !model.source_loaders().contains_key(&values.uuid.get()) {
+            let (_tx, rx) = std::sync::mpsc::channel();
+            let updated_model = model.add_source_loader(values.uuid.get(), rx).unwrap();
+
+            let (_tx, rx) = std::sync::mpsc::channel();
+            let updated_model = updated_model.add_source_loader(values.uuid.get(), rx);
+
+            assert!(updated_model.is_err());
+        }
+    })
+}
+
+#[test]
 fn test_add_source_success() {
     bolero_test!(|model| {
         let mut new_source_uuid = Uuid::new_v4();
@@ -84,6 +107,20 @@ fn test_add_source_success() {
                 enabled: true,
             }))
             .is_ok())
+    })
+}
+
+#[test]
+fn test_clear_sources() {
+    bolero_test!(|model| {
+        if !model.sources_map().is_empty() {
+            let updated_model = model.clear_sources();
+
+            assert_eq!(updated_model.sources_map().len(), 0);
+            assert_eq!(updated_model.sources_list().len(), 0);
+            assert_eq!(updated_model.samples().len(), 0);
+            assert!(!updated_model.has_sources_loading());
+        }
     })
 }
 
@@ -382,69 +419,6 @@ fn test_is_modified_vs_self() {
 }
 
 #[test]
-fn test_source() {
-    bolero_test!(|model| {
-        for (uuid, _) in model.sources_map().iter() {
-            assert!(model.source(*uuid).is_ok());
-        }
-    })
-}
-
-#[test]
-fn test_sources_map_and_sources_list() {
-    bolero_test!(|model| {
-        assert_eq!(model.sources_map().len(), model.sources_list().len());
-
-        assert!(model
-            .sources_map()
-            .iter()
-            .all(|(_, val)| model.sources_list().contains(&val)));
-
-        assert!(model.sources_list().iter().all(|listval| model
-            .sources_map()
-            .iter()
-            .any(|(_, mapval)| *listval == mapval)));
-    })
-}
-
-#[test]
-fn test_clear_sources() {
-    bolero_test!(|model| {
-        if !model.sources_map().is_empty() {
-            let updated_model = model.clear_sources();
-
-            assert_eq!(updated_model.sources_map().len(), 0);
-            assert_eq!(updated_model.sources_list().len(), 0);
-            assert_eq!(updated_model.samples().len(), 0);
-            assert!(!updated_model.has_sources_loading());
-        }
-    })
-}
-
-#[test]
-fn test_add_source_loader_failure_uuid_exists() {
-    #[derive(Debug, TypeGenerator)]
-    struct ModelAndUuid {
-        model_ops: Vec<CoreModelBuilderOps>,
-        uuid: UuidGen,
-    }
-
-    bolero_test!(gen::<ModelAndUuid>(), |values| {
-        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
-
-        if !model.source_loaders().contains_key(&values.uuid.get()) {
-            let (_tx, rx) = std::sync::mpsc::channel();
-            let updated_model = model.add_source_loader(values.uuid.get(), rx).unwrap();
-
-            let (_tx, rx) = std::sync::mpsc::channel();
-            let updated_model = updated_model.add_source_loader(values.uuid.get(), rx);
-
-            assert!(updated_model.is_err());
-        }
-    })
-}
-
-#[test]
 fn test_set_selected_sample() {
     bolero_test!(|model| {
         let sample = Sample::BaseSample(BaseSample::new(
@@ -476,6 +450,32 @@ fn test_set_selected_sample() {
         let updated_model = model.set_selected_sample(Some(sample.clone()));
         assert_eq!(updated_model.selected_sample(), Some(sample).as_ref());
         assert_ne!(updated_model.selected_sample(), Some(sample2).as_ref());
+    })
+}
+
+#[test]
+fn test_source() {
+    bolero_test!(|model| {
+        for (uuid, _) in model.sources_map().iter() {
+            assert!(model.source(*uuid).is_ok());
+        }
+    })
+}
+
+#[test]
+fn test_sources_map_and_sources_list() {
+    bolero_test!(|model| {
+        assert_eq!(model.sources_map().len(), model.sources_list().len());
+
+        assert!(model
+            .sources_map()
+            .iter()
+            .all(|(_, val)| model.sources_list().contains(&val)));
+
+        assert!(model.sources_list().iter().all(|listval| model
+            .sources_map()
+            .iter()
+            .any(|(_, mapval)| *listval == mapval)));
     })
 }
 
