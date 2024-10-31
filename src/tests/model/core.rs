@@ -17,6 +17,12 @@ use uuid::Uuid;
 use super::arbitrary::{CoreModelBuilderOps, UuidGen}; // super = crate::model::core
 
 macro_rules! bolero_test {
+    ($fn:expr) => {{
+        bolero_test!(gen::<Vec<CoreModelBuilderOps>>(), |ops| {
+            CoreModelBuilderOps::build_model(ops).map($fn)
+        })
+    }};
+
     ($gen:expr, $each:expr) => {{
         check!()
             .with_generator($gen)
@@ -31,12 +37,6 @@ macro_rules! bolero_test {
             // .with_iterations(10)
             .with_shrink_time(std::time::Duration::ZERO)
             .for_each($each);
-    }};
-
-    ($fn:expr) => {{
-        bolero_test!(gen::<Vec<CoreModelBuilderOps>>(), |ops| {
-            CoreModelBuilderOps::build_model(ops).map($fn)
-        })
     }};
 }
 
