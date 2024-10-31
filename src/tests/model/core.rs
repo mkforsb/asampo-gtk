@@ -147,6 +147,35 @@ fn test_disable_source_failure_uuid_not_present() {
 }
 
 #[test]
+fn test_disable_source_samples_removed() {
+    bolero_test!(|model| {
+        if !model.sources_list().is_empty() {
+            let mut updated_model = model.clone();
+
+            for source in model
+                .sources_list()
+                .iter()
+                .filter(|source| source.is_enabled())
+            {
+                let num_samples_pre = updated_model.samples().len();
+                let num_samples_src = source.list().unwrap().len();
+
+                updated_model = updated_model.disable_source(*source.uuid()).unwrap();
+
+                assert_eq!(
+                    num_samples_src,
+                    num_samples_pre - updated_model.samples().len()
+                );
+
+                for sample in source.list().unwrap().iter() {
+                    assert!(!updated_model.samples().contains(sample));
+                }
+            }
+        }
+    })
+}
+
+#[test]
 fn test_enable_source_failure_uuid_not_present() {
     bolero_test!(|model| {
         let source_uuids = model
@@ -479,7 +508,6 @@ fn test_sources_map_and_sources_list() {
     })
 }
 
-// TODO: test_disable_source_samples_removed
 // TODO: test_is_modified_vs_label_unassigned_in_set() (when generator generates labels)
 // TODO: test_is_modified_vs_removed_sequence()
 // TODO: test_is_modified_vs_changed_sequence_length()
