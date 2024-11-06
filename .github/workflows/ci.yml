@@ -20,7 +20,7 @@ jobs:
     - name: rustfmt
       run: cargo fmt --all --check
     - name: clippy
-      run: cargo clippy --all-targets
+      run: cargo clippy --all-targets -- -Dwarnings
     - name: build
       run: cargo build --verbose
     - name: test

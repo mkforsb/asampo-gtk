@@ -27,6 +27,6 @@ function xtrace {
 echo -e "${YELLOW}Running pre-commit checks ...${ENDCOLOR}"
 
 xtrace cargo fmt --all --check
-xtrace cargo clippy --all-targets
+xtrace cargo clippy --all-targets -- -Dwarnings
 xtrace cargo build
 xtrace cargo test
