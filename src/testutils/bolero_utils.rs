@@ -2,11 +2,9 @@
 //
 // Copyright (c) 2024 Mikael Forsberg (github.com/mkforsb)
 
-#![expect(dead_code)]
-
 use std::ops::{ControlFlow, RangeInclusive};
 
-use bolero::ValueGenerator;
+use bolero::{TypeGenerator, ValueGenerator};
 
 #[derive(Debug)]
 pub struct WeightedUsizeGenerator {
@@ -43,6 +41,7 @@ impl ValueGenerator for WeightedUsizeGenerator {
     }
 }
 
+#[expect(dead_code)]
 impl WeightedUsizeGenerator {
     pub fn new() -> Self {
         Self {
@@ -60,5 +59,18 @@ impl WeightedUsizeGenerator {
             weight_fn: weights,
             ..self
         }
+    }
+}
+
+#[derive(Debug, Clone, TypeGenerator)]
+pub struct Lcg {
+    seed: usize,
+}
+
+#[expect(dead_code)]
+impl Lcg {
+    pub fn next(&mut self) -> usize {
+        self.seed = self.seed.wrapping_mul(1103515245).wrapping_add(12345) & 0x7fffffff;
+        self.seed
     }
 }
