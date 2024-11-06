@@ -354,7 +354,7 @@ fn test_is_modified_vs_label_assigned_in_set() {
                         let mut updated_model = model.clone();
                         let updated_set = updated_model.set_mut(set.uuid()).unwrap();
                         updated_set
-                            .set_label::<DrumkitLabel, _>(sample, Some(DrumkitLabel::Clap))
+                            .set_label(sample, Some(DrumkitLabel::Clap))
                             .unwrap();
                         assert!(updated_model.is_modified_vs(&model));
                     })

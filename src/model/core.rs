@@ -370,9 +370,7 @@ impl CoreModel {
     ) -> AnyhowResult<CoreModel> {
         let mut result = self.clone();
 
-        result
-            .set_mut(set_uuid)?
-            .set_label::<DrumkitLabel, Option<DrumkitLabel>>(&sample, label)?;
+        result.set_mut(set_uuid)?.set_label(&sample, label)?;
 
         Ok(result)
     }

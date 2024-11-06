@@ -195,7 +195,7 @@ impl CoreModelBuilderOps {
                         {
                             labels_avail.remove(&label.unwrap());
 
-                            set.set_label::<DrumkitLabel, _>(
+                            set.set_label(
                                 &samples[index % samples.len()],
                                 Some(DRUM_LABELS[label.unwrap() % 16].1),
                             )

@@ -572,7 +572,7 @@ impl DrumMachineModel {
         }
 
         new_sampleset.add(source, sample.clone())?;
-        new_sampleset.set_label(&sample, label).unwrap();
+        new_sampleset.set_label(&sample, Some(label)).unwrap();
 
         let new_sources = if !self.sources.contains(source) {
             self.sources.clone_and_push(source.clone())

@@ -594,7 +594,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                         )?,
                         sample.clone(),
                     )?;
-                    set.set_label::<DrumkitLabel, Option<DrumkitLabel>>(
+                    set.set_label(
                         sample,
                         model
                             .drum_machine_sampleset()
