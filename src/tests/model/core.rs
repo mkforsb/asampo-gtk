@@ -14,6 +14,8 @@ use libasampo::{
 };
 use uuid::Uuid;
 
+use crate::bolero_utils::Lcg;
+
 // super = crate::model::core
 use super::arbitrary::{CoreModelBuilderOps, DummyAudioHasher, UuidGen};
 
@@ -108,6 +110,59 @@ fn test_add_source_success() {
                 enabled: true,
             }))
             .is_ok())
+    })
+}
+
+#[test]
+fn test_add_to_set() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        lcg: Lcg,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+
+        let has_samples = model
+            .sources_list()
+            .iter()
+            .any(|s| !s.list().unwrap().is_empty());
+
+        if has_samples && !model.sets_list().is_empty() {
+            let mut lcg = values.lcg.clone();
+            let num_sources = model.sources_list().len();
+            let num_sets = model.sets_list().len();
+
+            for _ in 0..100 {
+                let source = model.sources_list()[lcg.next() % num_sources];
+                let samples = source.list().unwrap();
+
+                if samples.is_empty() {
+                    continue;
+                }
+
+                let samples_idx = lcg.next() % samples.len();
+                let set = model.sets_list()[lcg.next() % num_sets];
+
+                if set.contains(&samples[samples_idx]) {
+                    continue;
+                }
+
+                let updated_model = model
+                    .clone()
+                    .add_to_set(samples[samples_idx].clone(), set.uuid())
+                    .unwrap();
+
+                assert!(updated_model
+                    .set(set.uuid())
+                    .unwrap()
+                    .contains(&samples[samples_idx]));
+
+                println!("booba");
+                break;
+            }
+        }
     })
 }
 
@@ -259,6 +314,64 @@ fn test_get_or_create_set() {
         }
     })
 }
+
+#[test]
+fn test_insert_set() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        uuid: UuidGen,
+        insert_middle_pos: usize,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let uuid = values.uuid.get();
+
+        if model.set(uuid).is_err() {
+            let num_sets_in_model = model.sets_list().len();
+
+            let mut set_to_insert =
+                BaseSampleSet::new_with_hasher::<DummyAudioHasher>("set to insert");
+            set_to_insert.set_uuid(values.uuid.get());
+
+            let inserted_start = model
+                .clone()
+                .insert_set(SampleSet::BaseSampleSet(set_to_insert.clone()), 0)
+                .unwrap();
+
+            let inserted_end = model
+                .clone()
+                .insert_set(
+                    SampleSet::BaseSampleSet(set_to_insert.clone()),
+                    num_sets_in_model,
+                )
+                .unwrap();
+
+            assert_eq!(inserted_start.sets_list().len(), num_sets_in_model + 1);
+            assert_eq!(inserted_start.sets_list()[0].uuid(), uuid);
+
+            assert_eq!(inserted_end.sets_list().len(), num_sets_in_model + 1);
+            assert_eq!(inserted_end.sets_list()[num_sets_in_model].uuid(), uuid);
+
+            if num_sets_in_model > 0 {
+                let insert_middle_pos = values.insert_middle_pos % num_sets_in_model;
+
+                let inserted_middle = model
+                    .clone()
+                    .insert_set(
+                        SampleSet::BaseSampleSet(set_to_insert.clone()),
+                        insert_middle_pos,
+                    )
+                    .unwrap();
+
+                assert_eq!(inserted_middle.sets_list().len(), num_sets_in_model + 1);
+                assert_eq!(inserted_middle.sets_list()[insert_middle_pos].uuid(), uuid);
+            }
+        }
+    })
+}
+
 #[test]
 fn test_is_modified_vs_added_sequence() {
     bolero_test!(|model| {
@@ -504,6 +617,15 @@ fn test_set_selected_sample() {
         let updated_model = model.set_selected_sample(Some(sample.clone()));
         assert_eq!(updated_model.selected_sample(), Some(sample).as_ref());
         assert_ne!(updated_model.selected_sample(), Some(sample2).as_ref());
+    })
+}
+
+#[test]
+fn test_sets_map_and_set() {
+    bolero_test!(|model| {
+        for uuid in model.sets_map().keys() {
+            assert_eq!(*uuid, model.set(*uuid).unwrap().uuid());
+        }
     })
 }
 

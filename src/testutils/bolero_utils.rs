@@ -67,7 +67,6 @@ pub struct Lcg {
     seed: usize,
 }
 
-#[expect(dead_code)]
 impl Lcg {
     pub fn next(&mut self) -> usize {
         self.seed = self.seed.wrapping_mul(1103515245).wrapping_add(12345) & 0x7fffffff;
