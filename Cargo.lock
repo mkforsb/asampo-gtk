@@ -77,9 +77,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.92"
+version = "1.0.93"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74f37166d7d48a0284b99dd824694c26119c700b53bf0d1540cdb147dbdaaf13"
+checksum = "4c95c10ba0b00a02636238b814946408b1322d5ac4760326e6fb8ec956d85775"
 
 [[package]]
 name = "arrayvec"
@@ -111,7 +111,7 @@ dependencies = [
 [[package]]
 name = "audiothread"
 version = "0.0.0"
-source = "git+https://github.com/mkforsb/libasampo#7fc3ca2833335357236b9800c797671fc3189e5c"
+source = "git+https://github.com/mkforsb/libasampo#826cec0af654ada927bc84a4ab606ff2f83181c6"
 dependencies = [
  "libpulse-binding",
  "log",
@@ -887,7 +887,7 @@ checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 [[package]]
 name = "libasampo"
 version = "0.0.0"
-source = "git+https://github.com/mkforsb/libasampo#7fc3ca2833335357236b9800c797671fc3189e5c"
+source = "git+https://github.com/mkforsb/libasampo#826cec0af654ada927bc84a4ab606ff2f83181c6"
 dependencies = [
  "audiothread",
  "glob",

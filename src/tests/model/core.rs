@@ -14,7 +14,8 @@ use libasampo::{
 };
 use uuid::Uuid;
 
-use super::arbitrary::{CoreModelBuilderOps, UuidGen}; // super = crate::model::core
+// super = crate::model::core
+use super::arbitrary::{CoreModelBuilderOps, DummyAudioHasher, UuidGen};
 
 macro_rules! bolero_test {
     ($fn:expr) => {{
@@ -277,7 +278,9 @@ fn test_is_modified_vs_added_set() {
     bolero_test!(|model| {
         let mut clone = model.clone();
         clone = clone
-            .add_set(SampleSet::BaseSampleSet(BaseSampleSet::new("test")))
+            .add_set(SampleSet::BaseSampleSet(BaseSampleSet::new_with_hasher::<
+                DummyAudioHasher,
+            >("test")))
             .unwrap();
         assert!(clone.is_modified_vs(&model));
     })

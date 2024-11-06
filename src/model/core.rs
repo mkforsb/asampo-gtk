@@ -6,6 +6,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::mpsc};
 
 use anyhow::anyhow;
 use libasampo::{
+    audiohash::{AudioHasher, Md5AudioHasher},
     samples::{Sample, SampleOps},
     samplesets::{export::ExportJobMessage, BaseSampleSet, DrumkitLabel, SampleSet, SampleSetOps},
     sequences::{DrumkitSequence, StepSequenceOps},
@@ -27,13 +28,13 @@ pub enum ExportState {
 }
 
 #[derive(Clone, Debug)]
-pub struct CoreModel {
+pub struct CoreModel<H: AudioHasher = Md5AudioHasher> {
     sources: HashMap<Uuid, Source>,
     sources_order: Vec<Uuid>,
     sources_loading: HashMap<Uuid, Rc<mpsc::Receiver<SourceLoadMsg>>>,
     samples: Rc<RefCell<Vec<Sample>>>,
     samplelist_selected_sample: Option<Sample>,
-    sets: HashMap<Uuid, SampleSet>,
+    sets: HashMap<Uuid, SampleSet<H>>,
     sets_order: Vec<Uuid>,
     sets_selected_set: Option<Uuid>,
     sets_most_recently_used_uuid: Option<Uuid>,
@@ -45,8 +46,15 @@ pub struct CoreModel {
 }
 
 impl CoreModel {
-    pub fn new() -> CoreModel {
-        CoreModel {
+    pub fn new() -> CoreModel<Md5AudioHasher> {
+        Self::new_with_hasher::<Md5AudioHasher>()
+    }
+
+    pub fn new_with_hasher<H>() -> CoreModel<H>
+    where
+        H: AudioHasher,
+    {
+        CoreModel::<H> {
             sources: HashMap::new(),
             sources_order: Vec::new(),
             sources_loading: HashMap::new(),
@@ -63,9 +71,14 @@ impl CoreModel {
             export_job_rx: None,
         }
     }
+}
 
+impl<H> CoreModel<H>
+where
+    H: AudioHasher,
+{
     /// For detecting need to save
-    pub fn is_modified_vs(&self, other: &Self) -> bool {
+    pub fn is_modified_vs(&self, other: &CoreModel<H>) -> bool {
         self.sources != other.sources
             || self.sources_order != other.sources_order
             || self.sets != other.sets
@@ -91,7 +104,7 @@ impl CoreModel {
             .ok_or(anyhow!("Failed to get source: UUID not present"))
     }
 
-    pub fn add_source(self, source: Source) -> AnyhowResult<CoreModel> {
+    pub fn add_source(self, source: Source) -> AnyhowResult<CoreModel<H>> {
         debug_assert!(self.sources.len() == self.sources_order.len());
         debug_assert!(self
             .sources
@@ -101,7 +114,7 @@ impl CoreModel {
         if self.sources.contains_key(source.uuid()) {
             Err(anyhow!("Failed to add source: UUID in use"))
         } else {
-            Ok(CoreModel {
+            Ok(CoreModel::<H> {
                 sources_order: self.sources_order.clone_and_push(*source.uuid()),
                 sources: self.sources.clone_and_insert(*source.uuid(), source),
                 ..self
@@ -109,10 +122,10 @@ impl CoreModel {
         }
     }
 
-    pub fn enable_source(self, uuid: Uuid) -> AnyhowResult<CoreModel> {
+    pub fn enable_source(self, uuid: Uuid) -> AnyhowResult<CoreModel<H>> {
         let loader_rx = Self::spawn_source_loader(self.source(uuid)?.clone());
 
-        CoreModel {
+        CoreModel::<H> {
             sources: self
                 .sources
                 .cloned_update_with(|mut s: HashMap<Uuid, Source>| {
@@ -126,12 +139,12 @@ impl CoreModel {
         .add_source_loader(uuid, loader_rx)
     }
 
-    pub fn disable_source(self, uuid: Uuid) -> AnyhowResult<CoreModel> {
+    pub fn disable_source(self, uuid: Uuid) -> AnyhowResult<CoreModel<H>> {
         self.samples
             .borrow_mut()
             .retain(|s| s.source_uuid() != Some(&uuid));
 
-        Ok(CoreModel {
+        Ok(CoreModel::<H> {
             sources: self
                 .sources
                 .cloned_update_with(|mut s: HashMap<Uuid, Source>| {
@@ -144,18 +157,18 @@ impl CoreModel {
         })
     }
 
-    pub fn remove_source(self, uuid: Uuid) -> AnyhowResult<CoreModel> {
+    pub fn remove_source(self, uuid: Uuid) -> AnyhowResult<CoreModel<H>> {
         let model = self.disable_source(uuid)?;
 
-        Ok(CoreModel {
+        Ok(CoreModel::<H> {
             sources_order: model.sources_order.clone_and_remove(&uuid)?,
             sources: model.sources.clone_and_remove(&uuid)?,
             ..model
         })
     }
 
-    pub fn clear_sources(self) -> CoreModel {
-        CoreModel {
+    pub fn clear_sources(self) -> CoreModel<H> {
+        CoreModel::<H> {
             sources: HashMap::new(),
             sources_order: Vec::new(),
             sources_loading: HashMap::new(),
@@ -184,11 +197,11 @@ impl CoreModel {
         self,
         source_uuid: Uuid,
         loader_rx: mpsc::Receiver<SourceLoadMsg>,
-    ) -> AnyhowResult<CoreModel> {
+    ) -> AnyhowResult<CoreModel<H>> {
         if self.sources_loading.contains_key(&source_uuid) {
             Err(anyhow!("Failed to add source loader: UUID in use"))
         } else {
-            Ok(CoreModel {
+            Ok(CoreModel::<H> {
                 sources_loading: self
                     .sources_loading
                     .clone_and_insert(source_uuid, Rc::new(loader_rx)),
@@ -211,11 +224,11 @@ impl CoreModel {
         }
     }
 
-    pub fn remove_source_loader(self, source_uuid: Uuid) -> AnyhowResult<CoreModel> {
+    pub fn remove_source_loader(self, source_uuid: Uuid) -> AnyhowResult<CoreModel<H>> {
         if !self.sources_loading.contains_key(&source_uuid) {
             Err(anyhow!("Failed to remove source loader: UUID not present"))
         } else {
-            Ok(CoreModel {
+            Ok(CoreModel::<H> {
                 sources_loading: self.sources_loading.clone_and_remove(&source_uuid)?,
                 ..self
             })
@@ -230,10 +243,10 @@ impl CoreModel {
         self.samples.borrow()
     }
 
-    pub fn set_selected_sample(self, maybe_sample: Option<Sample>) -> CoreModel {
+    pub fn set_selected_sample(self, maybe_sample: Option<Sample>) -> CoreModel<H> {
         // TODO: verify sample exists in self.samples?
 
-        CoreModel {
+        CoreModel::<H> {
             samplelist_selected_sample: maybe_sample,
             ..self
         }
@@ -243,36 +256,36 @@ impl CoreModel {
         self.samplelist_selected_sample.as_ref()
     }
 
-    pub fn sets_list(&self) -> Vec<&SampleSet> {
+    pub fn sets_list(&self) -> Vec<&SampleSet<H>> {
         self.sets_order
             .iter()
             .map(|uuid| self.sets.get(uuid).unwrap())
             .collect()
     }
 
-    pub fn sets_map(&self) -> &HashMap<Uuid, SampleSet> {
+    pub fn sets_map(&self) -> &HashMap<Uuid, SampleSet<H>> {
         &self.sets
     }
 
-    pub fn set(&self, uuid: Uuid) -> AnyhowResult<&SampleSet> {
+    pub fn set(&self, uuid: Uuid) -> AnyhowResult<&SampleSet<H>> {
         self.sets
             .get(&uuid)
             .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))
     }
 
-    fn set_mut(&mut self, uuid: Uuid) -> AnyhowResult<&mut SampleSet> {
+    fn set_mut(&mut self, uuid: Uuid) -> AnyhowResult<&mut SampleSet<H>> {
         self.sets
             .get_mut(&uuid)
             .ok_or(anyhow!("Failed to fetch sample set: UUID not present"))
     }
 
-    pub fn add_set(self, set: SampleSet) -> AnyhowResult<CoreModel> {
+    pub fn add_set(self, set: SampleSet<H>) -> AnyhowResult<CoreModel<H>> {
         if self.sets.contains_key(&set.uuid()) {
             Err(anyhow!("Failed to add set: UUID in use"))
         } else {
             let uuid = set.uuid();
 
-            Ok(CoreModel {
+            Ok(CoreModel::<H> {
                 sets: self.sets.clone_and_insert(uuid, set),
                 sets_order: self.sets_order.clone_and_push(uuid),
                 ..self
@@ -280,13 +293,13 @@ impl CoreModel {
         }
     }
 
-    pub fn insert_set(self, set: SampleSet, position: usize) -> AnyhowResult<CoreModel> {
+    pub fn insert_set(self, set: SampleSet<H>, position: usize) -> AnyhowResult<CoreModel<H>> {
         if self.sets.contains_key(&set.uuid()) {
             Err(anyhow!("Failed to insert sample set: UUID in use"))
         } else {
             let uuid = set.uuid();
 
-            Ok(CoreModel {
+            Ok(CoreModel::<H> {
                 sets: self.sets.clone_and_insert(uuid, set),
                 sets_order: self.sets_order.clone_and_insert(uuid, position),
                 ..self
@@ -297,7 +310,7 @@ impl CoreModel {
     pub fn get_or_create_set(
         self,
         name: impl Into<String>,
-    ) -> Result<(CoreModel, Uuid), anyhow::Error> {
+    ) -> Result<(CoreModel<H>, Uuid), anyhow::Error> {
         let name = name.into();
 
         match self
@@ -308,7 +321,7 @@ impl CoreModel {
         {
             Some(uuid) => Ok((self, uuid)),
             None => {
-                let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new(name));
+                let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new_with_hasher::<H>(name));
                 let new_uuid = new_set.uuid();
 
                 Ok((self.add_set(new_set)?, new_uuid))
@@ -316,16 +329,16 @@ impl CoreModel {
         }
     }
 
-    pub fn remove_set(self, uuid: Uuid) -> AnyhowResult<CoreModel> {
-        Ok(CoreModel {
+    pub fn remove_set(self, uuid: Uuid) -> AnyhowResult<CoreModel<H>> {
+        Ok(CoreModel::<H> {
             sets_order: self.sets_order.clone_and_remove(&uuid)?,
             sets: self.sets.clone_and_remove(&uuid)?,
             ..self
         })
     }
 
-    pub fn clear_sets(self) -> CoreModel {
-        CoreModel {
+    pub fn clear_sets(self) -> CoreModel<H> {
+        CoreModel::<H> {
             sets: HashMap::new(),
             sets_order: Vec::new(),
             sets_selected_set: None,
@@ -335,7 +348,7 @@ impl CoreModel {
         }
     }
 
-    pub fn add_to_set(self, sample: Sample, set_uuid: Uuid) -> AnyhowResult<CoreModel> {
+    pub fn add_to_set(self, sample: Sample, set_uuid: Uuid) -> AnyhowResult<CoreModel<H>> {
         let mut result = self.clone();
 
         result.set_mut(set_uuid)?.add(
@@ -350,7 +363,7 @@ impl CoreModel {
         result.set_set_most_recently_added_to(Some(set_uuid))
     }
 
-    pub fn remove_from_set(self, sample: &Sample, set_uuid: Uuid) -> AnyhowResult<CoreModel> {
+    pub fn remove_from_set(self, sample: &Sample, set_uuid: Uuid) -> AnyhowResult<CoreModel<H>> {
         let mut result = self.clone();
 
         result
@@ -367,7 +380,7 @@ impl CoreModel {
         set_uuid: Uuid,
         sample: Sample,
         label: Option<DrumkitLabel>,
-    ) -> AnyhowResult<CoreModel> {
+    ) -> AnyhowResult<CoreModel<H>> {
         let mut result = self.clone();
 
         result.set_mut(set_uuid)?.set_label(&sample, label)?;
@@ -378,10 +391,10 @@ impl CoreModel {
     pub fn set_set_most_recently_added_to(
         self,
         maybe_uuid: Option<Uuid>,
-    ) -> AnyhowResult<CoreModel> {
+    ) -> AnyhowResult<CoreModel<H>> {
         match maybe_uuid.and_then(|uuid| self.set(uuid).err()) {
             Some(err) => Err(err),
-            None => Ok(CoreModel {
+            None => Ok(CoreModel::<H> {
                 sets_most_recently_used_uuid: maybe_uuid,
                 ..self
             }),
@@ -392,11 +405,11 @@ impl CoreModel {
         self.sets_most_recently_used_uuid
     }
 
-    pub fn set_selected_set(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<CoreModel> {
+    pub fn set_selected_set(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<CoreModel<H>> {
         if let Some(false) = maybe_uuid.map(|uuid| self.sets.contains_key(&uuid)) {
             Err(anyhow!("Failed to set selected set: UUID not present"))
         } else {
-            Ok(CoreModel {
+            Ok(CoreModel::<H> {
                 sets_selected_set: maybe_uuid,
                 ..self
             })
@@ -407,8 +420,8 @@ impl CoreModel {
         self.sets_selected_set
     }
 
-    pub fn set_export_state(self, maybe_state: Option<ExportState>) -> CoreModel {
-        CoreModel {
+    pub fn set_export_state(self, maybe_state: Option<ExportState>) -> CoreModel<H> {
+        CoreModel::<H> {
             sets_export_state: maybe_state,
             ..self
         }
@@ -421,8 +434,8 @@ impl CoreModel {
     pub fn set_export_job_rx(
         self,
         maybe_rx: Option<mpsc::Receiver<ExportJobMessage>>,
-    ) -> CoreModel {
-        CoreModel {
+    ) -> CoreModel<H> {
+        CoreModel::<H> {
             export_job_rx: maybe_rx.map(Rc::new),
             ..self
         }
@@ -449,13 +462,13 @@ impl CoreModel {
         &self.sequences
     }
 
-    pub fn add_sequence(self, sequence: DrumkitSequence) -> AnyhowResult<CoreModel> {
+    pub fn add_sequence(self, sequence: DrumkitSequence) -> AnyhowResult<CoreModel<H>> {
         if self.sequences.contains_key(&sequence.uuid()) {
             Err(anyhow!("Failed to add sequence: UUID in use"))
         } else {
             let uuid = sequence.uuid();
 
-            Ok(CoreModel {
+            Ok(CoreModel::<H> {
                 sequences: self.sequences.clone_and_insert(uuid, sequence),
                 sequences_order: self.sequences_order.clone_and_push(uuid),
                 ..self
@@ -467,13 +480,13 @@ impl CoreModel {
         self,
         sequence: DrumkitSequence,
         position: usize,
-    ) -> AnyhowResult<CoreModel> {
+    ) -> AnyhowResult<CoreModel<H>> {
         if self.sequences.contains_key(&sequence.uuid()) {
             Err(anyhow!("Failed to insert sequence: UUID in use"))
         } else {
             let uuid = sequence.uuid();
 
-            Ok(CoreModel {
+            Ok(CoreModel::<H> {
                 sequences: self.sequences.clone_and_insert(uuid, sequence),
                 sequences_order: self.sequences_order.clone_and_insert(uuid, position),
                 ..self
@@ -481,11 +494,11 @@ impl CoreModel {
         }
     }
 
-    pub fn set_selected_sequence(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<CoreModel> {
+    pub fn set_selected_sequence(self, maybe_uuid: Option<Uuid>) -> AnyhowResult<CoreModel<H>> {
         if let Some(false) = maybe_uuid.map(|uuid| self.sequences.contains_key(&uuid)) {
             Err(anyhow!("Failed to set selected sequence: UUID not present"))
         } else {
-            Ok(CoreModel {
+            Ok(CoreModel::<H> {
                 sequences_selected_sequence: maybe_uuid,
                 ..self
             })
@@ -496,16 +509,16 @@ impl CoreModel {
         self.sequences_selected_sequence
     }
 
-    pub fn remove_sequence(self, uuid: Uuid) -> AnyhowResult<CoreModel> {
-        Ok(CoreModel {
+    pub fn remove_sequence(self, uuid: Uuid) -> AnyhowResult<CoreModel<H>> {
+        Ok(CoreModel::<H> {
             sequences_order: self.sequences_order.clone_and_remove(&uuid)?,
             sequences: self.sequences.clone_and_remove(&uuid)?,
             ..self
         })
     }
 
-    pub fn clear_sequences(self) -> CoreModel {
-        CoreModel {
+    pub fn clear_sequences(self) -> CoreModel<H> {
+        CoreModel::<H> {
             sequences: HashMap::new(),
             sequences_order: Vec::new(),
             ..self
