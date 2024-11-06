@@ -295,23 +295,23 @@ impl CoreModel {
     }
 
     pub fn get_or_create_set(
-        model: CoreModel,
+        self,
         name: impl Into<String>,
     ) -> Result<(CoreModel, Uuid), anyhow::Error> {
         let name = name.into();
 
-        match model
+        match self
             .sets
             .iter()
             .find(|(_, set)| set.name() == name)
             .map(|(uuid, _)| *uuid)
         {
-            Some(uuid) => Ok((model, uuid)),
+            Some(uuid) => Ok((self, uuid)),
             None => {
                 let new_set = SampleSet::BaseSampleSet(BaseSampleSet::new(name));
                 let new_uuid = new_set.uuid();
 
-                Ok((model.add_set(new_set)?, new_uuid))
+                Ok((self.add_set(new_set)?, new_uuid))
             }
         }
     }

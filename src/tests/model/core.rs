@@ -237,6 +237,28 @@ fn test_enable_source_samples_loaded() {
 }
 
 #[test]
+fn test_get_or_create_set() {
+    bolero_test!(|model| {
+        let (updated_model, uuid) = model.clone().get_or_create_set("name of set").unwrap();
+        assert_eq!(updated_model.set(uuid).unwrap().name(), "name of set");
+
+        if !model.sets_list().is_empty() {
+            let set = model.sets_list()[0].clone();
+
+            if model
+                .sets_list()
+                .iter()
+                .filter(|s| s.name() == set.name())
+                .count()
+                == 1
+            {
+                let (_, uuid) = model.get_or_create_set(set.name()).unwrap();
+                assert_eq!(uuid, set.uuid());
+            }
+        }
+    })
+}
+#[test]
 fn test_is_modified_vs_added_sequence() {
     bolero_test!(|model| {
         let mut clone = model.clone();

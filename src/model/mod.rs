@@ -347,16 +347,13 @@ impl AppModel {
         self.viewvalues.populate_samples_listmodel(&self.samples());
     }
 
-    pub fn get_or_create_set(
-        model: AppModel,
-        set_name: impl Into<String>,
-    ) -> AnyhowResult<(AppModel, Uuid)> {
-        let (result, uuid) = CoreModel::get_or_create_set(model.core, set_name)?;
+    pub fn get_or_create_set(self, set_name: impl Into<String>) -> AnyhowResult<(AppModel, Uuid)> {
+        let (updated_core, uuid) = self.core.get_or_create_set(set_name)?;
 
         Ok((
             AppModel {
-                core: result,
-                ..model
+                core: updated_core,
+                ..self
             },
             uuid,
         ))

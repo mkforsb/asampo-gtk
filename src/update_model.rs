@@ -544,7 +544,7 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
 
         AppMessage::InputDialogSubmitted(context, text) => match context {
             InputDialogContext::AddToSampleset => {
-                let (model, set_uuid) = AppModel::get_or_create_set(model, text)?;
+                let (model, set_uuid) = model.get_or_create_set(text)?;
                 let sample = model
                     .selected_sample()
                     .ok_or(anyhow!("No sample selected"))?
