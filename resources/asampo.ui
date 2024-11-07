@@ -1377,6 +1377,7 @@
                                     <property name="orientation">horizontal</property>
                                     <child>
                                       <object class="GtkLabel">
+                                        <property name="visible">false</property>
                                         <property name="label">Drum machine tips</property>
                                       </object>
                                     </child>
