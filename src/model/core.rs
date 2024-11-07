@@ -380,12 +380,12 @@ where
     pub fn set_sample_label(
         self,
         set_uuid: Uuid,
-        sample: Sample,
+        sample: &Sample,
         label: Option<DrumkitLabel>,
     ) -> AnyhowResult<CoreModel<H>> {
         let mut result = self.clone();
 
-        result.set_mut(set_uuid)?.set_label(&sample, label)?;
+        result.set_mut(set_uuid)?.set_label(sample, label)?;
 
         Ok(result)
     }

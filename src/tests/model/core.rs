@@ -14,7 +14,7 @@ use libasampo::{
 };
 use uuid::Uuid;
 
-use crate::bolero_utils::Lcg;
+use crate::{bolero_utils::Lcg, labels::DRUM_LABELS};
 
 // super = crate::model::core
 use super::arbitrary::{CoreModelBuilderOps, DummyAudioHasher, UuidGen};
@@ -582,6 +582,52 @@ fn test_is_modified_vs_sample_removed_from_set() {
 fn test_is_modified_vs_self() {
     bolero_test!(|model| {
         assert!(!model.is_modified_vs(&model));
+    })
+}
+
+#[test]
+fn test_set_sample_label() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        lcg: Lcg,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let mut lcg = values.lcg.clone();
+
+        if model.sets_list().is_empty() {
+            return;
+        }
+
+        let num_sets = model.sets_list().len();
+        let set_idx = lcg.next() % num_sets;
+
+        if model.sets_list()[set_idx].list().is_empty() {
+            return;
+        }
+
+        let set_uuid = model.sets_list()[set_idx].uuid();
+        let num_samples = model.sets_list()[set_idx].list().len();
+        let sample_idx = lcg.next() % num_samples;
+        let sample = model.sets_list()[set_idx].list()[sample_idx].clone();
+        let label_idx = lcg.next() % 17;
+
+        let label = if label_idx == 0 {
+            None
+        } else {
+            Some(DRUM_LABELS[label_idx - 1].1)
+        };
+
+        let updated_model = model.set_sample_label(set_uuid, &sample, label).unwrap();
+
+        assert_eq!(
+            updated_model.sets_list()[set_idx]
+                .get_label::<DrumkitLabel>(&sample)
+                .unwrap(),
+            label
+        );
     })
 }
 

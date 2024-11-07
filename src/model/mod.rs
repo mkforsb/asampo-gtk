@@ -410,7 +410,7 @@ impl AppModel {
         insert_set(set: SampleSet, position: usize): Result,
         add_to_set(sample: Sample, set_uuid: Uuid): Result,
         remove_from_set(sample: &Sample, set_uuid: Uuid): Result,
-        set_sample_label(set_uuid: Uuid, sample: Sample, label: Option<DrumkitLabel>): Result,
+        set_sample_label(set_uuid: Uuid, sample: &Sample, label: Option<DrumkitLabel>): Result,
         set_set_most_recently_added_to(maybe_uuid: Option<Uuid>): Result,
         set_most_recently_added_to() -> Option<Uuid>,
         set_selected_set(maybe_uuid: Option<Uuid>): Result,

@@ -721,11 +721,11 @@ pub fn update_model(model: AppModel, message: AppMessage) -> Result<AppModel, an
                 set_label_in_members_listmodel(&model, &sample, label);
 
                 model
-                    .set_sample_label(set_uuid, prev_sample, None)?
-                    .set_sample_label(set_uuid, sample, label)
+                    .set_sample_label(set_uuid, &prev_sample, None)?
+                    .set_sample_label(set_uuid, &sample, label)
             } else {
                 set_label_in_members_listmodel(&model, &sample, label);
-                model.set_sample_label(set_uuid, sample, label)
+                model.set_sample_label(set_uuid, &sample, label)
             }?;
 
             if model
