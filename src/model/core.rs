@@ -343,6 +343,8 @@ where
             sets_order: Vec::new(),
             sets_selected_set: None,
             sets_most_recently_used_uuid: None,
+
+            // TODO: does it make sense to clear export state here? is it a good idea?
             sets_export_state: None,
             ..self
         }
