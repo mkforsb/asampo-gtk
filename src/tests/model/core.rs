@@ -167,6 +167,18 @@ fn test_add_to_set() {
 }
 
 #[test]
+fn test_clear_sets() {
+    bolero_test!(|model| {
+        let updated_model = model.clear_sets();
+
+        assert!(updated_model.sets_map().is_empty());
+        assert!(updated_model.sets_list().is_empty());
+        assert_eq!(updated_model.selected_set(), None);
+        assert_eq!(updated_model.set_most_recently_added_to(), None);
+    })
+}
+
+#[test]
 fn test_clear_sources() {
     bolero_test!(|model| {
         if !model.sources_map().is_empty() {
