@@ -1,0 +1,14 @@
+{
+  "V3":{
+    "audio_output":"PulseAudioDefault",
+    "output_samplerate_hz":48000,
+    "buffer_size_samples":768,
+    "sample_rate_conversion_quality":"Lowest",
+    "config_save_path":"/tmp/v3.conf",
+    "sample_playback_behavior":"PlaySingleSample",
+    "save_workspace_behavior":"AskIfUnnamed",
+    "save_changed_sequence_behavior":"Ask",
+    "save_changed_set_behavior":"Save",
+    "synchronize_changed_set_behavior":"Unlink"
+  }
+}

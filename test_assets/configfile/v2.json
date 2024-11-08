@@ -1,0 +1,14 @@
+{
+  "V2":{
+    "audio_output":"PulseAudioDefault",
+    "output_samplerate_hz":44100,
+    "buffer_size_samples":1024,
+    "sample_rate_conversion_quality":"High",
+    "config_save_path":"/tmp/v2.conf",
+    "sample_playback_behavior":"PlayUntilEnd",
+    "save_on_quit_behavior":"Ask",
+    "save_changed_sequence_behavior":"DontSave",
+    "save_changed_set_behavior":"Ask",
+    "synchronize_changed_set_behavior":"Synchronize"
+  }
+}

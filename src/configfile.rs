@@ -294,3 +294,109 @@ impl ConfigFile {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{env, fs};
+
+    use uuid::Uuid;
+
+    use super::*;
+
+    fn asset_path(name: &str) -> String {
+        format!(
+            "{}/test_assets/configfile/{name}",
+            env::var("CARGO_MANIFEST_DIR").unwrap()
+        )
+    }
+
+    #[test]
+    fn test_load_v1() {
+        let conf = ConfigFile::load(asset_path("v1.json").as_str()).unwrap();
+
+        assert_eq!(conf.output_samplerate_hz, 96000);
+        assert_eq!(conf.buffer_size_frames, 2048);
+        assert_eq!(
+            conf.sample_rate_conversion_quality,
+            audiothread::Quality::Low
+        );
+        assert_eq!(conf.config_save_path, asset_path("v1.json"));
+        assert_eq!(
+            conf.sample_playback_behavior,
+            SamplePlaybackBehavior::PlayUntilEnd
+        );
+    }
+
+    #[test]
+    fn test_load_v2() {
+        let conf = ConfigFile::load(asset_path("v2.json").as_str()).unwrap();
+
+        assert_eq!(conf.output_samplerate_hz, 44100);
+        assert_eq!(conf.buffer_size_frames, 1024);
+        assert_eq!(
+            conf.sample_rate_conversion_quality,
+            audiothread::Quality::High
+        );
+        assert_eq!(conf.config_save_path, asset_path("v2.json"));
+        assert_eq!(
+            conf.sample_playback_behavior,
+            SamplePlaybackBehavior::PlayUntilEnd
+        );
+        assert_eq!(conf.save_workspace_behavior, SaveWorkspaceBehavior::Ask);
+        assert_eq!(
+            conf.save_changed_sequence_behavior,
+            SaveItemBehavior::DontSave
+        );
+        assert_eq!(conf.save_changed_set_behavior, SaveItemBehavior::Ask);
+        assert_eq!(
+            conf.synchronize_changed_set_behavior,
+            SynchronizeBehavior::Synchronize
+        );
+    }
+
+    #[test]
+    fn test_load_v3() {
+        let conf = ConfigFile::load(asset_path("v3.json").as_str()).unwrap();
+
+        assert_eq!(conf.output_samplerate_hz, 48000);
+        assert_eq!(conf.buffer_size_frames, 768);
+        assert_eq!(
+            conf.sample_rate_conversion_quality,
+            audiothread::Quality::Lowest
+        );
+        assert_eq!(conf.config_save_path, asset_path("v3.json"));
+        assert_eq!(
+            conf.sample_playback_behavior,
+            SamplePlaybackBehavior::PlaySingleSample
+        );
+        assert_eq!(
+            conf.save_workspace_behavior,
+            SaveWorkspaceBehavior::AskIfUnnamed
+        );
+        assert_eq!(conf.save_changed_sequence_behavior, SaveItemBehavior::Ask);
+        assert_eq!(conf.save_changed_set_behavior, SaveItemBehavior::Save);
+        assert_eq!(
+            conf.synchronize_changed_set_behavior,
+            SynchronizeBehavior::Unlink
+        );
+    }
+
+    #[test]
+    fn test_save() {
+        if let Ok(exists) = fs::exists("/tmp") {
+            if exists {
+                let mut conf = AppConfig {
+                    buffer_size_frames: 12345,
+                    ..AppConfig::default()
+                };
+
+                conf.config_save_path = format!("/tmp/{}.json", Uuid::new_v4());
+                ConfigFile::save(&conf, &conf.config_save_path).unwrap();
+
+                let conf2 = ConfigFile::load(&conf.config_save_path).unwrap();
+
+                assert_eq!(conf, conf2);
+            }
+        }
+    }
+}

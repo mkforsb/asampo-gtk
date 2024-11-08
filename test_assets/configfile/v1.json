@@ -1,0 +1,10 @@
+{
+  "V1":{
+    "audio_output":"PulseAudioDefault",
+    "output_samplerate_hz":96000,
+    "buffer_size_samples":2048,
+    "sample_rate_conversion_quality":"Low",
+    "config_save_path":"/tmp/v1.conf",
+    "sample_playback_behavior":"PlayUntilEnd"
+  }
+}
