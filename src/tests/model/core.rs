@@ -12,7 +12,6 @@ use libasampo::{
     sequences::{DrumkitSequence, NoteLength, TimeSpec},
     sources::{FakeSource, Source, SourceOps},
 };
-use uuid::Uuid;
 
 use crate::{bolero_utils::Lcg, labels::DRUM_LABELS};
 
@@ -92,27 +91,30 @@ fn test_add_source_loader_failure_uuid_exists() {
 
 #[test]
 fn test_add_source_success() {
-    bolero_test!(|model| {
-        let mut new_source_uuid = Uuid::new_v4();
-        let mut attempts = 0;
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        uuid: UuidGen,
+    }
 
-        while attempts < 1000 && model.sources_map().contains_key(&new_source_uuid) {
-            attempts += 1;
-            new_source_uuid = Uuid::new_v4();
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let new_source_uuid = values.uuid.get();
+
+        if !model.sources_map().contains_key(&new_source_uuid) {
+            assert!(model
+                .add_source(Source::FakeSource(FakeSource {
+                    name: None,
+                    uri: "".to_string(),
+                    uuid: new_source_uuid,
+                    list: Vec::new(),
+                    list_error: None,
+                    stream: HashMap::new(),
+                    stream_error: None,
+                    enabled: true,
+                }))
+                .is_ok())
         }
-
-        assert!(model
-            .add_source(Source::FakeSource(FakeSource {
-                name: None,
-                uri: "".to_string(),
-                uuid: new_source_uuid,
-                list: Vec::new(),
-                list_error: None,
-                stream: HashMap::new(),
-                stream_error: None,
-                enabled: true,
-            }))
-            .is_ok())
     })
 }
 
@@ -196,28 +198,6 @@ fn test_clear_sources() {
 }
 
 #[test]
-fn test_disable_source_failure_uuid_not_present() {
-    bolero_test!(|model| {
-        let source_uuids = model
-            .sources_map()
-            .iter()
-            .map(|(uuid, _)| uuid)
-            .cloned()
-            .collect::<Vec<_>>();
-
-        let mut bad_uuid = Uuid::new_v4();
-        let mut attempts = 0;
-
-        while attempts < 1000 && source_uuids.contains(&bad_uuid) {
-            attempts += 1;
-            bad_uuid = Uuid::new_v4();
-        }
-
-        assert!(model.disable_source(bad_uuid).is_err());
-    })
-}
-
-#[test]
 fn test_disable_source_samples_removed() {
     bolero_test!(|model| {
         if !model.sources_list().is_empty() {
@@ -247,24 +227,21 @@ fn test_disable_source_samples_removed() {
 }
 
 #[test]
-fn test_enable_source_failure_uuid_not_present() {
-    bolero_test!(|model| {
-        let source_uuids = model
-            .sources_map()
-            .iter()
-            .map(|(uuid, _)| uuid)
-            .cloned()
-            .collect::<Vec<_>>();
+fn test_enable_disable_source_failure_uuid_not_present() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        uuid: UuidGen,
+    }
 
-        let mut bad_uuid = Uuid::new_v4();
-        let mut attempts = 0;
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let bad_uuid = values.uuid.get();
 
-        while attempts < 1000 && source_uuids.contains(&bad_uuid) {
-            attempts += 1;
-            bad_uuid = Uuid::new_v4();
+        if !model.sources_map().contains_key(&bad_uuid) {
+            assert!(model.clone().enable_source(bad_uuid).is_err());
+            assert!(model.disable_source(bad_uuid).is_err());
         }
-
-        assert!(model.enable_source(bad_uuid).is_err());
     })
 }
 
@@ -442,22 +419,33 @@ fn test_is_modified_vs_added_set() {
 
 #[test]
 fn test_is_modified_vs_added_source() {
-    bolero_test!(|model| {
-        let mut clone = model.clone();
-        clone = clone
-            .add_source(Source::FakeSource(FakeSource {
-                name: None,
-                uri: "".to_string(),
-                uuid: Uuid::new_v4(),
-                list: Vec::new(),
-                list_error: None,
-                stream: HashMap::new(),
-                stream_error: None,
-                enabled: true,
-            }))
-            .unwrap();
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        uuid: UuidGen,
+    }
 
-        assert!(clone.is_modified_vs(&model));
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let uuid = values.uuid.get();
+
+        if !model.sources_map().contains_key(&uuid) {
+            let updated_model = model
+                .clone()
+                .add_source(Source::FakeSource(FakeSource {
+                    name: None,
+                    uri: "".to_string(),
+                    uuid,
+                    list: Vec::new(),
+                    list_error: None,
+                    stream: HashMap::new(),
+                    stream_error: None,
+                    enabled: true,
+                }))
+                .unwrap();
+
+            assert!(updated_model.is_modified_vs(&model));
+        }
     })
 }
 
