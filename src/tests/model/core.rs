@@ -6,9 +6,9 @@ use std::collections::HashMap;
 
 use bolero::{check, gen, TypeGenerator};
 use libasampo::{
-    prelude::SampleSetOps,
+    prelude::{SampleSetOps, StepSequenceOps},
     samples::{BaseSample, Sample, SampleMetadata, SampleURI},
-    samplesets::{BaseSampleSet, DrumkitLabel, SampleSet},
+    samplesets::{export::ExportJobMessage, BaseSampleSet, DrumkitLabel, SampleSet},
     sequences::{DrumkitSequence, NoteLength, TimeSpec},
     sources::{FakeSource, Source, SourceOps},
 };
@@ -43,6 +43,61 @@ macro_rules! bolero_test {
             .with_shrink_time(std::time::Duration::ZERO)
             .for_each($each);
     }};
+}
+
+#[test]
+fn test_add_insert_sequence_failure_uuid_in_use() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        lcg: Lcg,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let mut lcg = values.lcg.clone();
+
+        if !model.sequences_list().is_empty() {
+            let num_seqs = model.sequences_list().len();
+            let seq_idx = lcg.next() % num_seqs;
+            let seq_uuid = model.sequences_list()[seq_idx].uuid();
+
+            let mut new_seq =
+                DrumkitSequence::new(TimeSpec::new(120, 4, 4).unwrap(), NoteLength::Sixteenth);
+            new_seq.set_uuid(seq_uuid);
+
+            assert!(model.clone().add_sequence(new_seq.clone()).is_err());
+            assert!(model.insert_sequence(new_seq, 0).is_err());
+        }
+    })
+}
+
+#[test]
+fn test_add_insert_set_failure_uuid_in_use() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        lcg: Lcg,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let mut lcg = values.lcg.clone();
+
+        if !model.sets_list().is_empty() {
+            let num_sets = model.sets_list().len();
+            let set_idx = lcg.next() % num_sets;
+            let set_uuid = model.sets_list()[set_idx].uuid();
+
+            let mut new_set = SampleSet::BaseSampleSet(BaseSampleSet::new_with_hasher::<
+                DummyAudioHasher,
+            >("set name"));
+            new_set.set_uuid(set_uuid);
+
+            assert!(model.clone().add_set(new_set.clone()).is_err());
+            assert!(model.insert_set(new_set, 0).is_err());
+        }
+    })
 }
 
 #[test]
@@ -164,10 +219,19 @@ fn test_add_to_set() {
                     .unwrap()
                     .contains(&samples[samples_idx]));
 
-                println!("booba");
                 break;
             }
         }
+    })
+}
+
+#[test]
+fn test_clear_sequences() {
+    bolero_test!(|model| {
+        let updated_model = model.clear_sequences();
+
+        assert!(updated_model.sequences_map().is_empty());
+        assert!(updated_model.sequences_list().is_empty());
     })
 }
 
@@ -285,6 +349,26 @@ fn test_enable_source_samples_loaded() {
 }
 
 #[test]
+fn test_export_job_rx() {
+    bolero_test!(|model| {
+        let updated_model = model.set_export_job_rx(None);
+        assert!(updated_model.export_job_rx().is_none());
+
+        let (tx, rx) = std::sync::mpsc::channel::<ExportJobMessage>();
+
+        let updated_model = updated_model.set_export_job_rx(Some(rx));
+        let rx = updated_model.export_job_rx().unwrap();
+
+        tx.send(ExportJobMessage::ItemsCompleted(123)).unwrap();
+
+        assert!(match rx.recv() {
+            Ok(message) => matches!(message, ExportJobMessage::ItemsCompleted(123)),
+            Err(_) => false,
+        })
+    })
+}
+
+#[test]
 fn test_export_state() {
     #[derive(Debug, TypeGenerator)]
     struct Values {
@@ -328,6 +412,67 @@ fn test_get_or_create_set() {
             {
                 let (_, uuid) = model.get_or_create_set(set.name()).unwrap();
                 assert_eq!(uuid, set.uuid());
+            }
+        }
+    })
+}
+
+#[test]
+fn test_insert_sequence() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        uuid: UuidGen,
+        insert_middle_pos: usize,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let uuid = values.uuid.get();
+
+        if model.sequence(uuid).is_err() {
+            let num_seqs_in_model = model.sequences_list().len();
+
+            let mut seq_to_insert =
+                DrumkitSequence::new(TimeSpec::new(120, 4, 4).unwrap(), NoteLength::Sixteenth);
+
+            seq_to_insert.set_uuid(values.uuid.get());
+
+            let inserted_start = model
+                .clone()
+                .insert_sequence(seq_to_insert.clone(), 0)
+                .unwrap();
+
+            let inserted_end = model
+                .clone()
+                .insert_sequence(seq_to_insert.clone(), num_seqs_in_model)
+                .unwrap();
+
+            assert_eq!(inserted_start.sequences_list().len(), num_seqs_in_model + 1);
+            assert_eq!(inserted_start.sequences_list()[0].uuid(), uuid);
+
+            assert_eq!(inserted_end.sequences_list().len(), num_seqs_in_model + 1);
+            assert_eq!(
+                inserted_end.sequences_list()[num_seqs_in_model].uuid(),
+                uuid
+            );
+
+            if num_seqs_in_model > 0 {
+                let insert_middle_pos = values.insert_middle_pos % num_seqs_in_model;
+
+                let inserted_middle = model
+                    .clone()
+                    .insert_sequence(seq_to_insert.clone(), insert_middle_pos)
+                    .unwrap();
+
+                assert_eq!(
+                    inserted_middle.sequences_list().len(),
+                    num_seqs_in_model + 1
+                );
+                assert_eq!(
+                    inserted_middle.sequences_list()[insert_middle_pos].uuid(),
+                    uuid
+                );
             }
         }
     })
@@ -615,6 +760,75 @@ fn test_is_modified_vs_self() {
 }
 
 #[test]
+fn test_remove_sequence() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        lcg: Lcg,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let mut lcg = values.lcg.clone();
+
+        if !model.sequences_list().is_empty() {
+            let num_seqs = model.sequences_list().len();
+            let seq_idx = lcg.next() % num_seqs;
+            let seq_uuid = model.sequences_list()[seq_idx].uuid();
+
+            let updated_model = model.remove_sequence(seq_uuid).unwrap();
+
+            assert_eq!(updated_model.sequences_list().len(), num_seqs - 1);
+            assert!(updated_model.sequence(seq_uuid).is_err());
+        }
+    })
+}
+
+#[test]
+fn test_remove_source_loader_failure_uuid_not_present() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        uuid: UuidGen,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let uuid = values.uuid.get();
+
+        if !model.sources_map().contains_key(&uuid) {
+            assert!(model.remove_source_loader(uuid).is_err());
+        }
+    })
+}
+
+#[test]
+fn test_selected_sequence() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        lcg: Lcg,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let mut lcg = values.lcg.clone();
+
+        if !model.sequences_list().is_empty() {
+            let num_seqs = model.sequences_list().len();
+            let seq_idx = lcg.next() % num_seqs;
+            let seq_uuid = model.sequences_list()[seq_idx].uuid();
+
+            let updated_model = model.set_selected_sequence(Some(seq_uuid)).unwrap();
+            assert_eq!(updated_model.selected_sequence(), Some(seq_uuid));
+
+            let updated_model = updated_model.set_selected_sequence(None).unwrap();
+            assert_eq!(updated_model.selected_sequence(), None);
+        }
+    })
+}
+
+#[test]
 fn test_set_sample_label() {
     #[derive(Debug, TypeGenerator)]
     struct Values {
@@ -692,6 +906,24 @@ fn test_set_selected_sample() {
         let updated_model = model.set_selected_sample(Some(sample.clone()));
         assert_eq!(updated_model.selected_sample(), Some(sample).as_ref());
         assert_ne!(updated_model.selected_sample(), Some(sample2).as_ref());
+    })
+}
+
+#[test]
+fn test_set_selected_sequence_failure_uuid_not_present() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        uuid: UuidGen,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let uuid = values.uuid.get();
+
+        if !model.sequences_map().contains_key(&uuid) {
+            assert!(model.set_selected_sequence(Some(uuid)).is_err());
+        }
     })
 }
 
