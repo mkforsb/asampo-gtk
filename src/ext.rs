@@ -149,3 +149,43 @@ where
         self.iter().map(|(_, val)| *val).collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct Model {
+        value: i32,
+    }
+
+    const OPTIONS: [(&str, i32); 3] = [("a", 1), ("b", -2), ("c", 1)];
+
+    #[test]
+    fn test_with_model() {
+        Cell::new(Some(Model { value: 42 })).with_model(|model| {
+            assert_eq!(model.value, 42);
+            model
+        });
+    }
+
+    #[test]
+    fn test_peek_model() {
+        assert_eq!(
+            Cell::new(Some(Model { value: 42 })).peek_model(|model| model.value),
+            42
+        );
+    }
+
+    #[test]
+    fn test_options_map_ext() {
+        assert_eq!(OPTIONS.value_for("a"), Some(1).as_ref());
+        assert_eq!(OPTIONS.value_for("b"), Some(-2).as_ref());
+        assert_eq!(OPTIONS.value_for("c"), Some(1).as_ref());
+
+        assert_eq!(OPTIONS.key_for(&1), Some("a"));
+        assert_eq!(OPTIONS.key_for(&-2), Some("b"));
+
+        assert_eq!(OPTIONS.keys(), vec!["a", "b", "c"]);
+        assert_eq!(OPTIONS.values(), vec![1, -2, 1]);
+    }
+}
