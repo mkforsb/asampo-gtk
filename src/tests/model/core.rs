@@ -17,7 +17,10 @@ use uuid::Uuid;
 use crate::{bolero_utils::Lcg, labels::DRUM_LABELS};
 
 // super = crate::model::core
-use super::arbitrary::{CoreModelBuilderOps, DummyAudioHasher, UuidGen};
+use super::{
+    arbitrary::{CoreModelBuilderOps, DummyAudioHasher, UuidGen},
+    ExportState,
+};
 
 macro_rules! bolero_test {
     ($fn:expr) => {{
@@ -300,6 +303,32 @@ fn test_enable_source_samples_loaded() {
             for sample in model.source(*uuid).unwrap().list().unwrap() {
                 assert!(model.samples().contains(&sample));
             }
+        }
+    })
+}
+
+#[test]
+fn test_export_state() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        lcg: Lcg,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let mut lcg = values.lcg.clone();
+        let choice = lcg.next() % 3;
+
+        if choice == 0 {
+            let updated_model = model.set_export_state(None);
+            assert_eq!(updated_model.export_state(), None);
+        } else if choice == 1 {
+            let updated_model = model.set_export_state(Some(ExportState::Finished));
+            assert_eq!(updated_model.export_state(), Some(ExportState::Finished));
+        } else {
+            let updated_model = model.set_export_state(Some(ExportState::Exporting));
+            assert_eq!(updated_model.export_state(), Some(ExportState::Exporting));
         }
     })
 }
@@ -675,6 +704,50 @@ fn test_set_selected_sample() {
         let updated_model = model.set_selected_sample(Some(sample.clone()));
         assert_eq!(updated_model.selected_sample(), Some(sample).as_ref());
         assert_ne!(updated_model.selected_sample(), Some(sample2).as_ref());
+    })
+}
+
+#[test]
+fn test_set_selected_set() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        lcg: Lcg,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let mut lcg = values.lcg.clone();
+
+        if !model.sets_list().is_empty() {
+            let num_sets = model.sets_list().len();
+            let set_idx = lcg.next() % num_sets;
+            let set_uuid = model.sets_list()[set_idx].uuid();
+
+            let updated_model = model.set_selected_set(Some(set_uuid)).unwrap();
+            assert_eq!(updated_model.selected_set(), Some(set_uuid));
+
+            let updated_model = updated_model.set_selected_set(None).unwrap();
+            assert_eq!(updated_model.selected_set(), None);
+        }
+    })
+}
+
+#[test]
+fn test_set_selected_set_failure_uuid_not_present() {
+    #[derive(Debug, TypeGenerator)]
+    struct Values {
+        model_ops: Vec<CoreModelBuilderOps>,
+        uuid: UuidGen,
+    }
+
+    bolero_test!(gen::<Values>(), |values| {
+        let model = CoreModelBuilderOps::build_model(&values.model_ops).unwrap();
+        let uuid = values.uuid.get();
+
+        if !model.sets_map().contains_key(&uuid) {
+            assert!(model.set_selected_set(Some(uuid)).is_err());
+        }
     })
 }
 
