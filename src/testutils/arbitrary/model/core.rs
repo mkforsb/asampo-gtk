@@ -57,7 +57,6 @@ pub enum CoreModelBuilderOps {
 
 impl CoreModelBuilderOps {
     pub fn build_model(ops: &[CoreModelBuilderOps]) -> Option<CoreModel<FakeAudioHasher>> {
-
         let mut model = CoreModel::new_with_hasher::<FakeAudioHasher>();
         let mut samples = Vec::new();
 
