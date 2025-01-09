@@ -18,7 +18,7 @@ Main features:
 Asampo currently only runs on Linux using PulseAudio (runs great on `pipewire-pulse`).
 
 ## Installation
-Build with `cargo` and then `cargo run`, or use a [Flatpak or AppImage](releases).
+Build with `cargo` and then `cargo run`, or use a [Flatpak or AppImage](https://github.com/mkforsb/asampo-gtk/releases).
 
 ## Sources
 Add, remove, and toggle sources:
