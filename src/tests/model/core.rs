@@ -13,11 +13,11 @@ use libasampo::{
     sources::{FakeSource, Source, SourceOps},
 };
 
-use crate::{bolero_utils::Lcg, labels::DRUM_LABELS};
+use crate::{bolero_utils::Lcg, fake_audiohasher::FakeAudioHasher, labels::DRUM_LABELS};
 
 // super = crate::model::core
 use super::{
-    arbitrary::{CoreModelBuilderOps, DummyAudioHasher, UuidGen},
+    arbitrary::{CoreModelBuilderOps, UuidGen},
     ExportState,
 };
 
@@ -90,7 +90,7 @@ fn test_add_insert_set_failure_uuid_in_use() {
             let set_uuid = model.sets_list()[set_idx].uuid();
 
             let mut new_set = SampleSet::BaseSampleSet(BaseSampleSet::new_with_hasher::<
-                DummyAudioHasher,
+                FakeAudioHasher,
             >("set name"));
             new_set.set_uuid(set_uuid);
 
@@ -495,7 +495,7 @@ fn test_insert_set() {
             let num_sets_in_model = model.sets_list().len();
 
             let mut set_to_insert =
-                BaseSampleSet::new_with_hasher::<DummyAudioHasher>("set to insert");
+                BaseSampleSet::new_with_hasher::<FakeAudioHasher>("set to insert");
             set_to_insert.set_uuid(values.uuid.get());
 
             let inserted_start = model
@@ -555,7 +555,7 @@ fn test_is_modified_vs_added_set() {
         let mut clone = model.clone();
         clone = clone
             .add_set(SampleSet::BaseSampleSet(BaseSampleSet::new_with_hasher::<
-                DummyAudioHasher,
+                FakeAudioHasher,
             >("test")))
             .unwrap();
         assert!(clone.is_modified_vs(&model));

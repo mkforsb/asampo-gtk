@@ -38,6 +38,10 @@ mod bolero_utils;
 #[path = "testutils/fake_savefile.rs"]
 mod fake_savefile;
 
+#[cfg(test)]
+#[path = "testutils/fake_audiohasher.rs"]
+mod fake_audiohasher;
+
 use crate::{
     appmessage::AppMessage,
     config::AppConfig,

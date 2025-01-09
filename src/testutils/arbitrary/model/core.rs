@@ -6,14 +6,12 @@ use std::collections::HashSet;
 
 use bolero::{check, gen, TypeGenerator};
 use libasampo::{
-    audiohash::AudioHasher,
-    errors::Error as LibasampoError,
     samples::{BaseSample, SampleMetadata, SampleURI},
     sequences::{NoteLength, TimeSpec},
-    sources::{FakeSource, SourceReader},
+    sources::FakeSource,
 };
 
-use crate::labels::DRUM_LABELS;
+use crate::{fake_audiohasher::FakeAudioHasher, labels::DRUM_LABELS};
 
 use super::*; // super = crate::model::core
 
@@ -37,15 +35,6 @@ pub struct SampleGen {
 pub enum NoteLengthGen {
     Eighth,
     Sixteenth,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct DummyAudioHasher;
-
-impl AudioHasher for DummyAudioHasher {
-    fn audio_hash(_reader: SourceReader) -> Result<String, LibasampoError> {
-        Ok(String::from("dummy hash"))
-    }
 }
 
 #[derive(Debug, Clone, TypeGenerator)]
@@ -85,12 +74,12 @@ pub enum CoreModelBuilderOps {
 }
 
 impl CoreModelBuilderOps {
-    pub fn build_model(ops: &[CoreModelBuilderOps]) -> Option<CoreModel<DummyAudioHasher>> {
+    pub fn build_model(ops: &[CoreModelBuilderOps]) -> Option<CoreModel<FakeAudioHasher>> {
         fn uuidstr(val: u128) -> String {
             Uuid::from_u128(val).to_string()
         }
 
-        let mut model = CoreModel::new_with_hasher::<DummyAudioHasher>();
+        let mut model = CoreModel::new_with_hasher::<FakeAudioHasher>();
         let mut samples = Vec::new();
 
         for op in ops.iter().cloned() {
@@ -188,7 +177,7 @@ impl CoreModelBuilderOps {
                     name_uuidgen,
                     members,
                 } => {
-                    let mut set = BaseSampleSet::new_with_hasher::<DummyAudioHasher>(uuidstr(
+                    let mut set = BaseSampleSet::new_with_hasher::<FakeAudioHasher>(uuidstr(
                         name_uuidgen.val,
                     ));
                     set.set_uuid(Uuid::from_u128(uuidgen.val));
