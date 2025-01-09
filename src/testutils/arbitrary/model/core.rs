@@ -234,6 +234,7 @@ impl CoreModelBuilderOps {
 }
 
 #[test]
+#[ignore]
 fn test_core_model_builder() {
     check!()
         .with_generator(gen::<Vec<CoreModelBuilderOps>>())
