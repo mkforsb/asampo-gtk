@@ -13,13 +13,14 @@ use libasampo::{
     sources::{FakeSource, Source, SourceOps},
 };
 
-use crate::{bolero_utils::Lcg, fake_audiohasher::FakeAudioHasher, labels::DRUM_LABELS};
+use crate::{
+    bolero_utils::{Lcg, UuidGen},
+    fake_audiohasher::FakeAudioHasher,
+    labels::DRUM_LABELS,
+};
 
 // super = crate::model::core
-use super::{
-    arbitrary::{CoreModelBuilderOps, UuidGen},
-    ExportState,
-};
+use super::{arbitrary::CoreModelBuilderOps, ExportState};
 
 macro_rules! bolero_test {
     ($fn:expr) => {{

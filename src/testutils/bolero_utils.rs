@@ -5,6 +5,24 @@
 use std::ops::{ControlFlow, RangeInclusive};
 
 use bolero::{TypeGenerator, ValueGenerator};
+use uuid::Uuid;
+
+#[derive(Debug, Clone, TypeGenerator)]
+pub struct UuidGen {
+    val: u128,
+}
+
+impl UuidGen {
+    pub fn get(&self) -> Uuid {
+        uuid::Uuid::from_u128(self.val)
+    }
+}
+
+#[derive(Debug, Clone, TypeGenerator)]
+pub enum NoteLengthGen {
+    Eighth,
+    Sixteenth,
+}
 
 #[derive(Debug)]
 pub struct WeightedUsizeGenerator {

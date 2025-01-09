@@ -11,31 +11,13 @@ use libasampo::{
     sources::FakeSource,
 };
 
-use crate::{fake_audiohasher::FakeAudioHasher, labels::DRUM_LABELS};
+use crate::{
+    bolero_utils::{NoteLengthGen, UuidGen},
+    fake_audiohasher::FakeAudioHasher,
+    labels::DRUM_LABELS,
+};
 
 use super::*; // super = crate::model::core
-
-#[derive(Debug, Clone, TypeGenerator)]
-pub struct UuidGen {
-    val: u128,
-}
-
-impl UuidGen {
-    pub fn get(&self) -> Uuid {
-        uuid::Uuid::from_u128(self.val)
-    }
-}
-
-#[derive(Debug, Clone, TypeGenerator)]
-pub struct SampleGen {
-    name_uri_uuidgen: UuidGen,
-}
-
-#[derive(Debug, Clone, TypeGenerator)]
-pub enum NoteLengthGen {
-    Eighth,
-    Sixteenth,
-}
 
 #[derive(Debug, Clone, TypeGenerator)]
 #[allow(clippy::enum_variant_names)]
@@ -43,7 +25,7 @@ pub enum CoreModelBuilderOps {
     AddSource {
         name_uri_uuidgen: UuidGen,
         uuidgen: UuidGen,
-        list_and_stream: Vec<(SampleGen, Vec<f32>)>,
+        list_and_stream: Vec<(UuidGen, Vec<f32>)>,
         enabled: bool,
     },
     AddSet {
@@ -75,9 +57,6 @@ pub enum CoreModelBuilderOps {
 
 impl CoreModelBuilderOps {
     pub fn build_model(ops: &[CoreModelBuilderOps]) -> Option<CoreModel<FakeAudioHasher>> {
-        fn uuidstr(val: u128) -> String {
-            Uuid::from_u128(val).to_string()
-        }
 
         let mut model = CoreModel::new_with_hasher::<FakeAudioHasher>();
         let mut samples = Vec::new();
@@ -90,16 +69,16 @@ impl CoreModelBuilderOps {
                     list_and_stream,
                     enabled,
                 } => {
-                    let name = uuidstr(name_uri_uuidgen.val);
-                    let uri = uuidstr(name_uri_uuidgen.val);
-                    let uuid = Uuid::from_u128(uuidgen.val);
+                    let name = name_uri_uuidgen.get().to_string();
+                    let uri = name_uri_uuidgen.get().to_string();
+                    let uuid = uuidgen.get();
 
                     let list: Vec<Sample> = list_and_stream
                         .iter()
-                        .map(|(sample, data)| {
+                        .map(|(sample_uuid, data)| {
                             Sample::BaseSample(BaseSample::new(
-                                SampleURI::new(uuidstr(sample.name_uri_uuidgen.val)),
-                                uuidstr(sample.name_uri_uuidgen.val),
+                                SampleURI::new(sample_uuid.get().to_string()),
+                                sample_uuid.get().to_string(),
                                 SampleMetadata {
                                     rate: 44100,
                                     channels: 2,
@@ -116,11 +95,8 @@ impl CoreModelBuilderOps {
 
                     let stream = list_and_stream
                         .iter()
-                        .map(|(sample, data)| {
-                            (
-                                SampleURI::new(uuidstr(sample.name_uri_uuidgen.val)),
-                                data.clone(),
-                            )
+                        .map(|(sample_uuid, data)| {
+                            (SampleURI::new(sample_uuid.get().to_string()), data.clone())
                         })
                         .collect();
 
@@ -177,10 +153,10 @@ impl CoreModelBuilderOps {
                     name_uuidgen,
                     members,
                 } => {
-                    let mut set = BaseSampleSet::new_with_hasher::<FakeAudioHasher>(uuidstr(
-                        name_uuidgen.val,
-                    ));
-                    set.set_uuid(Uuid::from_u128(uuidgen.val));
+                    let mut set = BaseSampleSet::new_with_hasher::<FakeAudioHasher>(
+                        name_uuidgen.get().to_string(),
+                    );
+                    set.set_uuid(uuidgen.get());
 
                     let mut labels_avail: HashSet<usize> = (0..=15).collect();
 
@@ -239,7 +215,7 @@ impl CoreModelBuilderOps {
                         },
                     );
 
-                    sequence.set_uuid(Uuid::from_u128(uuidgen.val));
+                    sequence.set_uuid(uuidgen.get());
                     sequence.set_len(steps);
 
                     model = match model.add_sequence(sequence) {
