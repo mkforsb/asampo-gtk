@@ -90,7 +90,7 @@ fn update(model_ptr: AppModelPtr, view: &AsampoView, message: AppMessage) {
         return;
     }
 
-    let old_model = model_ptr.take().unwrap();
+    let old_model = model_ptr.take().expect("Always a model present at the start of update()");
 
     match update_model(old_model.clone(), message) {
         Ok(new_model) => {
