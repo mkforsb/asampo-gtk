@@ -35,6 +35,12 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
         };
     }
 
+    macro_rules! closer {
+        ($message:expr) => {
+            AppMessage::Sequence(vec![AppMessage::DialogClosed, $message])
+        };
+    }
+
     if is!(old, MainViewSensitive) != is!(new, MainViewSensitive) {
         view.set_sensitive(is!(new, MainViewSensitive));
     }
@@ -55,12 +61,6 @@ pub fn update_view(model_ptr: AppModelPtr, old: AppModel, new: AppModel, view: &
                 .export_button
                 .set_sensitive(is!(new, SampleSetExportFieldsValid));
         }
-    }
-
-    macro_rules! closer {
-        ($message:expr) => {
-            AppMessage::Sequence(vec![AppMessage::DialogClosed, $message])
-        };
     }
 
     if is!(new, ShowAddFilesystemSourceBrowseDialog) {
