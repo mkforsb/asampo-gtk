@@ -399,7 +399,7 @@ impl AppModel {
         source_loaders() -> &HashMap<Uuid, Rc<mpsc::Receiver<SourceLoadMsg>>>,
         remove_source_loader(uuid: Uuid): Result,
         has_sources_loading() -> bool,
-        samples() -> std::cell::Ref<Vec<Sample>>,
+        samples() -> std::cell::Ref<'_, Vec<Sample>>,
         set_selected_sample(s: Option<Sample>): Model,
         selected_sample() -> Option<&Sample>,
         sets_map() -> &HashMap<Uuid, SampleSet>,

@@ -239,7 +239,7 @@ where
         !self.sources_loading.is_empty()
     }
 
-    pub fn samples(&self) -> std::cell::Ref<Vec<Sample>> {
+    pub fn samples(&self) -> std::cell::Ref<'_, Vec<Sample>> {
         self.samples.borrow()
     }
 
