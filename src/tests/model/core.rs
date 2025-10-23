@@ -314,10 +314,7 @@ fn test_enable_disable_source_failure_uuid_not_present() {
 fn test_enable_source_samples_loaded() {
     bolero_test!(|model| {
         let mut model = model;
-        let source_uuids = model
-            .sources_map().keys()
-            .cloned()
-            .collect::<Vec<_>>();
+        let source_uuids = model.sources_map().keys().cloned().collect::<Vec<_>>();
 
         for uuid in source_uuids.iter() {
             model = model.disable_source(*uuid).unwrap();
