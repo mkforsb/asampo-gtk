@@ -315,9 +315,7 @@ fn test_enable_source_samples_loaded() {
     bolero_test!(|model| {
         let mut model = model;
         let source_uuids = model
-            .sources_map()
-            .iter()
-            .map(|(uuid, _)| uuid)
+            .sources_map().keys()
             .cloned()
             .collect::<Vec<_>>();
 
